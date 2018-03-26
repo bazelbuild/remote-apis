@@ -8,9 +8,6 @@ results. This allows builds to execute faster, both by reusing results already
 built by other clients and by allowing many actions to be executed in parallel,
 in excess of the resource limits of the machine running the build.
 
-This repository also contains the Remote Worker API, a companion API to allow
-workers to connect to a central server to receive work.
-
 ## Dependencies
 
 The APIs in this repository refer to several general-purpose APIs published by
