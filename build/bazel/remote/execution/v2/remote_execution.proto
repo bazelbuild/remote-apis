@@ -759,7 +759,7 @@ message ActionResult {
 
 // An `OutputFile` is similar to a
 // [FileNode][build.bazel.remote.execution.v2.FileNode], but it is used as an
-// as an output in an `ActionResult`. It allows a full file path rather than
+// output in an `ActionResult`. It allows a full file path rather than
 // only a name.
 //
 // `OutputFile` is binary-compatible with `FileNode`.
