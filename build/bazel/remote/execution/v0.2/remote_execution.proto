@@ -411,9 +411,6 @@ message Command {
 // [Action][build.bazel.remote.execution.v0_2.Action]'s execution
 // environment. A `Platform` is represented as a series of key-value pairs
 // representing the properties that are required of the platform.
-//
-// This message is currently being redeveloped since it is an overly simplistic
-// model of platforms.
 message Platform {
   // A single property for the environment. The server is responsible for
   // specifying the property `name`s that it accepts. If an unknown `name` is
