@@ -520,6 +520,8 @@ message FileNode {
   // The digest of the file's content.
   Digest digest = 2;
 
+  reserved 3; // Reserved to ensure wire-compatibility with `OutputFile`.
+
   // True if file is executable, false otherwise.
   bool is_executable = 4;
 }
@@ -581,6 +583,8 @@ message Digest {
 // An ActionResult represents the result of an
 // [Action][build.bazel.remote.execution.v0_2.Action] being run.
 message ActionResult {
+  reserved 1; // Reserved for use as the resource name.
+
   // The output files of the action. For each output file requested in the
   // `output_files` field of the Action, if the corresponding file existed after
   // the action completed, a single entry will be present in the output list.
@@ -738,8 +742,7 @@ message OutputDirectory {
   // and it denotes the entire working directory.
   string path = 1;
 
-  // DEPRECATED: This field is deprecated and should no longer be used.
-  Digest digest = 2;
+  reserved 2; // Used for a removed field in an earlier version of the API.
 
   // The digest of the encoded
   // [Tree][build.bazel.remote.execution.v0_2.Tree] proto containing the
@@ -765,13 +768,7 @@ message ExecuteRequest {
   // [ActionCache][build.bazel.remote.execution.v0_2.ActionCache].
   bool skip_cache_lookup = 3;
 
-  // DEPRECATED: This field should be ignored by clients and servers and will be
-  // removed.
-  int32 total_input_file_count = 4;
-
-  // DEPRECATED: This field should be ignored by clients and servers and will be
-  // removed.
-  int64 total_input_file_bytes = 5;
+  reserved 4, 5; // Used for removed fields in an earlier version of the API.
 }
 
 // A `LogFile` is a log stored in the CAS.
