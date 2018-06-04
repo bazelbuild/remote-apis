@@ -12,7 +12,7 @@ in excess of the resource limits of the machine running the build.
 
 The APIs in this repository refer to several general-purpose APIs published by
 Google in the [Google APIs
-repository][https://github.com/googleapis/googleapis]. You will need to refer to
+repository](https://github.com/googleapis/googleapis). You will need to refer to
 packages from that repository in order to generate code using this API.
 
 ## Using the APIs
