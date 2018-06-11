@@ -774,9 +774,10 @@ message ExecutionPolicy {
 // outputs are stored in the CAS and Action Cache.
 message ResultsCachePolicy {
   // The priority (relative importance) of this content in the overall cache.
-  // Generally, a higher value means a longer retention time or other advantage,
-  // but the interpretation of a given value is server-dependent. A priority of 0
-  // means a *default* value, decided by the server.
+  // Generally, a lower value means a longer retention time or other advantage,
+  // but the interpretation of a given value is server-dependent. A priority of
+  // 0 means a *default* value, decided by the server.
+  //
   // The particular semantics of this field is up to the server. In particular,
   // every server will have their own supported range of priorities, and will
   // decide how these map into retention/eviction policy.
@@ -932,6 +933,11 @@ message UpdateActionResultRequest {
   // The [ActionResult][build.bazel.remote.execution.v2.ActionResult]
   // to store in the cache.
   ActionResult action_result = 3;
+
+  // An optional policy for the results of this execution in the remote cache.
+  // The server will have a default policy if this is not provided.
+  // This may be applied to both the ActionResult and the associated blobs.
+  ResultsCachePolicy results_cache_policy = 4;
 }
 
 // A request message for
