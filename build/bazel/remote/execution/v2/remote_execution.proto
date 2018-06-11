@@ -279,12 +279,12 @@ service ContentAddressableStorage {
 // The Capabilities service may be used by remote execution clients to query
 // various server properties, in order to self-configure or return meaningful
 // error messages.
+//
 // The query may include a particular `instance_name`, in which case the values
 // returned will pertain to that instance.
 service Capabilities {
   // GetCapabilities returns the server capabilities configuration.
-  rpc GetCapabilities(GetCapabilitiesRequest)
-    returns (GetCapabilitiesResponse) {
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (ServerCapabilities) {
     option (google.api.http) = {
       get: "/v1test/{instance_name=**}/capabilities"
     };
@@ -1107,7 +1107,7 @@ message GetCapabilitiesRequest {
 
 // A response message for
 // [Capabilities.GetCapabilities][google.devtools.remoteexecution.v1test.Capabilities.GetCapabilities].
-message GetCapabilitiesResponse {
+message ServerCapabilities {
   // Capabilities of the remote cache system.
   CacheCapabilities cache_capabilities = 1;
 
