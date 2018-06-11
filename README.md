@@ -13,10 +13,16 @@ in excess of the resource limits of the machine running the build.
 The APIs in this repository refer to several general-purpose APIs published by
 Google in the [Google APIs
 repository](https://github.com/googleapis/googleapis). You will need to refer to
-packages from that repository in order to generate code using this API.
+packages from that repository in order to generate code using this API. If you
+build the repository using the included `BUILD` files, Bazel will fetch the
+protobuf compiler and googleapis automatically.
 
 ## Using the APIs
 
-We currently do not have a build system in this repository. All the APIs are
-written in [gRPC](grpc.io), and can be compiled to the language of your choice
-using the protobuf compiler.
+The repository contains `BUILD` files to build the protobuf library with
+[Bazel][https://bazel.build/]. If you wish to use them with your own project in
+Bazel, you will possibly want to declare `cc_proto_library`,
+`java_proto_library`, etc. rules that depend on them.
+
+Other build systems will have to run protoc on the protobuf files, and link in
+the googleapis and well-known proto types, manually.
