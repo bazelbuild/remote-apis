@@ -612,6 +612,12 @@ message ExecutedActionMetadata {
 
   // When the worker completed executing the action command.
   google.protobuf.Timestamp execution_completed_timestamp = 8;
+
+  // When the worker started uploading action outputs.
+  google.protobuf.Timestamp output_upload_start_timestamp = 9;
+
+  // When the worker finished uploading action outputs.
+  google.protobuf.Timestamp output_upload_completed_timestamp = 10;
 }
 
 // An ActionResult represents the result of an
