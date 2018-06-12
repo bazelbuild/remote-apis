@@ -20,7 +20,7 @@ protobuf compiler and googleapis automatically.
 ## Using the APIs
 
 The repository contains `BUILD` files to build the protobuf library with
-[Bazel][https://bazel.build/]. If you wish to use them with your own project in
+[Bazel](https://bazel.build/). If you wish to use them with your own project in
 Bazel, you will possibly want to declare `cc_proto_library`,
 `java_proto_library`, etc. rules that depend on them.
 

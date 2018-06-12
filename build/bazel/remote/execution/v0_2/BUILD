@@ -1,7 +1,5 @@
 package(default_visibility = ["//visibility:public"])
 
-# load("@protobuf//:protobuf.bzl", "proto_library")
-
 licenses(["notice"])
 
 proto_library(
