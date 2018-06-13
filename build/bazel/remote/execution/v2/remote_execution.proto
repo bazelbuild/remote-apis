@@ -14,23 +14,23 @@
 
 syntax = "proto3";
 
-package build.bazel.remote.execution.v0_2;
+package build.bazel.remote.execution.v2;
 
 import "google/api/annotations.proto";
 import "google/longrunning/operations.proto";
 import "google/protobuf/duration.proto";
 import "google/rpc/status.proto";
 
-option csharp_namespace = "Build.Bazel.Remote.Execution.V0_2";
+option csharp_namespace = "Build.Bazel.Remote.Execution.V2";
 option go_package = "remoteexecution";
 option java_multiple_files = true;
 option java_outer_classname = "RemoteExecutionProto";
-option java_package = "build.bazel.remote.execution.v0_2";
+option java_package = "build.bazel.remote.execution.v2";
 option objc_class_prefix = "REX";
 
 
 // The Remote Execution API is used to execute an
-// [Action][build.bazel.remote.execution.v0_2.Action] on the remote
+// [Action][build.bazel.remote.execution.v2.Action] on the remote
 // workers.
 //
 // As with other services in the Remote Execution API, any call may return an
@@ -42,10 +42,10 @@ service Execution {
   //
   // In order to execute an action, the client must first upload all of the
   // inputs, as well as the
-  // [Command][build.bazel.remote.execution.v0_2.Command] to run, into the
-  // [ContentAddressableStorage][build.bazel.remote.execution.v0_2.ContentAddressableStorage].
+  // [Command][build.bazel.remote.execution.v2.Command] to run, into the
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
   // It then calls `Execute` with an
-  // [Action][build.bazel.remote.execution.v0_2.Action] referring to them.
+  // [Action][build.bazel.remote.execution.v2.Action] referring to them.
   // The server will run the action and eventually return the result.
   //
   // The input `Action`'s fields MUST meet the various canonicalization
@@ -59,9 +59,9 @@ service Execution {
   //
   // Returns a [google.longrunning.Operation][google.longrunning.Operation]
   // describing the resulting execution, with eventual `response`
-  // [ExecuteResponse][build.bazel.remote.execution.v0_2.ExecuteResponse].
+  // [ExecuteResponse][build.bazel.remote.execution.v2.ExecuteResponse].
   // The `metadata` on the operation is of type
-  // [ExecuteOperationMetadata][build.bazel.remote.execution.v0_2.ExecuteOperationMetadata].
+  // [ExecuteOperationMetadata][build.bazel.remote.execution.v2.ExecuteOperationMetadata].
   //
   // To query the operation, you can use the
   // [Operations API][google.longrunning.Operations.GetOperation]. If you wish
@@ -102,23 +102,23 @@ service Execution {
   // `Violation` with a `type` of `MISSING` and a `subject` of
   // `"blobs/{hash}/{size}"` indicating the digest of the missing blob.
   rpc Execute(ExecuteRequest) returns (google.longrunning.Operation) {
-    option (google.api.http) = { post: "/v1test/{instance_name=**}/actions:execute" body: "*" };
+    option (google.api.http) = { post: "/v2/{instance_name=**}/actions:execute" body: "*" };
   }
 }
 
 // The action cache API is used to query whether a given action has already been
 // performed and, if so, retrieve its result. Unlike the
-// [ContentAddressableStorage][build.bazel.remote.execution.v0_2.ContentAddressableStorage],
+// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage],
 // which addresses blobs by their own content, the action cache addresses the
-// [ActionResult][build.bazel.remote.execution.v0_2.ActionResult] by a
-// digest of the encoded [Action][build.bazel.remote.execution.v0_2.Action]
+// [ActionResult][build.bazel.remote.execution.v2.ActionResult] by a
+// digest of the encoded [Action][build.bazel.remote.execution.v2.Action]
 // which produced them.
 //
 // The lifetime of entries in the action cache is implementation-specific, but
 // the server SHOULD assume that more recently used entries are more likely to
 // be used again. Additionally, action cache implementations SHOULD ensure that
 // any blobs referenced in the
-// [ContentAddressableStorage][build.bazel.remote.execution.v0_2.ContentAddressableStorage]
+// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
 // are still valid when returning a result.
 //
 // As with other services in the Remote Execution API, any call may return an
@@ -131,14 +131,14 @@ service ActionCache {
   // Errors:
   // * `NOT_FOUND`: The requested `ActionResult` is not in the cache.
   rpc GetActionResult(GetActionResultRequest) returns (ActionResult) {
-    option (google.api.http) = { get: "/v1test/{instance_name=**}/actionResults/{action_digest.hash}/{action_digest.size_bytes}" };
+    option (google.api.http) = { get: "/v2/{instance_name=**}/actionResults/{action_digest.hash}/{action_digest.size_bytes}" };
   }
 
   // Upload a new execution result.
   //
   // This method is intended for servers which implement the distributed cache
   // independently of the
-  // [Execution][build.bazel.remote.execution.v0_2.Execution] API. As a
+  // [Execution][build.bazel.remote.execution.v2.Execution] API. As a
   // result, it is OPTIONAL for servers to implement.
   //
   // Errors:
@@ -146,7 +146,7 @@ service ActionCache {
   // * `RESOURCE_EXHAUSTED`: There is insufficient storage space to add the
   //   entry to the cache.
   rpc UpdateActionResult(UpdateActionResultRequest) returns (ActionResult) {
-    option (google.api.http) = { put: "/v1test/{instance_name=**}/actionResults/{action_digest.hash}/{action_digest.size_bytes}" body: "action_result" };
+    option (google.api.http) = { put: "/v2/{instance_name=**}/actionResults/{action_digest.hash}/{action_digest.size_bytes}" body: "action_result" };
   }
 }
 
@@ -156,23 +156,23 @@ service ActionCache {
 //
 // Most of the binary data stored in the CAS is opaque to the execution engine,
 // and is only used as a communication medium. In order to build an
-// [Action][build.bazel.remote.execution.v0_2.Action],
+// [Action][build.bazel.remote.execution.v2.Action],
 // however, the client will need to also upload the
-// [Command][build.bazel.remote.execution.v0_2.Command] and input root
-// [Directory][build.bazel.remote.execution.v0_2.Directory] for the Action.
+// [Command][build.bazel.remote.execution.v2.Command] and input root
+// [Directory][build.bazel.remote.execution.v2.Directory] for the Action.
 // The Command and Directory messages must be marshalled to wire format and then
 // uploaded under the hash as with any other piece of content. In practice, the
 // input root directory is likely to refer to other Directories in its
 // hierarchy, which must also each be uploaded on their own.
 //
 // For small file uploads the client should group them together and call
-// [BatchUpdateBlobs][build.bazel.remote.execution.v0_2.ContentAddressableStorage.BatchUpdateBlobs]
+// [BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs]
 // on chunks of no more than 10 MiB. For large uploads, the client must use the
 // [Write method][google.bytestream.ByteStream.Write] of the ByteStream API. The
 // `resource_name` is `{instance_name}/uploads/{uuid}/blobs/{hash}/{size}`,
 // where `instance_name` is as described in the next paragraph, `uuid` is a
 // version 4 UUID generated by the client, and `hash` and `size` are the
-// [Digest][build.bazel.remote.execution.v0_2.Digest] of the blob. The
+// [Digest][build.bazel.remote.execution.v2.Digest] of the blob. The
 // `uuid` is used only to avoid collisions when multiple clients try to upload
 // the same file (or the same client tries to upload the file multiple times at
 // once on different threads), so the client MAY reuse the `uuid` for uploading
@@ -196,7 +196,7 @@ service ActionCache {
 // a response whose `committed_size` is the full size of the uploaded file
 // (regardless of how much data was transmitted by the client). If the client
 // completes the upload but the
-// [Digest][build.bazel.remote.execution.v0_2.Digest] does not match, an
+// [Digest][build.bazel.remote.execution.v2.Digest] does not match, an
 // `INVALID_ARGUMENT` error will be returned. In either case, the client should
 // not attempt to retry the upload.
 //
@@ -204,12 +204,12 @@ service ActionCache {
 // [Read method][google.bytestream.ByteStream.Read] of the ByteStream API, with
 // a `resource_name` of `"{instance_name}/blobs/{hash}/{size}"`, where
 // `instance_name` is the instance name (see above), and `hash` and `size` are
-// the [Digest][build.bazel.remote.execution.v0_2.Digest] of the blob.
+// the [Digest][build.bazel.remote.execution.v2.Digest] of the blob.
 //
 // The lifetime of entries in the CAS is implementation specific, but it SHOULD
 // be long enough to allow for newly-added and recently looked-up entries to be
 // used in subsequent calls (e.g. to
-// [Execute][build.bazel.remote.execution.v0_2.Execution.Execute]).
+// [Execute][build.bazel.remote.execution.v2.Execution.Execute]).
 //
 // As with other services in the Remote Execution API, any call may return an
 // error with a [RetryInfo][google.rpc.RetryInfo] error detail providing
@@ -223,7 +223,7 @@ service ContentAddressableStorage {
   //
   // There are no method-specific errors.
   rpc FindMissingBlobs(FindMissingBlobsRequest) returns (FindMissingBlobsResponse) {
-    option (google.api.http) = { post: "/v1test/{instance_name=**}/blobs:findMissing" body: "*" };
+    option (google.api.http) = { post: "/v2/{instance_name=**}/blobs:findMissing" body: "*" };
   }
 
   // Upload many blobs at once.
@@ -243,17 +243,17 @@ service ContentAddressableStorage {
   // Individual requests may return the following errors, additionally:
   // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob.
   // * `INVALID_ARGUMENT`: The
-  // [Digest][build.bazel.remote.execution.v0_2.Digest] does not match the
+  // [Digest][build.bazel.remote.execution.v2.Digest] does not match the
   // provided data.
   rpc BatchUpdateBlobs(BatchUpdateBlobsRequest) returns (BatchUpdateBlobsResponse) {
-    option (google.api.http) = { post: "/v1test/{instance_name=**}/blobs:batchUpdate" body: "*" };
+    option (google.api.http) = { post: "/v2/{instance_name=**}/blobs:batchUpdate" body: "*" };
   }
 
   // Fetch the entire directory tree rooted at a node.
   //
   // This request must be targeted at a
-  // [Directory][build.bazel.remote.execution.v0_2.Directory] stored in the
-  // [ContentAddressableStorage][build.bazel.remote.execution.v0_2.ContentAddressableStorage]
+  // [Directory][build.bazel.remote.execution.v2.Directory] stored in the
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
   // (CAS). The server will enumerate the `Directory` tree recursively and
   // return every node descended from the root.
   // The exact traversal order is unspecified and, unless retrieving subsequent
@@ -265,7 +265,7 @@ service ContentAddressableStorage {
   //
   // * `NOT_FOUND`: The requested tree root is not present in the CAS.
   rpc GetTree(GetTreeRequest) returns (GetTreeResponse) {
-    option (google.api.http) = { get: "/v1test/{instance_name=**}/blobs/{root_digest.hash}/{root_digest.size_bytes}:getTree" };
+    option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{root_digest.hash}/{root_digest.size_bytes}:getTree" };
   }
 }
 
@@ -280,27 +280,27 @@ service ContentAddressableStorage {
 // rather than needing to run afresh.
 //
 // When a server completes execution of an
-// [Action][build.bazel.remote.execution.v0_2.Action], it MAY choose to
-// cache the [result][build.bazel.remote.execution.v0_2.ActionResult] in
-// the [ActionCache][build.bazel.remote.execution.v0_2.ActionCache] unless
+// [Action][build.bazel.remote.execution.v2.Action], it MAY choose to
+// cache the [result][build.bazel.remote.execution.v2.ActionResult] in
+// the [ActionCache][build.bazel.remote.execution.v2.ActionCache] unless
 // `do_not_cache` is `true`. Clients SHOULD expect the server to do so. By
 // default, future calls to [Execute][] the same `Action` will also serve their
 // results from the cache. Clients must take care to understand the caching
 // behaviour. Ideally, all `Action`s will be reproducible so that serving a
 // result from cache is always desirable and correct.
 message Action {
-  // The digest of the [Command][build.bazel.remote.execution.v0_2.Command]
+  // The digest of the [Command][build.bazel.remote.execution.v2.Command]
   // to run, which MUST be present in the
-  // [ContentAddressableStorage][build.bazel.remote.execution.v0_2.ContentAddressableStorage].
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
   Digest command_digest = 1;
 
   // The digest of the root
-  // [Directory][build.bazel.remote.execution.v0_2.Directory] for the input
+  // [Directory][build.bazel.remote.execution.v2.Directory] for the input
   // files. The files in the directory tree are available in the correct
   // location on the build machine before the command is executed. The root
   // directory, as well as every subdirectory and content blob referred to, MUST
   // be in the
-  // [ContentAddressableStorage][build.bazel.remote.execution.v0_2.ContentAddressableStorage].
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
   Digest input_root_digest = 2;
 
   // A list of the output files that the client expects to retrieve from the
@@ -360,7 +360,7 @@ message Action {
   // reject the request.
   //
   // The timeout is a part of the
-  // [Action][build.bazel.remote.execution.v0_2.Action] message, and
+  // [Action][build.bazel.remote.execution.v2.Action] message, and
   // therefore two `Actions` with different timeouts are different, even if they
   // are otherwise identical. This is because, if they were not, running an
   // `Action` with a lower timeout than is required might result in a cache hit
@@ -375,7 +375,7 @@ message Action {
 }
 
 // A `Command` is the actual command executed by a worker running an
-// [Action][build.bazel.remote.execution.v0_2.Action].
+// [Action][build.bazel.remote.execution.v2.Action].
 //
 // Except as otherwise required, the environment (such as which system
 // libraries or binaries are available, and what filesystems are mounted where)
@@ -408,14 +408,14 @@ message Command {
 
 // A `Platform` is a set of requirements, such as hardware, operating system, or
 // compiler toolchain, for an
-// [Action][build.bazel.remote.execution.v0_2.Action]'s execution
+// [Action][build.bazel.remote.execution.v2.Action]'s execution
 // environment. A `Platform` is represented as a series of key-value pairs
 // representing the properties that are required of the platform.
 message Platform {
   // A single property for the environment. The server is responsible for
   // specifying the property `name`s that it accepts. If an unknown `name` is
   // provided in the requirements for an
-  // [Action][build.bazel.remote.execution.v0_2.Action], the server SHOULD
+  // [Action][build.bazel.remote.execution.v2.Action], the server SHOULD
   // reject the execution request. If permitted by the server, the same `name`
   // may occur multiple times.
   //
@@ -445,8 +445,8 @@ message Platform {
 }
 
 // A `Directory` represents a directory node in a file tree, containing zero or
-// more children [FileNodes][build.bazel.remote.execution.v0_2.FileNode]
-// and [DirectoryNodes][build.bazel.remote.execution.v0_2.DirectoryNode].
+// more children [FileNodes][build.bazel.remote.execution.v2.FileNode]
+// and [DirectoryNodes][build.bazel.remote.execution.v2.DirectoryNode].
 // Each `Node` contains its name in the directory, the digest of its content
 // (either a file blob or a `Directory` proto), as well as possibly some
 // metadata about the file or directory.
@@ -527,15 +527,15 @@ message FileNode {
 }
 
 // A `DirectoryNode` represents a child of a
-// [Directory][build.bazel.remote.execution.v0_2.Directory] which is itself
+// [Directory][build.bazel.remote.execution.v2.Directory] which is itself
 // a `Directory` and its associated metadata.
 message DirectoryNode {
   // The name of the directory.
   string name = 1;
 
   // The digest of the
-  // [Directory][build.bazel.remote.execution.v0_2.Directory] object
-  // represented. See [Digest][build.bazel.remote.execution.v0_2.Digest]
+  // [Directory][build.bazel.remote.execution.v2.Directory] object
+  // represented. See [Digest][build.bazel.remote.execution.v2.Digest]
   // for information about how to take the digest of a proto message.
   Digest digest = 2;
 }
@@ -581,7 +581,7 @@ message Digest {
 }
 
 // An ActionResult represents the result of an
-// [Action][build.bazel.remote.execution.v0_2.Action] being run.
+// [Action][build.bazel.remote.execution.v2.Action] being run.
 message ActionResult {
   reserved 1; // Reserved for use as the resource name.
 
@@ -599,7 +599,7 @@ message ActionResult {
   // in the `output_directories` field of the Action, if the corresponding
   // directory existed after the action completed, a single entry will be
   // present in the output list, which will contain the digest of a
-  // [Tree][build.bazel.remote.execution.v0_2.Tree[] message containing the
+  // [Tree][build.bazel.remote.execution.v2.Tree[] message containing the
   // directory tree, and the path equal exactly to the corresponding Action
   // output_directories member.
   //
@@ -669,7 +669,7 @@ message ActionResult {
 
   // The digest for a blob containing the standard output of the action, which
   // can be retrieved from the
-  // [ContentAddressableStorage][build.bazel.remote.execution.v0_2.ContentAddressableStorage].
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
   // See `stdout_raw` for when this will be set.
   Digest stdout_digest = 6;
 
@@ -683,13 +683,13 @@ message ActionResult {
 
   // The digest for a blob containing the standard error of the action, which
   // can be retrieved from the
-  // [ContentAddressableStorage][build.bazel.remote.execution.v0_2.ContentAddressableStorage].
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
   // See `stderr_raw` for when this will be set.
   Digest stderr_digest = 8;
 }
 
 // An `OutputFile` is similar to a
-// [FileNode][build.bazel.remote.execution.v0_2.FileNode], but it is
+// [FileNode][build.bazel.remote.execution.v2.FileNode], but it is
 // tailored for output as part of an `ActionResult`. It allows a full file path
 // rather than only a name, and allows the server to include content inline.
 //
@@ -707,7 +707,7 @@ message OutputFile {
   //
   // This field may be used by the server to provide the content of a file
   // inline in an
-  // [ActionResult][build.bazel.remote.execution.v0_2.ActionResult] and
+  // [ActionResult][build.bazel.remote.execution.v2.ActionResult] and
   // avoid requiring that the client make a separate call to
   // [ContentAddressableStorage.GetBlob] to retrieve it.
   //
@@ -720,7 +720,7 @@ message OutputFile {
 }
 
 // A `Tree` contains all the
-// [Directory][build.bazel.remote.execution.v0_2.Directory] protos in a
+// [Directory][build.bazel.remote.execution.v2.Directory] protos in a
 // single directory Merkle tree, compressed into one message.
 message Tree {
   // The root directory in the tree.
@@ -745,13 +745,13 @@ message OutputDirectory {
   reserved 2; // Used for a removed field in an earlier version of the API.
 
   // The digest of the encoded
-  // [Tree][build.bazel.remote.execution.v0_2.Tree] proto containing the
+  // [Tree][build.bazel.remote.execution.v2.Tree] proto containing the
   // directory's contents.
   Digest tree_digest = 3;
 }
 
 // A request message for
-// [Execution.Execute][build.bazel.remote.execution.v0_2.Execution.Execute].
+// [Execution.Execute][build.bazel.remote.execution.v2.Execution.Execute].
 message ExecuteRequest {
   // The instance of the execution system to operate against. A server may
   // support multiple instances of the execution system (with their own workers,
@@ -765,7 +765,7 @@ message ExecuteRequest {
 
   // If true, the action will be executed anew even if its result was already
   // present in the cache. If false, the result may be served from the
-  // [ActionCache][build.bazel.remote.execution.v0_2.ActionCache].
+  // [ActionCache][build.bazel.remote.execution.v2.ActionCache].
   bool skip_cache_lookup = 3;
 
   reserved 4, 5; // Used for removed fields in an earlier version of the API.
@@ -785,7 +785,7 @@ message LogFile {
 }
 
 // The response message for
-// [Execution.Execute][build.bazel.remote.execution.v0_2.Execution.Execute],
+// [Execution.Execute][build.bazel.remote.execution.v2.Execution.Execute],
 // which will be contained in the [response
 // field][google.longrunning.Operation.response] of the
 // [Operation][google.longrunning.Operation].
@@ -819,7 +819,7 @@ message ExecuteResponse {
 }
 
 // Metadata about an ongoing
-// [execution][build.bazel.remote.execution.v0_2.Execution.Execute], which
+// [execution][build.bazel.remote.execution.v2.Execution.Execute], which
 // will be contained in the [metadata
 // field][google.longrunning.Operation.response] of the
 // [Operation][google.longrunning.Operation].
@@ -843,7 +843,7 @@ message ExecuteOperationMetadata {
 
   Stage stage = 1;
 
-  // The digest of the [Action][build.bazel.remote.execution.v0_2.Action]
+  // The digest of the [Action][build.bazel.remote.execution.v2.Action]
   // being executed.
   Digest action_digest = 2;
 
@@ -859,7 +859,7 @@ message ExecuteOperationMetadata {
 }
 
 // A request message for
-// [ActionCache.GetActionResult][build.bazel.remote.execution.v0_2.ActionCache.GetActionResult].
+// [ActionCache.GetActionResult][build.bazel.remote.execution.v2.ActionCache.GetActionResult].
 message GetActionResultRequest {
   // The instance of the execution system to operate against. A server may
   // support multiple instances of the execution system (with their own workers,
@@ -868,13 +868,13 @@ message GetActionResultRequest {
   // omitted.
   string instance_name = 1;
 
-  // The digest of the [Action][build.bazel.remote.execution.v0_2.Action]
+  // The digest of the [Action][build.bazel.remote.execution.v2.Action]
   // whose result is requested.
   Digest action_digest = 2;
 }
 
 // A request message for
-// [ActionCache.UpdateActionResult][build.bazel.remote.execution.v0_2.ActionCache.UpdateActionResult].
+// [ActionCache.UpdateActionResult][build.bazel.remote.execution.v2.ActionCache.UpdateActionResult].
 message UpdateActionResultRequest {
   // The instance of the execution system to operate against. A server may
   // support multiple instances of the execution system (with their own workers,
@@ -883,17 +883,17 @@ message UpdateActionResultRequest {
   // omitted.
   string instance_name = 1;
 
-  // The digest of the [Action][build.bazel.remote.execution.v0_2.Action]
+  // The digest of the [Action][build.bazel.remote.execution.v2.Action]
   // whose result is being uploaded.
   Digest action_digest = 2;
 
-  // The [ActionResult][build.bazel.remote.execution.v0_2.ActionResult]
+  // The [ActionResult][build.bazel.remote.execution.v2.ActionResult]
   // to store in the cache.
   ActionResult action_result = 3;
 }
 
 // A request message for
-// [ContentAddressableStorage.FindMissingBlobs][build.bazel.remote.execution.v0_2.ContentAddressableStorage.FindMissingBlobs].
+// [ContentAddressableStorage.FindMissingBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs].
 message FindMissingBlobsRequest {
   // The instance of the execution system to operate against. A server may
   // support multiple instances of the execution system (with their own workers,
@@ -907,14 +907,14 @@ message FindMissingBlobsRequest {
 }
 
 // A response message for
-// [ContentAddressableStorage.FindMissingBlobs][build.bazel.remote.execution.v0_2.ContentAddressableStorage.FindMissingBlobs].
+// [ContentAddressableStorage.FindMissingBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs].
 message FindMissingBlobsResponse {
   // A list of the blobs requested *not* present in the storage.
   repeated Digest missing_blob_digests = 2;
 }
 
 // A single request message for
-// [ContentAddressableStorage.BatchUpdateBlobs][build.bazel.remote.execution.v0_2.ContentAddressableStorage.BatchUpdateBlobs].
+// [ContentAddressableStorage.BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs].
 message UpdateBlobRequest {
   // The digest of the blob. This MUST be the digest of `data`.
   Digest content_digest = 1;
@@ -924,7 +924,7 @@ message UpdateBlobRequest {
 }
 
 // A request message for
-// [ContentAddressableStorage.BatchUpdateBlobs][build.bazel.remote.execution.v0_2.ContentAddressableStorage.BatchUpdateBlobs].
+// [ContentAddressableStorage.BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs].
 message BatchUpdateBlobsRequest {
   // The instance of the execution system to operate against. A server may
   // support multiple instances of the execution system (with their own workers,
@@ -938,7 +938,7 @@ message BatchUpdateBlobsRequest {
 }
 
 // A response message for
-// [ContentAddressableStorage.BatchUpdateBlobs][build.bazel.remote.execution.v0_2.ContentAddressableStorage.BatchUpdateBlobs].
+// [ContentAddressableStorage.BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs].
 message BatchUpdateBlobsResponse {
   // A response corresponding to a single blob that the client tried to upload.
   message Response {
@@ -954,7 +954,7 @@ message BatchUpdateBlobsResponse {
 }
 
 // A request message for
-// [ContentAddressableStorage.GetTree][build.bazel.remote.execution.v0_2.ContentAddressableStorage.GetTree].
+// [ContentAddressableStorage.GetTree][build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree].
 message GetTreeRequest {
   // The instance of the execution system to operate against. A server may
   // support multiple instances of the execution system (with their own workers,
@@ -964,9 +964,9 @@ message GetTreeRequest {
   string instance_name = 1;
 
   // The digest of the root, which must be an encoded
-  // [Directory][build.bazel.remote.execution.v0_2.Directory] message
+  // [Directory][build.bazel.remote.execution.v2.Directory] message
   // stored in the
-  // [ContentAddressableStorage][build.bazel.remote.execution.v0_2.ContentAddressableStorage].
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
   Digest root_digest = 2;
 
   // A maximum page size to request. If present, the server will request no more
@@ -976,20 +976,20 @@ message GetTreeRequest {
   int32 page_size = 3;
 
   // A page token, which must be a value received in a previous
-  // [GetTreeResponse][build.bazel.remote.execution.v0_2.GetTreeResponse].
+  // [GetTreeResponse][build.bazel.remote.execution.v2.GetTreeResponse].
   // If present, the server will use it to return the following page of results.
   string page_token = 4;
 }
 
 // A response message for
-// [ContentAddressableStorage.GetTree][build.bazel.remote.execution.v0_2.ContentAddressableStorage.GetTree].
+// [ContentAddressableStorage.GetTree][build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree].
 message GetTreeResponse {
   // The directories descended from the requested root.
   repeated Directory directories = 1;
 
   // If present, signifies that there are more results which the client can
   // retrieve by passing this as the page_token in a subsequent
-  // [request][build.bazel.remote.execution.v0_2.GetTreeRequest].
+  // [request][build.bazel.remote.execution.v2.GetTreeRequest].
   // If empty, signifies that this is the last page of results.
   string next_page_token = 2;
 }
@@ -1007,7 +1007,7 @@ message ToolDetails {
 // external context of the request. The server may use this for logging or other
 // purposes. To use it, the client attaches the header to the call using the
 // canonical proto serialization:
-// name: build.bazel.remote.execution.v0_2.requestmetadata-bin
+// name: build.bazel.remote.execution.v2.requestmetadata-bin
 // contents: the base64 encoded binary RequestMetadata message.
 message RequestMetadata {
   // The details for the tool invoking the requests.
