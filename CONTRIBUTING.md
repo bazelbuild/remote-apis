@@ -3,7 +3,7 @@
 Contributions to this project are welcome. Feel free to make a pull request, or
 open an issue for further discussion. If you are making substantive changes to
 the proto files, please make sure that they build by running `bazel build
-build/bazel/remote/execution/v0_2:remote_execution_proto`.
+build/bazel/remote/execution/v2:remote_execution_proto`.
 
 ## Contributor License Agreement
 
