@@ -256,6 +256,12 @@ service ContentAddressableStorage {
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
   // (CAS). The server will enumerate the `Directory` tree recursively and
   // return every node descended from the root.
+  //
+  // The GetTreeRequest.page_token parameter can be used to skip ahead in
+  // the stream (e.g. when retrying a partially completed and aborted request),
+  // by setting it to a value taken from GetTreeResponse.next_page_token of the
+  // last successfully processed GetTreeResponse).
+  //
   // The exact traversal order is unspecified and, unless retrieving subsequent
   // pages from an earlier request, is not guaranteed to be stable across
   // multiple invocations of `GetTree`.
@@ -264,7 +270,7 @@ service ContentAddressableStorage {
   // portion present and omit the rest.
   //
   // * `NOT_FOUND`: The requested tree root is not present in the CAS.
-  rpc GetTree(GetTreeRequest) returns (GetTreeResponse) {
+  rpc GetTree(GetTreeRequest) returns (stream GetTreeResponse) {
     option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{root_digest.hash}/{root_digest.size_bytes}:getTree" };
   }
 }
