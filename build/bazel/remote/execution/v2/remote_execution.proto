@@ -756,6 +756,20 @@ message OutputDirectory {
   Digest tree_digest = 3;
 }
 
+// An `ExecutionPolicy` can be used to control the scheduling of the action.
+message ExecutionPolicy {
+  // The priority (relative importance) of this action. Generally, a lower value
+  // means that the action should be run sooner than actions having a greater
+  // priority value, but the interpretation of a given value is server-dependent.
+  // A priority of 0 means the *default* priority. Priorities may be positive or
+  // negative, and such actions should run later or sooner than actions having
+  // the default priority, respectively. The particular semantics of this field
+  // is up to the server. In particular, every server will have their own
+  // supported range of priorities, and will decide how these map into
+  // scheduling policy.
+  int32 priority = 1;
+}
+
 // A request message for
 // [Execution.Execute][build.bazel.remote.execution.v2.Execution.Execute].
 message ExecuteRequest {
@@ -775,6 +789,10 @@ message ExecuteRequest {
   bool skip_cache_lookup = 3;
 
   reserved 4, 5; // Used for removed fields in an earlier version of the API.
+
+  // An optional policy for execution of the action.
+  // The server will have a default policy if this is not provided.
+  ExecutionPolicy execution_policy = 6;
 }
 
 // A `LogFile` is a log stored in the CAS.
