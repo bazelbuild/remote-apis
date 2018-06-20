@@ -747,9 +747,9 @@ message ActionResult {
 }
 
 // An `OutputFile` is similar to a
-// [FileNode][build.bazel.remote.execution.v2.FileNode], but it is
-// tailored for output as part of an `ActionResult`. It allows a full file path
-// rather than only a name, and allows the server to include content inline.
+// [FileNode][build.bazel.remote.execution.v2.FileNode], but it is used as an
+// as an output in an `ActionResult`. It allows a full file path rather than
+// only a name.
 //
 // `OutputFile` is binary-compatible with `FileNode`.
 message OutputFile {
@@ -761,17 +761,7 @@ message OutputFile {
   // The digest of the file's content.
   Digest digest = 2;
 
-  // The raw content of the file.
-  //
-  // This field may be used by the server to provide the content of a file
-  // inline in an
-  // [ActionResult][build.bazel.remote.execution.v2.ActionResult] and
-  // avoid requiring that the client make a separate call to
-  // [ContentAddressableStorage.GetBlob] to retrieve it.
-  //
-  // The client SHOULD NOT assume that it will get raw content with any request,
-  // and always be prepared to retrieve it via `digest`.
-  bytes content = 3;
+  reserved 3; // Used for a removed field in an earlier version of the API.
 
   // True if file is executable, false otherwise.
   bool is_executable = 4;
