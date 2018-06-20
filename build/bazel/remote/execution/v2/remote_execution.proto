@@ -58,26 +58,22 @@ service Execution {
   // verify the requirement, then it will treat the `Action` as distinct from
   // another logically equivalent action if they hash differently.
   //
-  // Returns a [google.longrunning.Operation][google.longrunning.Operation]
+  // Returns a stream of
+  // [google.longrunning.Operation][google.longrunning.Operation] messages
   // describing the resulting execution, with eventual `response`
-  // [ExecuteResponse][build.bazel.remote.execution.v2.ExecuteResponse].
-  // The `metadata` on the operation is of type
+  // [ExecuteResponse][build.bazel.remote.execution.v2.ExecuteResponse]. The
+  // `metadata` on the operation is of type
   // [ExecuteOperationMetadata][build.bazel.remote.execution.v2.ExecuteOperationMetadata].
   //
-  // To query the operation, you can use the
-  // [Operations API][google.longrunning.Operations.GetOperation]. If you wish
-  // to allow the server to stream operations updates, rather than requiring
-  // client polling, you can use the
-  // [Watcher API][google.watcher.v1.Watcher.Watch] with the Operation's `name`
-  // as the `target`.
-  //
-  // When using the Watcher API, the initial `data` will be the `Operation` at
-  // the time of the request. Updates will be provided periodically by the
-  // server until the `Operation` completes, at which point the response message
-  // will (assuming no error) be at `data.response`.
+  // If the client remains connected after the first response is returned after
+  // the server, then updates are streamed as if the client had called
+  // [WaitExecution][build.bazel.remote.execution.v2.Execution.WaitExecution]
+  // until the execution completes or the request reaches an error. The
+  // operation can also be queried using [Operations
+  // API][google.longrunning.Operations.GetOperation].
   //
   // The server NEED NOT implement other methods or functionality of the
-  // Operation and Watcher APIs.
+  // Operations API.
   //
   // Errors discovered during creation of the `Operation` will be reported
   // as gRPC Status errors, while errors that occurred while running the
@@ -102,8 +98,18 @@ service Execution {
   // where, for each requested blob not present in the CAS, there is a
   // `Violation` with a `type` of `MISSING` and a `subject` of
   // `"blobs/{hash}/{size}"` indicating the digest of the missing blob.
-  rpc Execute(ExecuteRequest) returns (google.longrunning.Operation) {
+  rpc Execute(ExecuteRequest) returns (stream google.longrunning.Operation) {
     option (google.api.http) = { post: "/v2/{instance_name=**}/actions:execute" body: "*" };
+  }
+
+  // Wait for an execution operation to complete. When the client initially
+  // makes the request, the server immediately responds with the current status
+  // of the execution. The server will leave the request stream open until the
+  // operation completes, and then respond with the completed operation. The
+  // server MAY choose to stream additional updates as execution progresses,
+  // such as to provide an update as to the state of the execution.
+  rpc WaitExecution(WaitExecutionRequest) returns (stream google.longrunning.Operation) {
+    option (google.api.http) = { post: "/v2/{name=operations/**}:waitExecution" body: "*" };
   }
 }
 
@@ -946,6 +952,14 @@ message ExecuteOperationMetadata {
   // [ByteStream.Read][google.bytestream.ByteStream.Read] to stream the
   // standard error.
   string stderr_stream_name = 4;
+}
+
+// A request message for
+// [WaitExecution][build.bazel.remote.execution.v2.Execution.WaitExecution].
+message WaitExecutionRequest {
+  // The name of the [Operation][google.longrunning.operations.v1.Operation]
+  // returned by [Execute][build.bazel.remote.execution.v2.Execution.Execute].
+  string name = 1;
 }
 
 // A request message for
