@@ -341,7 +341,7 @@ message Action {
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
   Digest input_root_digest = 2;
 
-  reserved 3 to 5; // Used for files moved to [Command][build.bazel.remote.execution.v2.Command].
+  reserved 3 to 5; // Used for fields moved to [Command][build.bazel.remote.execution.v2.Command].
 
   // A timeout after which the execution should be killed. If the timeout is
   // absent, then the client is specifying that the execution should continue
