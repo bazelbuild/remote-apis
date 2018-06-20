@@ -286,7 +286,7 @@ service Capabilities {
   // GetCapabilities returns the server capabilities configuration.
   rpc GetCapabilities(GetCapabilitiesRequest) returns (ServerCapabilities) {
     option (google.api.http) = {
-      get: "/v1test/{instance_name=**}/capabilities"
+      get: "/v2/{instance_name=**}/capabilities"
     };
   }
 }
@@ -1095,7 +1095,7 @@ message GetTreeResponse {
 }
 
 // A request message for
-// [Capabilities.GetCapabilities][google.devtools.remoteexecution.v1test.Capabilities.GetCapabilities].
+// [Capabilities.GetCapabilities][google.devtools.remoteexecution.v2.Capabilities.GetCapabilities].
 message GetCapabilitiesRequest {
   // The instance of the execution system to operate against. A server may
   // support multiple instances of the execution system (with their own workers,
@@ -1106,7 +1106,7 @@ message GetCapabilitiesRequest {
 }
 
 // A response message for
-// [Capabilities.GetCapabilities][google.devtools.remoteexecution.v1test.Capabilities.GetCapabilities].
+// [Capabilities.GetCapabilities][google.devtools.remoteexecution.v2.Capabilities.GetCapabilities].
 message ServerCapabilities {
   // Capabilities of the remote cache system.
   CacheCapabilities cache_capabilities = 1;
@@ -1130,7 +1130,7 @@ message ActionCacheUpdateCapabilities {
 }
 
 // Allowed values for priority in
-// [ResultsCachePolicy][google.devtools.remoteexecution.v1test.ResultsCachePolicy]
+// [ResultsCachePolicy][google.devtools.remoteexecution.v2.ResultsCachePolicy]
 // Used for querying both cache and execution valid priority ranges.
 message PriorityCapabilities {
   // Supported range of priorities, including boundaries.
