@@ -276,6 +276,21 @@ service ContentAddressableStorage {
   }
 }
 
+// The Capabilities service may be used by remote execution clients to query
+// various server properties, in order to self-configure or return meaningful
+// error messages.
+//
+// The query may include a particular `instance_name`, in which case the values
+// returned will pertain to that instance.
+service Capabilities {
+  // GetCapabilities returns the server capabilities configuration.
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (ServerCapabilities) {
+    option (google.api.http) = {
+      get: "/v2/{instance_name=**}/capabilities"
+    };
+  }
+}
+
 // An `Action` captures all the information about an execution which is required
 // to reproduce it.
 //
@@ -1077,6 +1092,78 @@ message GetTreeResponse {
   // [request][build.bazel.remote.execution.v2.GetTreeRequest].
   // If empty, signifies that this is the last page of results.
   string next_page_token = 2;
+}
+
+// A request message for
+// [Capabilities.GetCapabilities][google.devtools.remoteexecution.v2.Capabilities.GetCapabilities].
+message GetCapabilitiesRequest {
+  // The instance of the execution system to operate against. A server may
+  // support multiple instances of the execution system (with their own workers,
+  // storage, caches, etc.). The server MAY require use of this field to select
+  // between them in an implementation-defined fashion, otherwise it can be
+  // omitted.
+  string instance_name = 1;
+}
+
+// A response message for
+// [Capabilities.GetCapabilities][google.devtools.remoteexecution.v2.Capabilities.GetCapabilities].
+message ServerCapabilities {
+  // Capabilities of the remote cache system.
+  CacheCapabilities cache_capabilities = 1;
+
+  // Capabilities of the remote execution system.
+  ExecutionCapabilities execution_capabilities = 2;
+}
+
+// The digest function used for converting values into keys for CAS and Action
+// Cache.
+enum DigestFunction {
+  UNKNOWN = 0;
+  SHA256 = 1;
+  SHA1 = 2;
+  MD5 = 3;
+}
+
+// Describes the server/instance capabilities for updating the action cache.
+message ActionCacheUpdateCapabilities {
+  bool update_enabled = 1;
+}
+
+// Allowed values for priority in
+// [ResultsCachePolicy][google.devtools.remoteexecution.v2.ResultsCachePolicy]
+// Used for querying both cache and execution valid priority ranges.
+message PriorityCapabilities {
+  // Supported range of priorities, including boundaries.
+  message PriorityRange {
+    int32 min_priority = 1;
+    int32 max_priority = 2;
+  }
+  repeated PriorityRange priorities = 1;
+}
+
+// Capabilities of the remote cache system.
+message CacheCapabilities {
+  // All the digest functions supported by the remote cache.
+  // Remote cache may support multiple digest functions simultaneously.
+  repeated DigestFunction digest_function = 1;
+
+  // Capabilities for updating the action cache.
+  ActionCacheUpdateCapabilities action_cache_update_capabilities = 2;
+
+  // Supported cache priority range for both CAS and ActionCache.
+  PriorityCapabilities cache_priority_capabilities = 3;
+}
+
+// Capabilities of the remote execution system.
+message ExecutionCapabilities {
+  // Remote execution may only support a single digest function.
+  DigestFunction digest_function = 1;
+
+  // Whether remote execution is enabled for the particular server/instance.
+  bool exec_enabled = 2;
+
+  // Supported execution priority range.
+  PriorityCapabilities execution_priority_capabilities = 3;
 }
 
 // Details for the tool used to call the API.
