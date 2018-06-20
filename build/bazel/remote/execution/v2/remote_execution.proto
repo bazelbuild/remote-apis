@@ -240,8 +240,9 @@ service ContentAddressableStorage {
   // chunks or uploaded using the
   // [ByteStream API][google.bytestream.ByteStream], as appropriate.
   //
-  // This request is equivalent to calling [UpdateBlob][] on each individual
-  // blob, in parallel. The requests may succeed or fail independently.
+  // This request is equivalent to calling a hypothetical `UpdateBlob` request
+  // on each individual blob, in parallel. The requests may succeed or fail
+  // independently.
   //
   // Errors:
   // * `INVALID_ARGUMENT`: The client attempted to upload more than 10 MiB of
@@ -312,10 +313,12 @@ service Capabilities {
 // cache the [result][build.bazel.remote.execution.v2.ActionResult] in
 // the [ActionCache][build.bazel.remote.execution.v2.ActionCache] unless
 // `do_not_cache` is `true`. Clients SHOULD expect the server to do so. By
-// default, future calls to [Execute][] the same `Action` will also serve their
-// results from the cache. Clients must take care to understand the caching
-// behaviour. Ideally, all `Action`s will be reproducible so that serving a
-// result from cache is always desirable and correct.
+// default, future calls to
+// [Execute][build.bazel.remote.execution.v2.Execution.Execute] the same
+// `Action` will also serve their results from the cache. Clients must take care
+// to understand the caching behaviour. Ideally, all `Action`s will be
+// reproducible so that serving a result from cache is always desirable and
+// correct.
 message Action {
   // The digest of the [Command][build.bazel.remote.execution.v2.Command]
   // to run, which MUST be present in the
@@ -330,6 +333,62 @@ message Action {
   // be in the
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
   Digest input_root_digest = 2;
+
+  reserved 3 to 5; // Used for files moved to [Command][build.bazel.remote.execution.v2.Command].
+
+  // A timeout after which the execution should be killed. If the timeout is
+  // absent, then the client is specifying that the execution should continue
+  // as long as the server will let it. The server SHOULD impose a timeout if
+  // the client does not specify one, however, if the client does specify a
+  // timeout that is longer than the server's maximum timeout, the server MUST
+  // reject the request.
+  //
+  // The timeout is a part of the
+  // [Action][build.bazel.remote.execution.v2.Action] message, and
+  // therefore two `Actions` with different timeouts are different, even if they
+  // are otherwise identical. This is because, if they were not, running an
+  // `Action` with a lower timeout than is required might result in a cache hit
+  // from an execution run with a longer timeout, hiding the fact that the
+  // timeout is too short. By encoding it directly in the `Action`, a lower
+  // timeout will result in a cache miss and the execution timeout will fail
+  // immediately, rather than whenever the cache entry gets evicted.
+  google.protobuf.Duration timeout = 6;
+
+  // If true, then the `Action`'s result cannot be cached.
+  bool do_not_cache = 7;
+}
+
+// A `Command` is the actual command executed by a worker running an
+// [Action][build.bazel.remote.execution.v2.Action] and specifications of its
+// environment.
+//
+// Except as otherwise required, the environment (such as which system
+// libraries or binaries are available, and what filesystems are mounted where)
+// is defined by and specific to the implementation of the remote execution API.
+message Command {
+  // An `EnvironmentVariable` is one variable to set in the running program's
+  // environment.
+  message EnvironmentVariable {
+    // The variable name.
+    string name = 1;
+
+    // The variable value.
+    string value = 2;
+  }
+
+  // The arguments to the command. The first argument must be the path to the
+  // executable, which must be either a relative path, in which case it is
+  // evaluated with respect to the input root, or an absolute path.
+  repeated string arguments = 1;
+
+  // The environment variables to set when running the program. The worker may
+  // provide its own default environment variables; these defaults can be
+  // overridden using this field. Additional variables can also be specified.
+  //
+  // In order to ensure that equivalent `Command`s always hash to the same
+  // value, the environment variables MUST be lexicographically sorted by name.
+  // Sorting of strings is done by code point, equivalently, by the UTF-8 bytes.
+  repeated EnvironmentVariable environment_variables = 2;
 
   // A list of the output files that the client expects to retrieve from the
   // action. Only the listed files, as well as directories listed in
@@ -379,59 +438,6 @@ message Action {
   // the client SHOULD ensure that running the action on any such worker will
   // have the same result.
   Platform platform = 5;
-
-  // A timeout after which the execution should be killed. If the timeout is
-  // absent, then the client is specifying that the execution should continue
-  // as long as the server will let it. The server SHOULD impose a timeout if
-  // the client does not specify one, however, if the client does specify a
-  // timeout that is longer than the server's maximum timeout, the server MUST
-  // reject the request.
-  //
-  // The timeout is a part of the
-  // [Action][build.bazel.remote.execution.v2.Action] message, and
-  // therefore two `Actions` with different timeouts are different, even if they
-  // are otherwise identical. This is because, if they were not, running an
-  // `Action` with a lower timeout than is required might result in a cache hit
-  // from an execution run with a longer timeout, hiding the fact that the
-  // timeout is too short. By encoding it directly in the `Action`, a lower
-  // timeout will result in a cache miss and the execution timeout will fail
-  // immediately, rather than whenever the cache entry gets evicted.
-  google.protobuf.Duration timeout = 6;
-
-  // If true, then the `Action`'s result cannot be cached.
-  bool do_not_cache = 7;
-}
-
-// A `Command` is the actual command executed by a worker running an
-// [Action][build.bazel.remote.execution.v2.Action].
-//
-// Except as otherwise required, the environment (such as which system
-// libraries or binaries are available, and what filesystems are mounted where)
-// is defined by and specific to the implementation of the remote execution API.
-message Command {
-  // An `EnvironmentVariable` is one variable to set in the running program's
-  // environment.
-  message EnvironmentVariable {
-    // The variable name.
-    string name = 1;
-
-    // The variable value.
-    string value = 2;
-  }
-
-  // The arguments to the command. The first argument must be the path to the
-  // executable, which must be either a relative path, in which case it is
-  // evaluated with respect to the input root, or an absolute path.
-  repeated string arguments = 1;
-
-  // The environment variables to set when running the program. The worker may
-  // provide its own default environment variables; these defaults can be
-  // overridden using this field. Additional variables can also be specified.
-  //
-  // In order to ensure that equivalent `Command`s always hash to the same
-  // value, the environment variables MUST be lexicographically sorted by name.
-  // Sorting of strings is done by code point, equivalently, by the UTF-8 bytes.
-  repeated EnvironmentVariable environment_variables = 2;
 
   // The working directory, relative to the input root, for the command to run
   // in. It must be a directory which exists in the input tree. If it is left
@@ -665,7 +671,7 @@ message ActionResult {
   // in the `output_directories` field of the Action, if the corresponding
   // directory existed after the action completed, a single entry will be
   // present in the output list, which will contain the digest of a
-  // [Tree][build.bazel.remote.execution.v2.Tree[] message containing the
+  // [Tree][build.bazel.remote.execution.v2.Tree] message containing the
   // directory tree, and the path equal exactly to the corresponding Action
   // output_directories member.
   //
