@@ -16,6 +16,7 @@ syntax = "proto3";
 
 package build.bazel.remote.execution.v2;
 
+import "build/bazel/semver/semver.proto";
 import "google/api/annotations.proto";
 import "google/longrunning/operations.proto";
 import "google/protobuf/duration.proto";
@@ -1136,6 +1137,15 @@ message ServerCapabilities {
 
   // Capabilities of the remote execution system.
   ExecutionCapabilities execution_capabilities = 2;
+
+  // Earliest RE API version supported, including deprecated versions.
+  build.bazel.semver.SemVer deprecated_api_version = 3;
+
+  // Earliest non-deprecated RE API version supported.
+  build.bazel.semver.SemVer low_api_version = 4;
+
+  // Latest RE API version supported.
+  build.bazel.semver.SemVer high_api_version = 5;
 }
 
 // The digest function used for converting values into keys for CAS and Action
