@@ -1123,7 +1123,7 @@ message BatchReadBlobsResponse {
     bytes data = 2;
 
     // The result of attempting to download that blob.
-    google.rpc.Status status = 2;
+    google.rpc.Status status = 3;
   }
 
   // The responses to the requests.
