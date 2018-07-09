@@ -243,8 +243,10 @@ service ContentAddressableStorage {
 
   // Upload many blobs at once.
   //
-  // The client MUST NOT upload blobs with a combined total size of more than 10
-  // MiB using this API. Such requests should either be split into smaller
+  // The server may enforce a limit of the combined total size of blobs
+  // to be uploaded using this API. This limit may be obtained using the
+  // [Capabilities][build.bazel.remote.execution.v2.Capabilities] API.
+  // Requests exceeding the limit should either be split into smaller
   // chunks or uploaded using the
   // [ByteStream API][google.bytestream.ByteStream], as appropriate.
   //
@@ -253,8 +255,8 @@ service ContentAddressableStorage {
   // independently.
   //
   // Errors:
-  // * `INVALID_ARGUMENT`: The client attempted to upload more than 4 MiB of
-  //   data.
+  // * `INVALID_ARGUMENT`: The client attempted to upload more than the
+  //   server supported limit.
   //
   // Individual requests may return the following errors, additionally:
   // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob.
@@ -267,8 +269,10 @@ service ContentAddressableStorage {
 
   // Download many blobs at once.
   //
-  // The client MUST NOT download blobs with a combined total size of more than 4
-  // MiB using this API. Such requests should either be split into smaller
+  // The server may enforce a limit of the combined total size of blobs
+  // to be downloaded using this API. This limit may be obtained using the
+  // [Capabilities][build.bazel.remote.execution.v2.Capabilities] API.
+  // Requests exceeding the limit should either be split into smaller
   // chunks or downloaded using the
   // [ByteStream API][google.bytestream.ByteStream], as appropriate.
   //
@@ -277,8 +281,8 @@ service ContentAddressableStorage {
   // independently.
   //
   // Errors:
-  // * `INVALID_ARGUMENT`: The client attempted to read more than 4 MiB of
-  //   data.
+  // * `INVALID_ARGUMENT`: The client attempted to read more than the
+  //   server supported limit.
   //
   // Every error on individual read will be returned in the corresponding digest
   // status.
@@ -1238,6 +1242,12 @@ message CacheCapabilities {
 
   // Supported cache priority range for both CAS and ActionCache.
   PriorityCapabilities cache_priority_capabilities = 3;
+
+  // Maximum total size of blobs to be uploaded/downloaded using
+  // batch methods. A value of 0 means no limit is set, although
+  // in practice there will always be a message size limitation
+  // of the protocol in use, e.g. GRPC.
+  int64 max_batch_total_size_bytes = 4;
 }
 
 // Capabilities of the remote execution system.
