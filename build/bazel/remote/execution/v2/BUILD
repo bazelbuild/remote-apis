@@ -15,3 +15,8 @@ proto_library(
         "@googleapis//:google_rpc_status_proto",
     ],
 )
+
+java_proto_library(
+    name = "remote_execution_java_proto",
+    deps = [":remote_execution_proto"],
+)
