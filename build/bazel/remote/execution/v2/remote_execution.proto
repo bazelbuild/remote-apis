@@ -517,11 +517,12 @@ message Platform {
 }
 
 // A `Directory` represents a directory node in a file tree, containing zero or
-// more children [FileNodes][build.bazel.remote.execution.v2.FileNode]
-// and [DirectoryNodes][build.bazel.remote.execution.v2.DirectoryNode].
-// Each `Node` contains its name in the directory, the digest of its content
-// (either a file blob or a `Directory` proto), as well as possibly some
-// metadata about the file or directory.
+// more children [FileNodes][build.bazel.remote.execution.v2.FileNode],
+// [DirectoryNodes][build.bazel.remote.execution.v2.DirectoryNode] and
+// [SymlinkNodes][build.bazel.remote.execution.v2.SymlinkNode].
+// Each `Node` contains its name in the directory, either the digest of its
+// content (either a file blob or a `Directory` proto) or a symlink target, as
+// well as possibly some metadata about the file or directory.
 //
 // In order to ensure that two equivalent directory trees hash to the same
 // value, the following restrictions MUST be obeyed when constructing a
@@ -529,8 +530,8 @@ message Platform {
 //   - Every child in the directory must have a path of exactly one segment.
 //     Multiple levels of directory hierarchy may not be collapsed.
 //   - Each child in the directory must have a unique path segment (file name).
-//   - The files and directories in the directory must each be sorted in
-//     lexicographical order by path. The path strings must be sorted by code
+//   - The files, directories and symlinks in the directory must each be sorted
+//     in lexicographical order by path. The path strings must be sorted by code
 //     point, equivalently, by UTF-8 bytes.
 //
 // A `Directory` that obeys the restrictions is said to be in canonical form.
@@ -582,6 +583,9 @@ message Directory {
 
   // The subdirectories in the directory.
   repeated DirectoryNode directories = 2;
+
+  // The symlinks in the directory.
+  repeated SymlinkNode symlinks = 3;
 }
 
 // A `FileNode` represents a single file and associated metadata.
@@ -610,6 +614,20 @@ message DirectoryNode {
   // represented. See [Digest][build.bazel.remote.execution.v2.Digest]
   // for information about how to take the digest of a proto message.
   Digest digest = 2;
+}
+
+// A `SymlinkNode` represents a symbolic link.
+message SymlinkNode {
+  // The name of the symlink.
+  string name = 1;
+
+  // The target path of the symlink. The path separator is a forward slash `/`.
+  // The target path can be relative to the parent directory of the symlink or
+  // it can be an absolute path starting with `/`. Support for absolute paths
+  // can be checked using the [Capabilities][build.bazel.remote.execution.v2.Capabilities]
+  // API. The canonical form forbids the substrings `/./` and `//` in the target
+  // path. `..` components are allowed anywhere in the target path.
+  string target = 2;
 }
 
 // A content digest. A digest for a given blob consists of the size of the blob
@@ -1233,6 +1251,20 @@ message PriorityCapabilities {
 
 // Capabilities of the remote cache system.
 message CacheCapabilities {
+  // Describes how the server treats absolute symlink targets.
+  enum SymlinkAbsolutePathStrategy {
+    UNKNOWN = 0;
+
+    // Server will return an INVALID_ARGUMENT on input symlinks with absolute targets.
+    // If an action tries to create an output symlink with an absolute target, a
+    // FAILED_PRECONDITION will be returned.
+    DISALLOWED = 1;
+
+    // Server will allow symlink targets to escape the input root tree, possibly
+    // resulting in non-hermetic builds.
+    ALLOWED = 2;
+  }
+
   // All the digest functions supported by the remote cache.
   // Remote cache may support multiple digest functions simultaneously.
   repeated DigestFunction digest_function = 1;
@@ -1248,6 +1280,9 @@ message CacheCapabilities {
   // in practice there will always be a message size limitation
   // of the protocol in use, e.g. GRPC.
   int64 max_batch_total_size_bytes = 4;
+
+  // Whether absolute symlink targets are supported.
+  SymlinkAbsolutePathStrategy symlink_absolute_path_strategy = 5;
 }
 
 // Capabilities of the remote execution system.
