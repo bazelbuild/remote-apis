@@ -821,7 +821,7 @@ message ActionResult {
 //
 // `OutputFile` is binary-compatible with `FileNode`.
 message OutputFile {
-  // The full path of the file relative to the input root, including the
+  // The full path of the file relative to the working directory, including the
   // filename. The path separator is a forward slash `/`. Since this is a
   // relative path, it MUST NOT begin with a leading forward slash.
   string path = 1;
