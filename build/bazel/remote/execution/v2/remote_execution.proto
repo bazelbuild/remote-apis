@@ -181,8 +181,8 @@ service ActionCache {
 // hierarchy, which must also each be uploaded on their own.
 //
 // For small file uploads the client should group them together and call
-// [BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs]
-// on chunks of no more than 10 MiB. For large uploads, the client must use the
+// [BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs].
+// For large uploads, the client must use the
 // [Write method][google.bytestream.ByteStream.Write] of the ByteStream API. The
 // `resource_name` is `{instance_name}/uploads/{uuid}/blobs/{hash}/{size}`,
 // where `instance_name` is as described in the next paragraph, `uuid` is a
