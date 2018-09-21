@@ -901,8 +901,7 @@ message OutputDirectory {
 
 // An `OutputSymlink` is similar to a
 // [Symlink][build.bazel.remote.execution.v2.SymlinkNode], but it is used as an
-// output in an `ActionResult`. It allows a full file path rather than
-// only a name. It is only used with symlinks pointing to files, not directories.
+// output in an `ActionResult`.
 //
 // `OutputSymlink` is binary-compatible with `SymlinkNode`.
 message OutputSymlink {
