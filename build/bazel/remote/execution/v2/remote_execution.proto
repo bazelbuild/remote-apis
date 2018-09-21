@@ -727,7 +727,7 @@ message ActionResult {
   // For each output file requested in the `output_files` field of the Action,
   // if the corresponding file existed after
   // the action completed, a single entry will be present either in this field,
-  // or in the output_files field, if the file was not a symbolic link.
+  // or in the `output_files` field, if the file was not a symbolic link.
   //
   // If the action does not produce the requested output, or produces a
   // directory where a regular file is expected or vice versa, then that output
@@ -795,6 +795,22 @@ message ActionResult {
   // }
   // ```
   repeated OutputDirectory output_directories = 3;
+
+  // The output directories of the action that are symbolic links to other
+  // directories. Those may be links to other output directories, or input
+  // directories, or even absolute paths outside of the working directory,
+  // if the server supports
+  // [SymlinkAbsolutePathStrategy.ALLOWED][build.bazel.remote.execution.v2.SymlinkAbsolutePathStrategy].
+  // For each output directory requested in the `output_directories` field of
+  // the Action, if the directory file existed after
+  // the action completed, a single entry will be present either in this field,
+  // or in the `output_directories` field, if the directory was not a symbolic link.
+  //
+  // If the action does not produce the requested output, or produces a
+  // file where a directory is expected or vice versa, then that output
+  // will be omitted from the list. The server is free to arrange the output
+  // list as desired; clients MUST NOT assume that the output list is sorted.
+  repeated OutputSymlink output_directory_symlinks = 11;
 
   // The exit code of the command.
   int32 exit_code = 4;
