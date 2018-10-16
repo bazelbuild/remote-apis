@@ -93,6 +93,9 @@ service Execution {
   // * `INTERNAL`: An internal error occurred in the execution engine or the
   //   worker.
   // * `DEADLINE_EXCEEDED`: The execution timed out.
+  // * `CANCELLED`: The operation was cancelled by the client. This status is
+  //   only possible if the server implements the Operations API CancelOperation
+  //   method, and it was called for the current execution.
   //
   // In the case of a missing input or command, the server SHOULD additionally
   // send a [PreconditionFailure][google.rpc.PreconditionFailure] error detail
