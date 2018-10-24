@@ -14,10 +14,10 @@ below.
 ### Clients
 These tools use the Remote Execution API to distribute builds to workers.
 
-* [bazel](https://bazel.build)
+* [Bazel](https://bazel.build)
 * [BuildStream](https://buildstream.build/)
-* [recc](https://gitlab.com/bloomberg/recc)
-* [pants](https://www.pantsbuild.org)
+* [Recc](https://gitlab.com/bloomberg/recc)
+* [Pants](https://www.pantsbuild.org)
 
 ### Servers
 These applications implement the Remote Execution API to server build requests
