@@ -16,8 +16,8 @@ These tools use the Remote Execution API to distribute builds to workers.
 
 * [Bazel](https://bazel.build)
 * [BuildStream](https://buildstream.build/)
-* [Recc](https://gitlab.com/bloomberg/recc)
 * [Pants](https://www.pantsbuild.org)
+* [Recc](https://gitlab.com/bloomberg/recc)
 
 ### Servers
 These applications implement the Remote Execution API to server build requests
