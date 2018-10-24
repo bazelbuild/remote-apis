@@ -8,6 +8,27 @@ results. This allows builds to execute faster, both by reusing results already
 built by other clients and by allowing many actions to be executed in parallel,
 in excess of the resource limits of the machine running the build.
 
+There are a number of clients and services using these APIs, they are listed
+below.
+
+### Clients
+These tools use the Remote Execution API to distribute builds to workers.
+
+* [Bazel](https://bazel.build)
+* [BuildStream](https://buildstream.build/)
+* [Pants](https://www.pantsbuild.org)
+* [Recc](https://gitlab.com/bloomberg/recc)
+
+### Servers
+These applications implement the Remote Execution API to server build requests
+from the clients above. These are then distributed to workers; some of these 
+workers implement the Remote Worker API.
+
+* [Buildbarn](https://github.com/EdSchouten/bazel-buildbarn)
+* [Buildfarm](https://github.com/bazelbuild/bazel-buildfarm)
+* [BuildGrid](https://buildgrid.build/)
+* [Remote Build Execution (Alpha)](https://blog.bazel.build/2018/10/05/remote-build-execution.html)
+
 ## Dependencies
 
 The APIs in this repository refer to several general-purpose APIs published by
