@@ -28,6 +28,7 @@ workers implement the Remote Worker API.
 * [Buildfarm](https://github.com/bazelbuild/bazel-buildfarm)
 * [BuildGrid](https://buildgrid.build/)
 * [Remote Build Execution (Alpha)](https://blog.bazel.build/2018/10/05/remote-build-execution.html)
+* [Scoot] (https://github.com/twitter/scoot)
 
 ## Dependencies
 
