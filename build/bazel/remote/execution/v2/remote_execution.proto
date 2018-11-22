@@ -1027,6 +1027,10 @@ message ExecuteResponse {
   // phase. The keys SHOULD be human readable so that a client can display them
   // to a user.
   map<string, LogFile> server_logs = 4;
+
+  // Freeform informational message with details on the execution of the action
+  // that may be displayed to the user upon failure or when requested explicitly.
+  string message = 5;
 }
 
 // Metadata about an ongoing
