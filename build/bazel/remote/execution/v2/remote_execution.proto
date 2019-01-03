@@ -160,7 +160,9 @@ service ActionCache {
   // `ContentAddressableStorage`.
   //
   // Errors:
-  // * `UNIMPLEMENTED`: This method is not supported by the server.
+  // * `INVALID_ARGUMENT`: One or more arguments are invalid.
+  // * `FAILED_PRECONDITION`: One or more errors occurred in updating the
+  //   action result, such as a missing command or action.
   // * `RESOURCE_EXHAUSTED`: There is insufficient storage space to add the
   //   entry to the cache.
   rpc UpdateActionResult(UpdateActionResultRequest) returns (ActionResult) {
