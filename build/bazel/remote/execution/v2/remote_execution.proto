@@ -446,6 +446,9 @@ message Command {
   //
   // An output file cannot be duplicated, be a parent of another output file, or
   // have the same path as any of the listed output directories.
+  //
+  // Directories leading up to the output files are created by the worker prior
+  // to execution, even if they are not explicitly part of the input root.
   repeated string output_files = 3;
 
   // A list of the output directories that the client expects to retrieve from
@@ -470,6 +473,10 @@ message Command {
   //
   // An output directory cannot be duplicated or have the same path as any of
   // the listed output files.
+  //
+  // Directories leading up to the output directories (but not the output
+  // directories themselves) are created by the worker prior to execution, even
+  // if they are not explicitly part of the input root.
   repeated string output_directories = 4;
 
   // The platform requirements for the execution environment. The server MAY
