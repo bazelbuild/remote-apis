@@ -1218,7 +1218,7 @@ message BatchReadBlobsRequest {
 // A response message for
 // [ContentAddressableStorage.BatchReadBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs].
 message BatchReadBlobsResponse {
-  // A response corresponding to a single blob that the client tried to upload.
+  // A response corresponding to a single blob that the client tried to download.
   message Response {
     // The digest to which this response corresponds.
     Digest digest = 1;
