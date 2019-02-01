@@ -374,6 +374,23 @@ message Action {
   // directory, as well as every subdirectory and content blob referred to, MUST
   // be in the
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+  //
+  // The build action may assume that all files that are part of the
+  // input root are available for reading (i.e., at least 'r--' or 'r-x'
+  // in terms of UNIX permissions). All directories are available for
+  // writing ('rwx'), meaning that files and directories may be created
+  // by the build action at any place within the input root.
+  //
+  // In addition to that, the entire input root must be exposed through
+  // a single mount, meaning that calls to the rename() on files and
+  // directories within the input root may not fail due to cross-device
+  // links. If the operating system executing the build action supports
+  // hard links, the same applies to link().
+  //
+  // Due to recent versions of Linux disallowing the creation of hard
+  // links to files without having write access to them (sysctl
+  // fs.protected_hardlinks=1), the build action may only be permitted
+  // to create hard links to files that were not part of the input root.
   Digest input_root_digest = 2;
 
   reserved 3 to 5; // Used for fields moved to [Command][build.bazel.remote.execution.v2.Command].
