@@ -385,12 +385,15 @@ message Action {
   // a single mount, meaning that calls to the rename() on files and
   // directories within the input root may not fail due to cross-device
   // links. If the operating system executing the build action supports
-  // hard links, the same applies to link().
+  // hard links, the same applies to link(). Whether directories outside
+  // of the input root (e.g., /tmp) reside on the same file system is
+  // unspecified.
   //
   // Due to recent versions of Linux disallowing the creation of hard
   // links to files without having write access to them (sysctl
-  // fs.protected_hardlinks=1), the build action may only be permitted
-  // to create hard links to files that were not part of the input root.
+  // fs.protected_hardlinks=1) and input files may not be writable, the
+  // build action may only be permitted to create hard links to files in
+  // the input root that were created at runtime.
   Digest input_root_digest = 2;
 
   reserved 3 to 5; // Used for fields moved to [Command][build.bazel.remote.execution.v2.Command].
