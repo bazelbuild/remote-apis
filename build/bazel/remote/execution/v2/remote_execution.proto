@@ -382,7 +382,7 @@ message Action {
   // by the build action at any place within the input root.
   //
   // In addition to that, the entire input root must be exposed through
-  // a single mount, meaning that calls to the rename() on files and
+  // a single mount, meaning that calls to rename() on files and
   // directories within the input root may not fail due to cross-device
   // links. If the operating system executing the build action supports
   // hard links, the same applies to link(). Whether directories outside
