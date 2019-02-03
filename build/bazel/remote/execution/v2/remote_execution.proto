@@ -379,7 +379,7 @@ message Action {
   // input root are available for reading (i.e., at least 'r--' or 'r-x'
   // in terms of UNIX permissions). All directories are available for
   // writing ('rwx'), meaning that files and directories may be created
-  // by the build action at any place within the input root.
+  // and deleted by the build action at any place within the input root.
   //
   // In addition to that, the entire input root must be exposed through
   // a single mount, meaning that calls to rename() on files and
