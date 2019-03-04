@@ -24,7 +24,7 @@ These applications implement the Remote Execution API to server build requests
 from the clients above. These are then distributed to workers; some of these 
 workers implement the Remote Worker API.
 
-* [Buildbarn](https://github.com/EdSchouten/bazel-buildbarn)
+* [Buildbarn](https://github.com/buildbarn)
 * [Buildfarm](https://github.com/bazelbuild/bazel-buildfarm)
 * [BuildGrid](https://buildgrid.build/)
 * [Remote Build Execution (Alpha)](https://blog.bazel.build/2018/10/05/remote-build-execution.html)
