@@ -30,6 +30,17 @@ workers implement the Remote Worker API.
 * [Remote Build Execution (Alpha)](https://blog.bazel.build/2018/10/05/remote-build-execution.html)
 * [Scoot](https://github.com/twitter/scoot)
 
+## API Community
+
+The [Remote Execution APIs
+group](https://groups.google.com/forum/#!forum/remote-execution-apis) hosts
+discussions related to the APIs in this repository.
+
+Interested parties meet monthly via VC to discuss issues related to the APIs,
+and several contributors have organized occasional meetups, hack-a-thons, and
+summits. Joining the email discussion group will automatically add you to the
+Google Calendar invite for the monthly meeting.
+
 ## Dependencies
 
 The APIs in this repository refer to several general-purpose APIs published by
