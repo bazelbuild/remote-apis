@@ -1,0 +1,10 @@
+#!/bin/sh
+# Precommit hook to rebuild generated go code. Fails if building or copying the
+# files fails.
+set -e
+bazel build build/bazel/remote/execution/v2:remote_execution_go_proto
+GEN_REPB_PATH="build/bazel/remote/execution/v2/remote_execution.pb.go"
+cp "$(find $(bazel info bazel-bin) -path "*/$GEN_REPB_PATH")" "$GEN_REPB_PATH"
+GEN_SEMVERPB_PATH="build/bazel/semver/semver.pb.go"
+cp "$(find $(bazel info bazel-bin) -path "*/$GEN_SEMVERPB_PATH")" "$GEN_SEMVERPB_PATH"
+git add "$GEN_REPB_PATH" "$GEN_SEMVERPB_PATH"

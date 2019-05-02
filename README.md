@@ -60,3 +60,28 @@ Bazel, you will possibly want to declare `cc_proto_library`,
 
 Other build systems will have to run protoc on the protobuf files, and link in
 the googleapis and well-known proto types, manually.
+
+### Go (for non-Bazel build systems)
+
+This repository contains the generated Go code for interacting with the API via
+gRPC. Get it with:
+
+```
+go get github.com/bazelbuild/remote-apis
+```
+
+Import it with, for example:
+
+```
+repb "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2"
+```
+
+## Development
+
+Enable the git hooks to automatically generate Go proto code on commit:
+
+```
+git config core.hooksPath hooks/
+```
+
+This is a local setting, so applies only to this repository.
