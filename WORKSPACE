@@ -33,12 +33,12 @@ http_archive(
 # Needed for C++ gRPC.
 http_archive(
     name = "com_github_grpc_grpc",
-    strip_prefix = "grpc-1.17.2",
+    strip_prefix = "grpc-1.20.1",
     urls = [
-        "https://github.com/grpc/grpc/archive/v1.17.2.tar.gz",
-        "https://mirror.bazel.build/github.com/grpc/grpc/archive/v1.17.2.tar.gz",
+        "https://github.com/grpc/grpc/archive/v1.20.1.tar.gz",
+        "https://mirror.bazel.build/github.com/grpc/grpc/archive/v1.20.1.tar.gz",
     ],
-    sha256 = "34ed95b727e7c6fcbf85e5eb422e962788e21707b712fdb4caf931553c2c6dbc",
+    sha256 = "ba8b08a697b66e14af35da07753583cf32ff3d14dcd768f91b1bbe2e6c07c349",
 )
 
 # Pull in all gRPC dependencies.
