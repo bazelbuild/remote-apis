@@ -54,3 +54,25 @@ bind(
     name = "grpc_lib",
     actual = "@com_github_grpc_grpc//:grpc++",
 )
+
+# We have to import zlib directly ourselves, because protobuf_deps.bzl isn't
+# part of the protobuf release yet
+# (https://github.com/protocolbuffers/protobuf/issues/5918). This should be
+# fixed in 3.8.0.
+http_archive(
+    name = "net_zlib",
+    build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
+    sha256 = "6d4d6640ca3121620995ee255945161821218752b551a1a180f4215f7d124d45",
+    strip_prefix = "zlib-1.2.11",
+    urls = ["https://zlib.net/zlib-1.2.11.tar.gz"],
+)
+
+# Pull in go rules.
+http_archive(
+    name = "io_bazel_rules_go",
+    sha256 = "86ae934bd4c43b99893fc64be9d9fc684b81461581df7ea8fc291c816f5ee8c5",
+    urls = ["https://github.com/bazelbuild/rules_go/releases/download/0.18.3/rules_go-0.18.3.tar.gz"],
+)
+load("@io_bazel_rules_go//go:deps.bzl", "go_rules_dependencies", "go_register_toolchains")
+go_rules_dependencies()
+go_register_toolchains()
