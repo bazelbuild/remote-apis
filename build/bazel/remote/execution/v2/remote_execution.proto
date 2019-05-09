@@ -845,8 +845,7 @@ message ActionResult {
   // The standard output buffer of the action. The server SHOULD NOT inline
   // stdout unless requested by the client in the
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
-  // message and instead return a digest in `stdout_digest` that points to
-  // the buffer.
+  // message.
   bytes stdout_raw = 5;
 
   // The digest for a blob containing the standard output of the action, which
@@ -857,8 +856,7 @@ message ActionResult {
   // The standard error buffer of the action. The server SHOULD NOT inline
   // stderr unless requested by the client in the
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
-  // message and instead return a digest in `stderr_digest` that points to
-  // the buffer.
+  // message.
   bytes stderr_raw = 7;
 
   // The digest for a blob containing the standard error of the action, which
