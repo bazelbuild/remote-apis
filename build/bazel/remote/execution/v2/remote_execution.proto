@@ -1414,6 +1414,11 @@ message ToolDetails {
 //
 // * name: `build.bazel.remote.execution.v2.requestmetadata-bin`
 // * contents: the base64 encoded binary `RequestMetadata` message.
+// Note: the gRPC library serializes binary headers encoded in base 64 by
+// default (https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#requests).
+// Therefore, if the gRPC library is used to pass/retrieve this
+// metadata, the user may ignore the base64 encoding and assume it is simply
+// serialized as a binary message.
 message RequestMetadata {
   // The details for the tool invoking the requests.
   ToolDetails tool_details = 1;
