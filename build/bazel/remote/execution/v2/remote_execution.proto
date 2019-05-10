@@ -489,6 +489,7 @@ message Command {
   // choose to execute the action on any worker satisfying the requirements, so
   // the client SHOULD ensure that running the action on any such worker will
   // have the same result.
+  // A detailed lexicon for this can be found in the accompanying platform.md.
   Platform platform = 5;
 
   // The working directory, relative to the input root, for the command to run
