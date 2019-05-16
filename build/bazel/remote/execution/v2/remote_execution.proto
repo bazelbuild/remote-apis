@@ -738,8 +738,8 @@ message ActionResult {
   // The output files of the action. For each output file requested in the
   // `output_files` field of the Action, if the corresponding file existed after
   // the action completed, a single entry will be present either in this field,
-  // or the `inlined_output_files` field or the `output_file_symlinks` field if the
-  // file was a symbolic link to another file.
+  // or the `output_file_symlinks` field if the file was a symbolic link to
+  // another file.
   //
   // If the action does not produce the requested output, or produces a
   // directory where a regular file is expected or vice versa, then that output
@@ -845,7 +845,8 @@ message ActionResult {
   // The standard output buffer of the action. The server SHOULD NOT inline
   // stdout unless requested by the client in the
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
-  // message.
+  // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
+  // would cause the response to exceed message size limits.
   bytes stdout_raw = 5;
 
   // The digest for a blob containing the standard output of the action, which
@@ -856,7 +857,8 @@ message ActionResult {
   // The standard error buffer of the action. The server SHOULD NOT inline
   // stderr unless requested by the client in the
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
-  // message.
+  // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
+  // would cause the response to exceed message size limits.
   bytes stderr_raw = 7;
 
   // The digest for a blob containing the standard error of the action, which
@@ -889,6 +891,8 @@ message OutputFile {
   // The contents of the file if inlining was requested. The server SHOULD NOT inline
   // file contents unless requested by the client in the
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
+  // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
+  // would cause the response to exceed message size limits.
   bytes contents = 5;
 }
 
