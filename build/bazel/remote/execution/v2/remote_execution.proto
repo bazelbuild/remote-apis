@@ -128,10 +128,7 @@ service Execution {
 //
 // The lifetime of entries in the action cache is implementation-specific, but
 // the server SHOULD assume that more recently used entries are more likely to
-// be used again. Additionally, action cache implementations SHOULD ensure that
-// any blobs referenced in the
-// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
-// are still valid when returning a result.
+// be used again.
 //
 // As with other services in the Remote Execution API, any call may return an
 // error with a [RetryInfo][google.rpc.RetryInfo] error detail providing
@@ -139,6 +136,13 @@ service Execution {
 // respect the information provided.
 service ActionCache {
   // Retrieve a cached execution result.
+  //
+  // Implementations SHOULD ensure that any blobs referenced from the
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
+  // are available at the time of returning the
+  // [ActionResult][build.bazel.remote.execution.v2.ActionResult] and will be
+  // for some period of time afterwards. The TTLs of the referenced blobs SHOULD be increased
+  // if necessary and applicable.
   //
   // Errors:
   //
