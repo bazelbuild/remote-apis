@@ -2,6 +2,14 @@ workspace(name = "bazel_remote_apis")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+load("//:repository_rules.bzl", "switched_rules_by_language")
+switched_rules_by_language(
+    name = "bazel_remote_apis_imports",
+    go = True,
+    java = True,
+    cc = True,
+)
+
 # Needed for protobuf.
 http_archive(
     name = "bazel_skylib",
