@@ -1349,6 +1349,10 @@ enum DigestFunction {
 
   // The MD5 digest function.
   MD5 = 3;
+
+  // The Microsoft "VSO-Hash" paged SHA256 digest function.
+  // See https://github.com/microsoft/BuildXL/blob/master/Documentation/Specs/PagedHash.md .
+  VSO = 4;
 }
 
 // Describes the server/instance capabilities for updating the action cache.
