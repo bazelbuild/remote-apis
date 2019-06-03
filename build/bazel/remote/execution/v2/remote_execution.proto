@@ -336,7 +336,14 @@ service ContentAddressableStorage {
 // The query may include a particular `instance_name`, in which case the values
 // returned will pertain to that instance.
 service Capabilities {
-  // GetCapabilities returns the server capabilities configuration.
+  // GetCapabilities returns the server capabilities configuration of the
+  // remote endpoint.
+  // Only the capabilities of the services supported by the endpoint will
+  // be returned:
+  // * Execution + CAS + Action Cache endpoints should return both
+  //   CacheCapabilities and ExecutionCapabilities.
+  // * Execution only endpoints should return ExecutionCapabilities.
+  // * CAS + Action Cache only endpoints should return CacheCapabilities.
   rpc GetCapabilities(GetCapabilitiesRequest) returns (ServerCapabilities) {
     option (google.api.http) = {
       get: "/v2/{instance_name=**}/capabilities"
