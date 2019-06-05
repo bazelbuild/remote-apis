@@ -16,6 +16,8 @@ The following standard property `name`s are defined:
     - `macos`
     - `sunos`
     - `windows`
+    - `android`
+    - `ios`
 
   Additional values may be defined by the server. For other POSIX systems
   the recommendation is to use the output of `uname -s` in lower case.
