@@ -669,8 +669,7 @@ message SymlinkNode {
 }
 
 // A content digest. A digest for a given blob consists of the size of the blob
-// and its hash. The hash algorithm to use is defined by the server, but servers
-// SHOULD use SHA-256.
+// and its hash. The hash algorithm to use is defined by the server.
 //
 // The size is considered to be an integral part of the digest and cannot be
 // separated. That is, even if the `hash` field is correctly specified but
@@ -1359,10 +1358,10 @@ message DigestFunction {
     // It is an error for the server to return this value.
     UNKNOWN = 0;
 
-    // The Sha-256 digest function.
+    // The SHA-256 digest function.
     SHA256 = 1;
 
-    // The Sha-1 digest function.
+    // The SHA-1 digest function.
     SHA1 = 2;
 
     // The MD5 digest function.
@@ -1371,6 +1370,12 @@ message DigestFunction {
     // The Microsoft "VSO-Hash" paged SHA256 digest function.
     // See https://github.com/microsoft/BuildXL/blob/master/Documentation/Specs/PagedHash.md .
     VSO = 4;
+
+    // The SHA-384 digest function.
+    SHA384 = 5;
+
+    // The SHA-512 digest function.
+    SHA512 = 6;
   }
 }
 
