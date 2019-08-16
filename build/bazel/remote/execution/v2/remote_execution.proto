@@ -323,6 +323,8 @@ service ContentAddressableStorage {
   // If part of the tree is missing from the CAS, the server will return the
   // portion present and omit the rest.
   //
+  // Errors:
+  //
   // * `NOT_FOUND`: The requested tree root is not present in the CAS.
   rpc GetTree(GetTreeRequest) returns (stream GetTreeResponse) {
     option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{root_digest.hash}/{root_digest.size_bytes}:getTree" };
