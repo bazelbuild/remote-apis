@@ -1306,7 +1306,8 @@ message GetTreeRequest {
 
   // A page token, which must be a value received in a previous
   // [GetTreeResponse][build.bazel.remote.execution.v2.GetTreeResponse].
-  // If present, the server will use it to return the following page of results.
+  // If present, the server will use that token as an offset, returning only
+  // that page and the ones that succeed it.
   string page_token = 4;
 }
 
