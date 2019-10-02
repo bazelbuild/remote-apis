@@ -1491,6 +1491,9 @@ message ExecutionCapabilities {
 
   // Supported execution priority range.
   PriorityCapabilities execution_priority_capabilities = 3;
+
+  // Supported node properties.
+  repeated string supported_node_properties = 4;
 }
 
 // Details for the tool used to call the API.
