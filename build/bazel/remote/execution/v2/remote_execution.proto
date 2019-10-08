@@ -412,6 +412,16 @@ message Action {
   // If true, then the `Action`'s result cannot be cached, and in-flight
   // requests for the same `Action` may not be merged.
   bool do_not_cache = 7;
+
+  // List of required supported [NodeProperty][build.bazel.remote.execution.v2.NodeProperty]
+  // keys. In order to ensure that equivalent `Action`s always hash to the same
+  // value, the supported node properties MUST be lexicographically sorted by name.
+  // Sorting of strings is done by code point, equivalently, by the UTF-8 bytes.
+  //
+  // The interpretation of these properties is server-dependent. If a property is
+  // not recognized by the server, the server will return an `INVALID_ARGUMENT`
+  // error.
+  repeated string output_node_properties = 8;
 }
 
 // A `Command` is the actual command executed by a worker running an
@@ -573,6 +583,9 @@ message Platform {
 // * The files, directories and symlinks in the directory must each be sorted
 //   in lexicographical order by path. The path strings must be sorted by code
 //   point, equivalently, by UTF-8 bytes.
+// * The [NodeProperties][build.bazel.remote.execution.v2.NodeProprty] of files,
+//   directories, and symlinks must be sorted in lexicographical order by
+//   property name.
 //
 // A `Directory` that obeys the restrictions is said to be in canonical form.
 //
@@ -589,7 +602,13 @@ message Platform {
 //       digest: {
 //         hash: "4a73bc9d03...",
 //         size: 65534
-//       }
+//       },
+//       node_properties: [
+//         {
+//           "name": "MTime",
+//           "value": "2017-01-15T01:30:15.01Z"
+//         }
+//       ]
 //     }
 //   ],
 //   directories: [
@@ -628,6 +647,19 @@ message Directory {
   repeated SymlinkNode symlinks = 3;
 }
 
+// A single property for [FileNodes][build.bazel.remote.execution.v2.FileNode],
+// [DirectoryNodes][build.bazel.remote.execution.v2.DirectoryNode], and
+// [SymlinkNodes][build.bazel.remote.execution.v2.SymlinkNode]. The server is
+// responsible for specifying the property `name`s that it accepts. If
+// permitted by the server, the same `name` may occur multiple times.
+message NodeProperty {
+    // The property name.
+    string name = 1;
+
+    // The property value.
+    string value = 2;
+}
+
 // A `FileNode` represents a single file and associated metadata.
 message FileNode {
   // The name of the file.
@@ -640,6 +672,9 @@ message FileNode {
 
   // True if file is executable, false otherwise.
   bool is_executable = 4;
+
+  // The node properties of the FileNode.
+  repeated NodeProperty node_properties = 5;
 }
 
 // A `DirectoryNode` represents a child of a
@@ -654,6 +689,9 @@ message DirectoryNode {
   // represented. See [Digest][build.bazel.remote.execution.v2.Digest]
   // for information about how to take the digest of a proto message.
   Digest digest = 2;
+
+  // The node properties of the DirectoryNode.
+  repeated NodeProperty node_properties = 3;
 }
 
 // A `SymlinkNode` represents a symbolic link.
@@ -668,6 +706,9 @@ message SymlinkNode {
   // API. The canonical form forbids the substrings `/./` and `//` in the target
   // path. `..` components are allowed anywhere in the target path.
   string target = 2;
+
+  // The node properties of the SymlinkNode.
+  repeated NodeProperty node_properties = 3;
 }
 
 // A content digest. A digest for a given blob consists of the size of the blob
@@ -912,6 +953,9 @@ message OutputFile {
   // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
   // would cause the response to exceed message size limits.
   bytes contents = 5;
+
+  // The supported node properties of the OutputFile, if requested by the Action.
+  repeated NodeProperty node_properties = 6;
 }
 
 // A `Tree` contains all the
@@ -943,6 +987,10 @@ message OutputDirectory {
   // [Tree][build.bazel.remote.execution.v2.Tree] proto containing the
   // directory's contents.
   Digest tree_digest = 3;
+
+  // The supported node properties of the OutputDirectory, if requested by the
+  // Action.
+  repeated NodeProperty node_properties = 4;
 }
 
 // An `OutputSymlink` is similar to a
@@ -963,6 +1011,10 @@ message OutputSymlink {
   // API. The canonical form forbids the substrings `/./` and `//` in the target
   // path. `..` components are allowed anywhere in the target path.
   string target = 2;
+
+  // The supported node properties of the OutputSymlink, if requested by the
+  // Action.
+  repeated NodeProperty node_properties = 3;
 }
 
 // An `ExecutionPolicy` can be used to control the scheduling of the action.
@@ -1449,6 +1501,9 @@ message ExecutionCapabilities {
 
   // Supported execution priority range.
   PriorityCapabilities execution_priority_capabilities = 3;
+
+  // Supported node properties.
+  repeated string supported_node_properties = 4;
 }
 
 // Details for the tool used to call the API.
