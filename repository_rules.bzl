@@ -6,6 +6,8 @@ This is adapted from
 https://github.com/googleapis/googleapis/blob/master/repository_rules.bzl
 """
 
+load("//:remote_apis_deps.bzl", "remote_apis_go_deps")
+
 def _switched_rules_impl(ctx):
     disabled_rule_script = """
 def {rule_name}(**kwargs):
@@ -116,6 +118,8 @@ def switched_rules_by_language(
         name = name,
         rules = rules,
     )
+    if go:
+        remote_apis_go_deps()
 
 def _switch(enabled, enabled_value):
     return enabled_value if enabled else ""
