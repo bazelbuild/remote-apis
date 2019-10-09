@@ -11,7 +11,7 @@ load("//:remote_apis_deps.bzl", "remote_apis_go_deps")
 def _switched_rules_impl(ctx):
     disabled_rule_script = """
 def {rule_name}(**kwargs):
-    print("Ignoring {rule_name}(name = %s)" % kwargs.get("name",  None))
+    pass
 """
     enabled_native_rule_script = """
 {rule_name} = {native_rule_name}
