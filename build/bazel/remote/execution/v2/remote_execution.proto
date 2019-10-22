@@ -583,7 +583,7 @@ message Platform {
 // * The files, directories and symlinks in the directory must each be sorted
 //   in lexicographical order by path. The path strings must be sorted by code
 //   point, equivalently, by UTF-8 bytes.
-// * The [NodeProperties][build.bazel.remote.execution.v2.NodeProprty] of files,
+// * The [NodeProperties][build.bazel.remote.execution.v2.NodeProperty] of files,
 //   directories, and symlinks must be sorted in lexicographical order by
 //   property name.
 //
@@ -645,6 +645,9 @@ message Directory {
 
   // The symlinks in the directory.
   repeated SymlinkNode symlinks = 3;
+
+  // The node properties of the Directory.
+  repeated NodeProperty node_properties = 4;
 }
 
 // A single property for [FileNodes][build.bazel.remote.execution.v2.FileNode],
@@ -689,9 +692,6 @@ message DirectoryNode {
   // represented. See [Digest][build.bazel.remote.execution.v2.Digest]
   // for information about how to take the digest of a proto message.
   Digest digest = 2;
-
-  // The node properties of the DirectoryNode.
-  repeated NodeProperty node_properties = 3;
 }
 
 // A `SymlinkNode` represents a symbolic link.
@@ -987,10 +987,6 @@ message OutputDirectory {
   // [Tree][build.bazel.remote.execution.v2.Tree] proto containing the
   // directory's contents.
   Digest tree_digest = 3;
-
-  // The supported node properties of the OutputDirectory, if requested by the
-  // Action.
-  repeated NodeProperty node_properties = 4;
 }
 
 // An `OutputSymlink` is similar to a
