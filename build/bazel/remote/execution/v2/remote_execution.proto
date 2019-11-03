@@ -479,7 +479,7 @@ message Command {
   // Directories leading up to the output files are created by the worker prior
   // to execution, even if they are not explicitly part of the input root.
   //
-  // DEPRECATED: Use output_paths instead.
+  // DEPRECATED since v2.1: Use output_paths instead.
   repeated string output_files = 3;
 
   // A list of the output directories that the client expects to retrieve from
@@ -510,7 +510,7 @@ message Command {
   // directories themselves) are created by the worker prior to execution, even
   // if they are not explicitly part of the input root.
   //
-  // DEPRECATED: Use output_paths instead.
+  // DEPRECATED since 2.1: Use output_paths instead.
   repeated string output_directories = 4;
 
   // A list of the output paths that the client expects to retrieve from the
@@ -535,13 +535,10 @@ message Command {
   // MUST be sorted lexicographically by code point (or, equivalently, by UTF-8
   // bytes).
   //
-  // An output file cannot be duplicated, be a parent of another output file, or
-  // have the same path as any of the listed output directories.
-  //
-  // Directories leading up to the output files are created by the worker prior
+  // Directories leading up to the output paths are created by the worker prior
   // to execution, even if they are not explicitly part of the input root.
   //
-  // This field supersedes the DEPRECATED `output_files` and
+  // New in v2.1: this field supersedes the DEPRECATED `output_files` and
   // `output_directories` fields. If `output_paths` is used, `output_files` and
   // `output_directories` will be ignored!
   repeated string output_paths = 7;
@@ -830,7 +827,7 @@ message ActionResult {
   // `output_files` or `output_paths` field of the Action, if the corresponding
   // file existed after the action completed, a single entry will be present
   // either in this field, or the `output_file_symlinks` field if the file was
-  // a symbolic link to another file.
+  // a symbolic link to another file (`output_symlinks` field after v2.1).
   //
   // If an output listed in `output_files` was found, but was a directory rather
   // than a regular file, the server will return a FAILED_PRECONDITION.
@@ -854,7 +851,27 @@ message ActionResult {
   // If the action does not produce the requested output, then that output
   // will be omitted from the list. The server is free to arrange the output
   // list as desired; clients MUST NOT assume that the output list is sorted.
+  //
+  // DEPRECATED as of v2.1. Servers should populate this for backward
+  // compatibility in case `output_files` or `output_directories` fields of
+  // `Command` are used.
   repeated OutputSymlink output_file_symlinks = 10;
+
+  // New in v2.1: this field will only be populated if the command
+  // `output_paths` field was used, and not the pre v2.1 `output_files` or
+  // `output_directories` fields.
+  // The output paths of the action that are symbolic links to other paths. Those
+  // may be links to other outputs, or inputs, or even absolute paths
+  // outside of the working directory, if the server supports
+  // [SymlinkAbsolutePathStrategy.ALLOWED][build.bazel.remote.execution.v2.CacheCapabilities.SymlinkAbsolutePathStrategy].
+  // A single entry for each output requested in `output_paths`
+  // field of the Action, if the corresponding path existed after
+  // the action completed and was a symbolic link.
+  //
+  // If the action does not produce a requested output, then that output
+  // will be omitted from the list. The server is free to arrange the output
+  // list as desired; clients MUST NOT assume that the output list is sorted.
+  repeated OutputSymlink output_symlinks = 12;
 
   // The output directories of the action. For each output directory requested
   // in the `output_directories` or `output_paths` field of the Action, if the
@@ -935,6 +952,10 @@ message ActionResult {
   // If the action does not produce the requested output, then that output
   // will be omitted from the list. The server is free to arrange the output
   // list as desired; clients MUST NOT assume that the output list is sorted.
+  //
+  // DEPRECATED as of v2.1. Servers should populate this for backward
+  // compatibility in case `output_files` or `output_directories` fields of
+  // `Command` are used.
   repeated OutputSymlink output_directory_symlinks = 11;
 
   // The exit code of the command.
