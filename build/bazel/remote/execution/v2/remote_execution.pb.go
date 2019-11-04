@@ -14,6 +14,8 @@ import (
 	longrunning "google.golang.org/genproto/googleapis/longrunning"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status1 "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -3131,6 +3133,17 @@ type ExecutionServer interface {
 	WaitExecution(*WaitExecutionRequest, Execution_WaitExecutionServer) error
 }
 
+// UnimplementedExecutionServer can be embedded to have forward compatible implementations.
+type UnimplementedExecutionServer struct {
+}
+
+func (*UnimplementedExecutionServer) Execute(req *ExecuteRequest, srv Execution_ExecuteServer) error {
+	return status1.Errorf(codes.Unimplemented, "method Execute not implemented")
+}
+func (*UnimplementedExecutionServer) WaitExecution(req *WaitExecutionRequest, srv Execution_WaitExecutionServer) error {
+	return status1.Errorf(codes.Unimplemented, "method WaitExecution not implemented")
+}
+
 func RegisterExecutionServer(s *grpc.Server, srv ExecutionServer) {
 	s.RegisterService(&_Execution_serviceDesc, srv)
 }
@@ -3234,6 +3247,17 @@ func (c *actionCacheClient) UpdateActionResult(ctx context.Context, in *UpdateAc
 type ActionCacheServer interface {
 	GetActionResult(context.Context, *GetActionResultRequest) (*ActionResult, error)
 	UpdateActionResult(context.Context, *UpdateActionResultRequest) (*ActionResult, error)
+}
+
+// UnimplementedActionCacheServer can be embedded to have forward compatible implementations.
+type UnimplementedActionCacheServer struct {
+}
+
+func (*UnimplementedActionCacheServer) GetActionResult(ctx context.Context, req *GetActionResultRequest) (*ActionResult, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method GetActionResult not implemented")
+}
+func (*UnimplementedActionCacheServer) UpdateActionResult(ctx context.Context, req *UpdateActionResultRequest) (*ActionResult, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method UpdateActionResult not implemented")
 }
 
 func RegisterActionCacheServer(s *grpc.Server, srv ActionCacheServer) {
@@ -3378,6 +3402,23 @@ type ContentAddressableStorageServer interface {
 	GetTree(*GetTreeRequest, ContentAddressableStorage_GetTreeServer) error
 }
 
+// UnimplementedContentAddressableStorageServer can be embedded to have forward compatible implementations.
+type UnimplementedContentAddressableStorageServer struct {
+}
+
+func (*UnimplementedContentAddressableStorageServer) FindMissingBlobs(ctx context.Context, req *FindMissingBlobsRequest) (*FindMissingBlobsResponse, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method FindMissingBlobs not implemented")
+}
+func (*UnimplementedContentAddressableStorageServer) BatchUpdateBlobs(ctx context.Context, req *BatchUpdateBlobsRequest) (*BatchUpdateBlobsResponse, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method BatchUpdateBlobs not implemented")
+}
+func (*UnimplementedContentAddressableStorageServer) BatchReadBlobs(ctx context.Context, req *BatchReadBlobsRequest) (*BatchReadBlobsResponse, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method BatchReadBlobs not implemented")
+}
+func (*UnimplementedContentAddressableStorageServer) GetTree(req *GetTreeRequest, srv ContentAddressableStorage_GetTreeServer) error {
+	return status1.Errorf(codes.Unimplemented, "method GetTree not implemented")
+}
+
 func RegisterContentAddressableStorageServer(s *grpc.Server, srv ContentAddressableStorageServer) {
 	s.RegisterService(&_ContentAddressableStorage_serviceDesc, srv)
 }
@@ -3511,6 +3552,14 @@ func (c *capabilitiesClient) GetCapabilities(ctx context.Context, in *GetCapabil
 // CapabilitiesServer is the server API for Capabilities service.
 type CapabilitiesServer interface {
 	GetCapabilities(context.Context, *GetCapabilitiesRequest) (*ServerCapabilities, error)
+}
+
+// UnimplementedCapabilitiesServer can be embedded to have forward compatible implementations.
+type UnimplementedCapabilitiesServer struct {
+}
+
+func (*UnimplementedCapabilitiesServer) GetCapabilities(ctx context.Context, req *GetCapabilitiesRequest) (*ServerCapabilities, error) {
+	return nil, status1.Errorf(codes.Unimplemented, "method GetCapabilities not implemented")
 }
 
 func RegisterCapabilitiesServer(s *grpc.Server, srv CapabilitiesServer) {

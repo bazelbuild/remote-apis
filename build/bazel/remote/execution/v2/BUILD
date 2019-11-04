@@ -1,4 +1,6 @@
 package(default_visibility = ["//visibility:public"])
+
+load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@bazel_remote_apis_imports//:imports.bzl", "java_proto_library", "go_library", "go_proto_library", "cc_grpc_library")
 
 licenses(["notice"])
@@ -25,6 +27,9 @@ java_proto_library(
 cc_grpc_library(
     name = "remote_execution_cc_proto",
     srcs = ["remote_execution.proto"],
+    proto_only = False,
+    use_external = False,
+    well_known_protos = True,
     deps = [
         "//build/bazel/semver:semver_cc_proto",
         "@googleapis//:google_api_annotations_cc_proto",
@@ -32,9 +37,6 @@ cc_grpc_library(
         "@googleapis//:google_longrunning_operations_cc_proto",
         "@googleapis//:google_rpc_status_cc_proto",
     ],
-    proto_only = False,
-    well_known_protos = True,
-    use_external = False,
 )
 
 go_proto_library(
