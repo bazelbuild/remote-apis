@@ -479,7 +479,7 @@ message Command {
   // Directories leading up to the output files are created by the worker prior
   // to execution, even if they are not explicitly part of the input root.
   //
-  // DEPRECATED since v2.1: Use output_paths instead.
+  // DEPRECATED since v2.1: Use `output_paths` instead.
   repeated string output_files = 3;
 
   // A list of the output directories that the client expects to retrieve from
@@ -510,7 +510,7 @@ message Command {
   // directories themselves) are created by the worker prior to execution, even
   // if they are not explicitly part of the input root.
   //
-  // DEPRECATED since 2.1: Use output_paths instead.
+  // DEPRECATED since 2.1: Use `output_paths` instead.
   repeated string output_directories = 4;
 
   // A list of the output paths that the client expects to retrieve from the
