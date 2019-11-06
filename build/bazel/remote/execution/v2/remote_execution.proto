@@ -532,8 +532,8 @@ message Command {
   // being a relative path.
   //
   // In order to ensure consistent hashing of the same Action, the output paths
-  // MUST be sorted lexicographically by code point (or, equivalently, by UTF-8
-  // bytes).
+  // MUST be deduplicated and sorted lexicographically by code point (or,
+  // equivalently, by UTF-8 bytes).
   //
   // Directories leading up to the output paths are created by the worker prior
   // to execution, even if they are not explicitly part of the input root.
@@ -852,9 +852,8 @@ message ActionResult {
   // will be omitted from the list. The server is free to arrange the output
   // list as desired; clients MUST NOT assume that the output list is sorted.
   //
-  // DEPRECATED as of v2.1. Servers should populate this for backward
-  // compatibility in case `output_files` or `output_directories` fields of
-  // `Command` are used.
+  // DEPRECATED as of v2.1. Servers that wish to be compatible with v2.0 API
+  // should still populate this field in addition to `output_symlinks`.
   repeated OutputSymlink output_file_symlinks = 10;
 
   // New in v2.1: this field will only be populated if the command
@@ -953,9 +952,8 @@ message ActionResult {
   // will be omitted from the list. The server is free to arrange the output
   // list as desired; clients MUST NOT assume that the output list is sorted.
   //
-  // DEPRECATED as of v2.1. Servers should populate this for backward
-  // compatibility in case `output_files` or `output_directories` fields of
-  // `Command` are used.
+  // DEPRECATED as of v2.1. Servers that wish to be compatible with v2.0 API
+  // should still populate this field in addition to `output_symlinks`.
   repeated OutputSymlink output_directory_symlinks = 11;
 
   // The exit code of the command.
