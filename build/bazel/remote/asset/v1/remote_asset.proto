@@ -84,7 +84,7 @@ message Qualifier {
 // information about when the client should retry the request; clients SHOULD
 // respect the information provided.
 service Fetch {
-  // Rsolve or fetch referenced assets, making them available to the caller and
+  // Resolve or fetch referenced assets, making them available to the caller and
   // other consumers in the [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
   //
   // Servers *MAY* fetch content that they do not already have cached, for any
