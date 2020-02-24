@@ -65,13 +65,13 @@ option objc_class_prefix = "RA";
 //
 // Qualifiers may be supplied in any order.
 message Qualifier {
-  // The “name” of the qualifier, for example “resource_type”.
-  // No separation is made between ‘standard' and ‘nonstandard'
+  // The "name" of the qualifier, for example "resource_type".
+  // No separation is made between 'standard' and 'nonstandard'
   // qualifiers, in accordance with https://tools.ietf.org/html/rfc6648,
   // however implementers *SHOULD* take care to avoid ambiguity.
   string name = 1;
 
-  // The “value” of the qualifier. Semantics will be dictated by the name.
+  // The "value" of the qualifier. Semantics will be dictated by the name.
   string value = 2;
 }
 
@@ -139,7 +139,7 @@ service Fetch {
   // In the case of unsupported qualifiers, the server *SHOULD* additionally
   // send a [BadRequest][google.rpc.BadRequest] error detail where, for each
   // unsupported qualifier, there is a `FieldViolation` with a `field` of
-  // `qualifiers.name` and a `description` of `"{qualifier}” not supported`
+  // `qualifiers.name` and a `description` of `"{qualifier}" not supported`
   // indicating the name of the unsupported qualifier.
   rpc FetchBlob(FetchBlobRequest) returns (FetchBlobResponse) {
     option (google.api.http) = { post: "/v1/{instance_name=**}/assets:fetchBlob" body: "*" };
