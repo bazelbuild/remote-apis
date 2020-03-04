@@ -61,8 +61,8 @@ rules.
 For instance, if you only use Java in your project, add the following to your
 `WORKSPACE` file:
 
-```
-load("@remoteapis//:repository_rules.bzl", "switched_rules_by_language")
+```starlark
+load("@bazel_remote_apis//:repository_rules.bzl", "switched_rules_by_language")
 switched_rules_by_language(
     name = "bazel_remote_apis_imports",
     java = True,
