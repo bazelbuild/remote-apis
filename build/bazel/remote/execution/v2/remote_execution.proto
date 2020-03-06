@@ -246,6 +246,9 @@ service ContentAddressableStorage {
   // Clients can use this API before uploading blobs to determine which ones are
   // already present in the CAS and do not need to be uploaded again.
   //
+  // Servers SHOULD increase the TTLs of the referenced blobs if necessary and
+  // applicable.
+  //
   // There are no method-specific errors.
   rpc FindMissingBlobs(FindMissingBlobsRequest) returns (FindMissingBlobsResponse) {
     option (google.api.http) = { post: "/v2/{instance_name=**}/blobs:findMissing" body: "*" };
