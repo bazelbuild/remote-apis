@@ -5,7 +5,27 @@ This lexicon defines standard qualifier names that servers
 
 The following standard qualifier `name`s are defined:
 
-* `resource_type`: This describes the type of resource.
+* `resource_type`: This describes the type of resource.  In case of file assets use
+  an existing [media type](https://www.iana.org/assignments/media-types/media-types.xhtml).
+
+  It is expected to see git repositories be a common directory asset, the
+  `resource_type` to use will be `application/x-git`.
+  
+  Example:
+  ```json
+  // (FetchDirectoryRequest proto)
+  {
+    "uris": [
+      "https://github.com/bazelbuild/remote-apis.git"
+    ],
+    "qualifiers": [
+      {
+        "name": "resource_type",
+        "value": "application/x-git"
+      }
+    ]
+  }
+  ```   
 
 * `checksum.sri`: The value represents a [Subresource Integrity](https://www.w3.org/TR/SRI/)
   checksum of the content.
