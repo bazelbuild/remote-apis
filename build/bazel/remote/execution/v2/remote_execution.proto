@@ -416,15 +416,7 @@ message Action {
   // requests for the same `Action` may not be merged.
   bool do_not_cache = 7;
 
-  // List of required supported [NodeProperty][build.bazel.remote.execution.v2.NodeProperty]
-  // keys. In order to ensure that equivalent `Action`s always hash to the same
-  // value, the supported node properties MUST be lexicographically sorted by name.
-  // Sorting of strings is done by code point, equivalently, by the UTF-8 bytes.
-  //
-  // The interpretation of these properties is server-dependent. If a property is
-  // not recognized by the server, the server will return an `INVALID_ARGUMENT`
-  // error.
-  repeated string output_node_properties = 8;
+  reserved 8; // Used for field moved to [Command][build.bazel.remote.execution.v2.Command].
 }
 
 // A `Command` is the actual command executed by a worker running an
@@ -557,6 +549,16 @@ message Command {
   // in. It must be a directory which exists in the input tree. If it is left
   // empty, then the action is run in the input root.
   string working_directory = 6;
+
+  // List of required supported [NodeProperty][build.bazel.remote.execution.v2.NodeProperty]
+  // keys. In order to ensure that equivalent `Action`s always hash to the same
+  // value, the supported node properties MUST be lexicographically sorted by name.
+  // Sorting of strings is done by code point, equivalently, by the UTF-8 bytes.
+  //
+  // The interpretation of these properties is server-dependent. If a property is
+  // not recognized by the server, the server will return an `INVALID_ARGUMENT`
+  // error.
+  repeated string output_node_properties = 8;
 }
 
 // A `Platform` is a set of requirements, such as hardware, operating system, or
