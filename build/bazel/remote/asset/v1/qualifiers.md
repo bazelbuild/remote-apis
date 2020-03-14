@@ -5,11 +5,11 @@ This lexicon defines standard qualifier names that servers
 
 The following standard qualifier `name`s are defined:
 
-* `resource_type`: This describes the type of resource.  In case of file assets use
-  an existing [media type](https://www.iana.org/assignments/media-types/media-types.xhtml).
+* `resource_type`: This describes the type of resource.
 
-  It is expected to see git repositories be a common directory asset, the
-  `resource_type` to use will be `application/x-git`.
+  File assests should use an existing [media type](https://www.iana.org/assignments/media-types/media-types.xhtml).
+
+  Git repositories should use `application/x-git`.
   
   Example:
   ```json
