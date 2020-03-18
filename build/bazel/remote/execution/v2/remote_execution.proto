@@ -715,6 +715,9 @@ message NodeProperties {
   // A list of string-based
   // [NodeProperties][build.bazel.remote.execution.v2.NodeProperty].
   repeated NodeProperty properties = 1;
+
+  // The file's last modification timestamp.
+  google.protobuf.Timestamp mtime = 2;
 }
 
 // A `FileNode` represents a single file and associated metadata.
