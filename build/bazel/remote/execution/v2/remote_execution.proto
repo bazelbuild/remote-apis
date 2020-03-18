@@ -21,6 +21,7 @@ import "google/api/annotations.proto";
 import "google/longrunning/operations.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 import "google/rpc/status.proto";
 
 option csharp_namespace = "Build.Bazel.Remote.Execution.V2";
@@ -718,6 +719,9 @@ message NodeProperties {
 
   // The file's last modification timestamp.
   google.protobuf.Timestamp mtime = 2;
+
+  // The UNIX file mode, e.g., 0755.
+  google.protobuf.UInt32Value unix_mode = 3;
 }
 
 // A `FileNode` represents a single file and associated metadata.
