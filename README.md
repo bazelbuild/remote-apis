@@ -22,7 +22,7 @@ These tools use the Remote Execution API to distribute builds to workers.
 
 ### Servers
 These applications implement the Remote Execution API to server build requests
-from the clients above. These are then distributed to workers; some of these 
+from the clients above. These are then distributed to workers; some of these
 workers implement the Remote Worker API.
 
 * [Buildbarn](https://github.com/buildbarn) (open source)
@@ -68,6 +68,8 @@ switched_rules_by_language(
     name = "bazel_remote_apis_imports",
     java = True,
 )
+load("@bazel_remote_apis_imports//deps.bzl", "load_deps")
+load_deps()
 ```
 
 You can find the complete list of supported languages in `repository_rules.bzl`.
