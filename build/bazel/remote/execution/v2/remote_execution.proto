@@ -1233,14 +1233,14 @@ message ExecuteOperationMetadata {
   // being executed.
   Digest action_digest = 2;
 
-  // If set, the client can use this name with
+  // If set, the client can use this resource name with
   // [ByteStream.Read][google.bytestream.ByteStream.Read] to stream the
-  // standard output.
+  // standard output from the endpoint hosting streamed responses.
   string stdout_stream_name = 3;
 
-  // If set, the client can use this name with
+  // If set, the client can use this resource name with
   // [ByteStream.Read][google.bytestream.ByteStream.Read] to stream the
-  // standard error.
+  // standard error from the endpoint hosting streamed responses.
   string stderr_stream_name = 4;
 }
 
