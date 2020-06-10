@@ -1494,7 +1494,8 @@ message ActionCacheUpdateCapabilities {
 }
 
 // Allowed values for priority in
-// [ResultsCachePolicy][google.devtools.remoteexecution.v2.ResultsCachePolicy]
+// [ResultsCachePolicy][build.bazel.remoteexecution.v2.ResultsCachePolicy] and
+// [ExecutionPolicy][build.bazel.remoteexecution.v2.ResultsCachePolicy]
 // Used for querying both cache and execution valid priority ranges.
 message PriorityCapabilities {
   // Supported range of priorities, including boundaries.
