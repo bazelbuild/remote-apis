@@ -1499,7 +1499,11 @@ message ActionCacheUpdateCapabilities {
 message PriorityCapabilities {
   // Supported range of priorities, including boundaries.
   message PriorityRange {
+    // The minimum numeric value for this priority range, which represents the
+    // most urgent task or longest retained item.
     int32 min_priority = 1;
+    // The maximum numeric value for this priority range, which represents the
+    // least urgent task or shortest retained item.
     int32 max_priority = 2;
   }
   repeated PriorityRange priorities = 1;
