@@ -161,6 +161,9 @@ service ActionCache {
   // [Command][build.bazel.remote.execution.v2.Command], into the
   // `ContentAddressableStorage`.
   //
+  // Server implementations MAY modify the
+  // `UpdateActionResultRequest.action_result` and return an equivalent value.
+  //
   // Errors:
   //
   // * `INVALID_ARGUMENT`: One or more arguments are invalid.
@@ -853,6 +856,11 @@ message ExecutedActionMetadata {
 
 // An ActionResult represents the result of an
 // [Action][build.bazel.remote.execution.v2.Action] being run.
+//
+// It is advised that at least one field (for example
+// `ActionResult.execution_metadata.Worker`) have a non-default value, to
+// ensure that the serialized value is non-empty, which can then be used
+// as a basic data sanity check.
 message ActionResult {
   reserved 1; // Reserved for use as the resource name.
 
