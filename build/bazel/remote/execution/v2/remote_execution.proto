@@ -19,6 +19,7 @@ package build.bazel.remote.execution.v2;
 import "build/bazel/semver/semver.proto";
 import "google/api/annotations.proto";
 import "google/longrunning/operations.proto";
+import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
@@ -108,12 +109,126 @@ service Execution {
     option (google.api.http) = { post: "/v2/{instance_name=**}/actions:execute" body: "*" };
   }
 
+  // Executes an action remotely, allowing dynamic retrieval of directory and
+  // file inputs from the client where the client did not upload the inputs
+  // beforehand. The client must remain connected to the worker during the
+  // duration of the action execution.
+  //
+  // This call may not be implemented on all platforms. Its support is
+  // indicated by
+  // [ExecutionCapabilities.dynamic_execution_support][build.bazel.remote.execution.v2.ExecutionCapabilities.dynamic_execution_support].
+  //
+  // In order to execute an action, the client must first upload the best
+  // guesses for the action's file inputs (which can be zero files if
+  // prediction is unavailable), the
+  // [Command][build.bazel.remote.execution.v2.Command] to run, and the
+  // [Action][build.bazel.remote.execution.v2.Action] containing the best
+  // guess for the `Action`'s needed directory and file layout into the
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+  // It then calls `ExecuteWithDynamicRetrieval` with an `action_digest`
+  // referring to them. The worker will run the action and eventually return
+  // the result.
+  //
+  // The `Action.input_root_digest` directory tree provides a filesystem
+  // layout that may be underspecified in terms of missing directories or
+  // unspecified file hashes. Any `Directory` entry provided in this tree
+  // must contain at least the subdirectory names and file names and sizes
+  // needed to enumerate the complete contents of the directory.
+  //
+  // A typical implementation of a server using dynamic execution will use a
+  // virtual filesystem to allow receiving callbacks about files and
+  // directories requested via operating system filesytem APIs. The server
+  // MAY allow rendering of a fully qualified, rooted filesystem by the
+  // client, by accepting in `Action.input_root_digest` a `Directory` tree
+  // that contains a filesystem root appropriate to the operating system.
+  // By convention, representation of such a filesystem utilizes a Directory
+  // with an empty string for a name. Under Linux this translates into the
+  // '/' root. Under Windows such a root contains `DirectoryNode`s that are
+  // the single-character drive letters available on the client, allowing
+  // the server to present a virtual filesystem spanning all drive roots
+  // for dynamic request by the server. There must be exactly one such
+  // empty-string root at the root of the directory tree; any use of empty
+  // strings other than the root SHOULD result in an `INVALID_ARGUMENT`
+  // error.
+  //
+  // This API is bidirectional both from the client to server and from server
+  // to client to allow the client to answer questions from the server about
+  // the contents of unspecified directories, file hashes, or to upload file
+  // content on demand, based on the observed filesystem calls of the action.
+  // This allows the server to execute actions whose inputs are incompletely
+  // specified. It also prevents execution of the action in a fire-and-forget
+  // fashion; the client must remain connected to the server for the entire
+  // execution of the action, or else the server MUST cancel the in-progress
+  // execution.
+  // [WaitExecution][build.bazel.remote.execution.v2.Execution.WaitExecution]
+  // is not allowed for dynamic execution operations.
+  //
+  // `ExecuteWithDynamicRetrieval` is intended for use with two-phase caching
+  // that also allows for incompletely specified inputs. See
+  // [ActionCache.GetPotentialActionResults][build.bazel.remote.execution.v2.ActionCache.GetPotentialActionResults].
+  //
+  // The input `Action`'s fields MUST meet the various canonicalization
+  // requirements specified in the documentation for their types so that it has
+  // the same digest as other logically equivalent `Action`s. The server MAY
+  // enforce the requirements and return errors if a non-canonical input is
+  // received. It MAY also proceed without verifying some or all of the
+  // requirements, such as for performance reasons. If the server does not
+  // verify the requirement, then it will treat the `Action` as distinct from
+  // another logically equivalent action if they hash differently.
+  //
+  // Returns a stream of
+  // [google.longrunning.Operation][google.longrunning.Operation] messages
+  // describing the execution, with eventual `response`
+  // [ExecuteResponse][build.bazel.remote.execution.v2.ExecuteResponse].
+  // The `metadata` on the operation is of type
+  // [DynamicExecuteOperationMetadata][build.bazel.remote.execution.v2.ExecuteOperationMetadata]
+  // which the client should examine for requests
+  //
+  // The server NEED NOT implement other methods or functionality of the
+  // Operations API.
+  //
+  // Errors discovered during creation of the `Operation` will be reported
+  // as gRPC Status errors, while errors that occurred while running the
+  // action will be reported in the `status` field of the `ExecuteResponse`. The
+  // server MUST NOT set the `error` field of the `Operation` proto.
+  // The possible errors include:
+  //
+  // * `INVALID_ARGUMENT`: One or more arguments are invalid.
+  // * `FAILED_PRECONDITION`: One or more errors occurred in setting up the
+  //   action requested, such as a missing input or command or no worker being
+  //   available. The client may be able to fix the errors and retry.
+  // * `RESOURCE_EXHAUSTED`: There is insufficient quota of some resource to run
+  //   the action.
+  // * `UNAVAILABLE`: Due to a transient condition, such as all workers being
+  //   occupied (and the server does not support a queue), the action could not
+  //   be started. The client should retry.
+  // * `INTERNAL`: An internal error occurred in the execution engine or the
+  //   worker.
+  // * `DEADLINE_EXCEEDED`: The execution timed out.
+  // * `CANCELLED`: The operation was cancelled by the client. This status is
+  //   only possible if the server implements the Operations API CancelOperation
+  //   method, and it was called for the current execution.
+  // * `NOT_IMPLEMENTED`: This server does not implement this optional call.
+  //   Implicitly this means that
+  //   [DynamicExecutionSupport.NOT_SUPPORTED][build.bazel.remote.execution.v2.DynamicExecutionSupport.NOT_SUPPORTED]
+  //   or [DynamicExecutionSupport.UNKNOWN][build.bazel.remote.execution.v2.DynamicExecutionSupport.UNKNOWN]
+  //   is set in the [ExecutionCapabilities][build.bazel.remote.execution.v2.ExecutionCapabilities].
+  rpc ExecuteWithDynamicRetrieval(stream StreamedDynamicExecutionData) returns (stream google.longrunning.Operation) {
+    option (google.api.http) = { post: "/v2/{instance_name=**}/actions:executeDynamic" body: "*" };
+  }
+  
   // Wait for an execution operation to complete. When the client initially
   // makes the request, the server immediately responds with the current status
   // of the execution. The server will leave the request stream open until the
   // operation completes, and then respond with the completed operation. The
   // server MAY choose to stream additional updates as execution progresses,
   // such as to provide an update as to the state of the execution.
+  //
+  // The possible errors include:
+  //
+  // * `FAILED_PRECONDITION`: The operation is from
+  //   [ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval]
+  //   and cannot be retrieved using this call.
   rpc WaitExecution(WaitExecutionRequest) returns (stream google.longrunning.Operation) {
     option (google.api.http) = { post: "/v2/{name=operations/**}:waitExecution" body: "*" };
   }
@@ -150,6 +265,26 @@ service ActionCache {
   // * `NOT_FOUND`: The requested `ActionResult` is not in the cache.
   rpc GetActionResult(GetActionResultRequest) returns (ActionResult) {
     option (google.api.http) = { get: "/v2/{instance_name=**}/actionResults/{action_digest.hash}/{action_digest.size_bytes}" };
+  }
+
+  // Retrieves a set of potential matches for an action fingerprint that can
+  // incompletely describe the inputs needed by an action. If a specific
+  // result matches the client's filesystem, the client uses the related
+  // `ActionResult` digest to retrieve the build outputs using
+  // [ActionCache.GetActionResult][build.bazel.remote.execution.v2.ActionCache.GetActionResult]
+  //
+  // This call may not be implemented on all platforms. See 
+  // [CacheCapabilities][build.bazel.remote.execution.v2.CacheCapabilities].
+  //
+  // Errors:
+  //
+  // * `NOT_FOUND`: The requested action digest is not in the cache.
+  // * `NOT_IMPLEMENTED`: This server does not implement this optional call. Implicitly this means
+  //   that [TwoPhaseCacheSupport.NOT_SUPPORTED][build.bazel.remote.execution.v2.TwoPhaseCacheSupport.NOT_SUPPORTED]
+  //   or [TwoPhaseCacheSupport.UNKNOWN][build.bazel.remote.execution.v2.TwoPhaseCacheSupport.UNKNOWN]
+  //   is set in the [CacheCapabilities][build.bazel.remote.execution.v2.CacheCapabilities].
+  rpc GetPotentialActionResults(GetPotentialActionResultsRequest) returns (GetPotentialActionResultsResponse) {
+    option (google.api.http) = { get: "/v2/{instance_name=**}/actionResults/2phase/{action_fingerprint_digest.hash}/{action_fingerprint_digest.size_bytes}" };
   }
 
   // Upload a new execution result.
@@ -737,6 +872,19 @@ message FileNode {
   string name = 1;
 
   // The digest of the file's content.
+  //
+  // If a virtual filesystem is in use for action execution, e.g. for use with
+  // dynamic file and directory retrieval in
+  // [ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval],
+  // this digest is allowed to be empty/zero-length, but with a file size
+  // specified, meaning that this file is meant to fill the VFS view but was
+  // predicted as unlikely to be used by the action, and its content was
+  // not uploaded to the CAS. Example: If an `Action` is predicted to use
+  // only 1 file in a directory, either from static prediction or using
+  // historical information, the client may choose to hash and upload just
+  // that one file, but to support the `Action` possibly using additional
+  // files in the directory, the directory is uploaded with file names and
+  // sizes for rendering in the VFS.
   Digest digest = 2;
 
   reserved 3; // Reserved to ensure wire-compatibility with `OutputFile`.
@@ -754,6 +902,13 @@ message FileNode {
 // a `Directory` and its associated metadata.
 message DirectoryNode {
   // The name of the directory.
+  //
+  // If a virtual filesystem is in use for action execution, e.g. for use with
+  // dynamic file and directory retrieval in
+  // [ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval],
+  // this string is allowed to be empty/zero-length, which maps to an OS
+  // specific filesystem root ('/' on Linux, or a virtual root containing
+  // drive letters on Windows). See notes on `ExecuteWithDynamicRetrieval`.
   string name = 1;
 
   // The digest of the
@@ -826,6 +981,35 @@ message Digest {
 
 // ExecutedActionMetadata contains details about a completed execution.
 message ExecutedActionMetadata {
+  //  Used with
+  // [ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval].
+  message DynamicExecutionMetadata {
+    // The number of dynamic directory information requests made to the client.
+    int32 num_dynamic_directory_requests = 1;
+
+    // The total time spent by the worker waiting for dynamic directory
+    // information from the client.
+    google.protobuf.Duration dynamic_directory_requests_time = 2;
+
+    // The number of dynamic file hash requests made to the client.
+    int32 num_dynamic_file_hash_requests = 3;
+
+    // The total time spent by the worker waiting for dynamic file hash
+    // information from the client.
+    google.protobuf.Duration dynamic_file_hash_requests_time = 4;
+
+    // The number of dynamic file content requests made to the client when the
+    // worker could not find a dynamic file hash in the CAS.
+    int32 num_dynamic_file_content_requests = 5;
+
+    // The total time spent by the worker waiting for dynamic file content
+    // information from the client.
+    google.protobuf.Duration dynamic_file_content_requests_time = 6;
+
+    // Additional implementation-specific statistics.
+    google.protobuf.Any extended_metadata = 7;
+  }
+
   // The name of the worker which ran the execution.
   string worker = 1;
 
@@ -855,6 +1039,10 @@ message ExecutedActionMetadata {
 
   // When the worker finished uploading action outputs.
   google.protobuf.Timestamp output_upload_completed_timestamp = 10;
+
+  // Additional statistics for dynamic execution via
+  // [ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval].
+  DynamicExecutionMetadata dynamic_execution = 11;
 }
 
 // An ActionResult represents the result of an
@@ -1029,6 +1217,50 @@ message ActionResult {
 
   // The details of the execution that originally produced this result.
   ExecutedActionMetadata execution_metadata = 9;
+
+  // The inlined contents of a
+  // [ConsoleOutputs][build.bazel.remote.execution.v2.ConsoleOutputs] message
+  // containing a series of stdout and stderr outputs in order of write from
+  // the action. The server SHOULD NOT inline `console_outputs` unless
+  // requested by the client in the
+  // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
+  // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
+  // would cause the response to exceed message size limits.
+  bytes console_outputs = 13;
+
+  // The digest for a blob containing the
+  // [ConsoleOutputs][build.bazel.remote.execution.v2.ConsoleOutputs] for the action,
+  // which can be retrieved from the
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+  Digest console_outputs_digest = 14;
+}
+
+// A sequence of console outputs in the order received for a remoted process.
+// This may contain the interleaved outputs from a process in the order
+// received during execution. If the service does not implement
+// interleaving, this may contain a summary of the stdout and stderr output
+// streams as single large writes in a server-defined order.
+message ConsoleOutputs
+{
+  // An output record for one or more outputs to stdout or stderr.
+  //
+  // Design note: For text coloring and other effects, ANSI codes may be
+  // embedded within these strings. Windows console API calls are not
+  // supported in this protocol, but a server implementation MAY choose to
+  // translate console API calls into ANSI codes, as more recent Windows 10
+  // releases included ANSI code support.
+  message ConsoleOutput {
+    // When true, the `Writes` were directed at the stderr stream.
+    bool is_stderr = 1;
+    
+    // One or more written strings. There is an implicit operating system
+    // dependent newline after each string. Each string may contain embedded
+    // OS-dependent newline character sequences.
+    repeated string writes = 2;
+  }
+
+  // A series of stdout and stderr outputs in order of write from the remoted process.
+  repeated ConsoleOutput outputs = 2;
 }
 
 // An `OutputFile` is similar to a
@@ -1185,6 +1417,156 @@ message ExecuteRequest {
   ResultsCachePolicy results_cache_policy = 8;
 }
 
+// Metadata and requests to the client for an ongoing
+// [dynamic execution][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval],
+// which will be contained in the [metadata field][google.longrunning.Operation.response] of the
+// [Operation][google.longrunning.Operation].
+//
+// Design note: Dynamic directory and file requests are made using individual
+// messages for each directory or file path. The typical implementation
+// utilizes a virtual filesystem and a directory or file read request is
+// held pending in the VFS awaiting the information from the client.
+// VFS rendering callbacks may occur in a multithreaded fashion, but this is
+// unusual, and a chatty back-and-forth request series to the client resolves
+// pending I/O faster for each thread rather than adding in a Nagle
+// algorithm implementation and using repeated fields for the dynamic requests.
+// Dynamic callbacks for content are expected to be unusual or rare by
+// construction, and inherently slow down action execution.
+message DynamicExecuteOperationMetadata {
+  // Used by the worker to request that the client upload specific content
+  // to the CAS.
+  message DynamicFileContentRequest {
+    // The file path for which the worker does not have the contents.
+    // Depending on the server and client implementation this may be a
+    // relative or fully qualified path.
+    string path = 1;
+
+    // The file hash of the content expected by the worker.
+    // If this is not the current hash of the file content at `path`
+    // then the corrected hash is returned in
+    // `DynamicExecuteOperationMetadata.dynamic_directory_metadata_response`.
+    string file_hash = 2;
+  }
+
+  // The current stage of execution.
+  ExecutionStage.Value stage = 1;
+
+  // The digest of the [Action][build.bazel.remote.execution.v2.Action]
+  // being executed.
+  Digest action_digest = 2;
+
+  // A series of incremental (streamed) stdout and stderr outputs in order of
+  // write from the action during execution. The full set of console outputs
+  // from the action will also be written in the final
+  // [ExecuteResponse][build.bazel.remote.execution.v2.ExecuteResponse].
+  // The server MAY buffer these outputs in order to return larger batches
+  // of messages less frequently. The server MAY choose to omit incremental
+  // messages and instead wait to the final `ExecuteResponse` to return all
+  // outputs from the action, however in this case the server MUST NOT return
+  // any incremental messages in this field.
+  ConsoleOutputs streamed_console_outputs = 3;
+
+  // A directory path for which the worker does not have metadata. This
+  // indicates a directory that the `Action` was not predicted to use
+  // from the client filesystem. The client is requested to enumerate
+  // directory metadata and respond in
+  // [StreamedDynamicExecutionData.dynamic_directory_metadata_response][build.bazel.remote.execution.StreamedDynamicExecutionData].
+  // The client MAY include individual file digests but this is not required,
+  // the worker will request individual file hashes as needed using
+  // `dynamic_file_hash_path`.
+  // Depending on the server and client implementation this may be a
+  // relative or fully qualified path.
+  string dynamic_directory_content_path = 4;
+
+  // A file path for which the worker does not have a hash. This indicates
+  // a file that the `Action` was not predicted to use from the client
+  // filesystem. The client is requested to hash the file and respond in
+  // [StreamedDynamicExecutionData.dynamic_file_hash_response][build.bazel.remote.execution.StreamedDynamicExecutionData].
+  // Depending on the server and client implementation this may be a
+  // relative or fully qualified path.
+  string dynamic_file_hash_path = 5;
+
+  // A file path and expected content hash that the worker does not have in
+  // the CAS. This indicates file content that the `Action` was not predicted
+  // to use from the client, or content that was subsequently removed from
+  // the CAS. The client is requested to upload the file content into the
+  // CAS and respond in 
+  // [StreamedDynamicExecutionData.dynamic_file_content_response][build.bazel.remote.execution.StreamedDynamicExecutionData].
+  DynamicFileContentRequest dynamic_file_content_request = 6;
+}
+
+// A streaming request message for
+// [Execution.ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval].
+message StreamedDynamicExecutionData {
+  // Sent in response to a dynamic directory metadata request.
+  message DynamicDirectoryMetadataResponse {
+    // The directory path, copied from the directory metadata request.
+    string path = 1;
+
+    // Metadata for the directory. [DirectoryNode][build.bazel.remote.execution.v2.Execution.DirectoryNode]
+    // instances in this field MAY omit digest reference information, as
+    // the directory name is the required information needed to feed into
+    // the filesystem, and the contents of the subdirectory contained in the
+    // `DirectoryNode` are not required to be in the CAS. If the
+    // `DirectoryNode` digest is sent to the worker, the referenced `Directory`
+    // information MUST have been previously uploaded to the CAS.
+    Directory directory_metadata = 2;
+  }
+
+  // Sent in response to a dynamic file hash request.
+  message DynamicFileHashResponse {
+    // The file path, copied from the file hash request.
+    string path = 1;
+    
+    // Set to true if the requested file path does not exist.
+    bool file_does_not_exist = 2;
+
+    // The file digest and associated metadata.
+    FileNode file = 3;
+  }
+
+  // Sent in response to a dynamic file content request.
+  // When `could_not_upload` is false, this message is an acknowledgement
+  // that the client successfully uploaded the requested file content to
+  // the CAS, and the worker should retrieve the file content to resolve
+  // the action's pending file read I/O.
+  message DynamicFileContentResponse {
+    // The file path, copied from the file content request.
+    string path = 1;
+
+    // When true, the file is missing or inaccessible in the client filesystem
+    // and could not be uploaded to the CAS. The worker MAY fail the `Action`
+    // execution with a PRECONDITION_FAILED error, or it MAY return a
+    // file-not-found return code to the executing `Action` file read request
+    // which may cause the action to fail.
+    bool could_not_upload = 2;
+
+    // The hash and size of the file. This is important for  the case where
+    // the file path requested by the server did not have the same hash as
+    // expected.
+    Digest file_digest = 3;
+  }
+
+  // Details of the action to execute. This message should only included in
+  // the first message sent to the server, and will be ignored if present
+  // in later streamed messages.
+  ExecuteRequest execute_request = 1;
+
+  // Provides dynamic directory content information in response to a previous
+  // request from the worker in
+  // [DynamicExecuteOperationMetadata.dynamic_directory_content_path][build.bazel.remote.execution.v2.DynamicExecuteOperationMetadata].
+  DynamicDirectoryMetadataResponse dynamic_directory_metadata_response = 2;
+  
+  // Provides dynamic file hash information in response to a previous
+  // request from the worker in
+  // [DynamicExecuteOperationMetadata.dynamic_file_hash_path][build.bazel.remote.execution.v2.DynamicExecuteOperationMetadata].
+  DynamicFileHashResponse dynamic_file_hash_response = 3;
+
+  // Provides a response from a previous request from the worker that
+  // file content be uploaded by the client to the CAS.
+  DynamicFileContentResponse dynamic_file_content_response = 4;
+}
+
 // A `LogFile` is a log stored in the CAS.
 message LogFile {
   // The digest of the log contents.
@@ -1289,6 +1671,228 @@ message WaitExecutionRequest {
 }
 
 // A request message for
+// [ActionCache.GetPotentialActionResults][build.bazel.remote.execution.v2.ActionCache.GetPotentialActionResults]
+// two-phase cache lookups.
+message GetPotentialActionResultsRequest {
+  // The instance of the execution system to operate against. A server may
+  // support multiple instances of the execution system (with their own workers,
+  // storage, caches, etc.). The server MAY require use of this field to select
+  // between them in an implementation-defined fashion, otherwise it can be
+  // omitted.
+  string instance_name = 1;
+
+  // The hash of an [Action][build.bazel.remote.execution.v2.Action] that may
+  // contain incomplete file input predictions. This possibly-incomplete `Action`
+  // acts as a key to look up potential action results that must be compared
+  // to the client's current filesystem contents to get a match. On a match,
+  // the corresponding build outputs in the form of an
+  // [ActionResult][build.bazel.remote.execution.v2.ActionResult] can be
+  // retrieved from
+  // [ActionCache.GetActionResult][build.bazel.remote.execution.v2.ActionCache.GetActionResult].
+  //
+  // In two-phase caching an `Action` contains a reference to a
+  // [Command][build.bazel.remote.execution.v2.Command] but the
+  // `input_root_digest` can refer to a subset of the files that are predicted
+  // to be needed to run the `Action`. The input root can contain all files
+  // needed for the command, in which case the action fingerprint should lead
+  // to just one output (or none if there are no cache hits). When the input
+  // root contains fewer files than those actually needed by the action, the
+  // action fingerprint gets less specific, and the number of possible matches
+  // grows. It is possible for the input root to contain zero files, which is
+  // a very non-specific fingerprint as it can match any action results that
+  // match the `Command`. Less-specific action fingerprints lead to more I/O
+  // and time spent matching `ObservedPathSet`s against the client filesystem;
+  // adding in any predictions about the filesystem "focuses" the lookup to
+  // more-specific results.
+  Digest action_fingerprint_digest = 2;
+
+  // A hint to the server to request inlining `ObservedPathSet`s in the
+  // [GetPotentialActionResultsResponse][build.bazel.remote.execution.v2.GetPotentialActionResultsResponse]
+  // message.
+  bool inline_pathsets = 3;
+
+  // A maximum page size to request. If present, the server will respond with no more
+  // than this many items. Regardless of whether a page size is specified, the
+  // server may place its own limit on the number of items to be returned and
+  // require the client to retrieve more items using a subsequent request.
+  int32 page_size = 4;
+
+  // A page token, which must be a value received in a previous
+  // [GetPotentialActionResultsResponse][build.bazel.remote.execution.v2.GetPotentialActionResultsResponse].
+  // If present, the server will use that token as an offset, returning only
+  // that page and the ones that succeed it.
+  string page_token = 5;
+}
+
+// Returns a set of zero or more
+// (pathset, observed-input digest, `ActionResult` digest) results
+// from a two-phase cache lookup call to
+// [ActionCache.GetPotentialActionResults][build.bazel.remote.execution.v2.ActionCache.GetPotentialActionResults].
+// These results are compared to the local filesystem and, on a match to the
+// observed-input digest, the associated `ActionResult` is used to retrieve
+// cached outputs.
+message GetPotentialActionResultsResponse {
+  // A set of possible matches to the client filesystem along with a reference to build outputs.
+  repeated ObservedPathSetAndInputDigest potential_action_matches = 1;
+
+  // If present, signifies that there are more results which the client can
+  // retrieve by passing this as the page_token in a subsequent
+  // [request][build.bazel.remote.execution.v2.GetPotentialActionResults].
+  // If empty, signifies that this is the last page of results.
+  string next_page_token = 2;
+}
+
+// The ordered file reads and probes and directory enumerations used in
+// two-phase caching to compare to the client filesystem when seeking a match
+// from an action fingerprint formed from potentially incomplete
+// (underspecified) inputs to a set of outputs.
+//
+// When comparing to the filesystem, a corresponding observed-input digest is
+// initialized. Each pathset entry is examined against the filesystem, and
+// depending on the outcome of the comparison, new hash information is added
+// to the observed-input digest. At the end of pathset enumeration the
+// observed-input digest is compared to the observed-input digest provided in
+// the two-phase cache lookup (`observed_input_digest` in
+// [ObservedPathSetAndInputDigest][build.bazel.remote.execution.v2.ObservedPathSetAndInputDigest])
+// and if they match, this is a cache hit, and the resulting
+// [ActionResult][build.bazel.remote.execution.v2.ActionResult] should be
+// retrieved and used.
+//
+// Generating a directory hash: Create a list of the names of directory members
+// (files and directories) that pass the directory enumeration or
+// `ObservedAccessFileNames` filters. Lexicographically sort the names by code
+// point or, equivalently, by the UTF-8 bytes. Join the sorted strings together
+// with the ',' character to form a comma-delimited list; note for a
+// multi-member list this means that there is no tail ',', e.g. for
+// a.h and b.h the list string is "a.h,b.h". Convert this string to uppercase.
+// Hash the UTF-8 string bytes.
+//
+// Discussion of how to generate pathsets from action execution filesystem
+// observations can be found at
+// https://github.com/microsoft/BuildXL/blob/master/Documentation/Wiki/Advanced-Features/Search-Path-Enumeration.md .
+message ObservedPathSet
+{
+  // An individual file or directory access observed during execution of
+  // an [Action][build.bazel.remote.execution.v2.Action].
+  message Entry
+  {
+    // Operation kind.
+    enum OpKind
+    {
+      // `Path` refers to a file that was read by the action. If the file is
+      // not present, this pathset does not match the filesystem. Otherwise
+      // the hash of the string constant "R" followed by the hash of the file
+      // must be added to the observed-input digest.
+      FILE_READ = 0;
+
+      // `Path` is a directory that was enumerated by the action using
+      // `DirectorySearchPattern`. If the directory is missing, this pathset
+      // does not match the filesystem. Otherwise the hash of the string
+      // constant "E" followed by the hash of the directory contents with the
+      // search pattern applied must be added to the observed-input digest.
+      // See comments on
+      // [ObservedPathSet][build.bazel.remote.execution.v2.ObservedPathSet]
+      // for how to generate a directory hash.
+      DIRECTORY_ENUMERATION = 1;
+
+      // `Path` is a directory that was enumerated by the action. If the
+      // directory is missing, this pathset does not match the filesystem.
+      // Otherwise the hash of the string constant "E" followed by a hash of
+      // the directory contents filtered to only the file names in
+      // `ObservedAccessFileNames` (compared to only the directory's filenames
+      // without extensions) must be added to the observed-input digest.
+      // See comments on
+      // [ObservedPathSet][build.bazel.remote.execution.v2.ObservedPathSet]
+      // for how to generate a directory hash.
+      DIRECTORY_SEARCH = 2;
+
+      // 'Path' is a file probed for existence, but not read, by the action
+      // and that was present during execution. If the file is not present or
+      // is instead a directory, this pathset does not match the filesystem.
+      // Otherwise the hash of the string constant "F" must be
+      // added to the observed-input digest.
+      EXISTING_FILE_PROBE = 3;
+
+      // `Path` is a directory probed for existence, but not enumerated, by
+      // the action and that was present during execution. If the directory is
+      // not present, or is instead a file, this pathset does not match the
+      // filesystem. Otherwise the hash of the string constant "D" must be
+      // added to the observed-input digest.
+      EXISTING_DIRECTORY_PROBE = 4;
+
+      // `Path` is a file or directory probed for existence by the action
+      // that was not present during execution. If path is present as a file
+      // or directory, this pathset does not match the filesystem. Otherwise
+      // the hash of the string constant "P" must be added to the
+      // observed-input digest.
+      ABSENT_FILE_OR_DIRECTORY_PROBE = 5;
+    }
+
+    // File or directory path.
+    string Path = 1;
+
+    // Defines the meaning of `Path` and how to compare to the local
+    // filesystem.
+    OpKind Kind = 2;
+
+    // For entries of `OpKind.DIRECTORY_ENUMERATION`, the enumeration pattern
+    // used. When null/empty/missing the search pattern was "*" meaning the
+    // full directory.
+    string DirectorySearchPattern = 3;
+  }
+
+  // Observed path set entries. In order to ensure consistent hashing of the
+  // same `ObservedPathSet`, the entries MUST be sorted lexicographically by
+  // Path code point (or, equivalently, by UTF-8 bytes).
+  repeated Entry Entries = 1;
+
+  // For directory comparisons in Entries marked with `OpKind.DIRECTORY_SEARCH`,
+  // this defines the filenames, with extensions removed, that were read by the
+  // action. These are used as the filter for generating a directory hash to
+  // add to the observed-input digest.
+  //
+  // Design point: Extensions are removed from storage and comparisons because
+  // of search path implementations in tools that search for a varied list of
+  // extensions (e.g. .h, .hpp, no extension in C++; .dll, .exe in .NET
+  // assembly search).
+  repeated string ObservedAccessedFileNames = 2;
+}
+
+// Represents a two-phase cache pathset, referenced or inlined, with an
+// observed-input digest and a reference to build outputs to retrieve from the
+// cache if the observed-input digest calculated from the client's filesystem
+// matches.
+message ObservedPathSetAndInputDigest {
+  // The digest for a blob containing the
+  // [ObservedPathSet][build.bazel.remote.execution.v2.ObservedPathSet],
+  // which can be retrieved from the
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+  // Servers SHOULD increase the TTL of the referenced blob if necessary and
+  // applicable.
+  Digest pathset_digest = 1;
+
+  // An inlined copy of the pathset. The server SHOULD NOT inline pathsets
+  // unless requested by the client in the
+  // [GetPotentialActionResultsRequest][build.bazel.remote.execution.v2.GetPotentialActionResultsRequest]
+  // message. The server MAY omit inlining, even if requested, and MUST do so
+  // if inlining would cause the response to exceed message size limits.
+  bytes pathset = 2;
+
+  // The observed-input digest generated along with the pathset from the
+  // worker's filesystem after completion of the [Action][build.bazel.remote.execution.v2.Action].
+  // This value is compared to the observed-input digest during comparison of
+  // an [ObservedPathSet][build.bazel.remote.execution.v2.ObservedPathSet]
+  // to the client filesystem.
+  Digest observed_input_digest = 3;
+
+  // The digest of the [ActionResult][build.bazel.remote.execution.v2.ActionResult]
+  // to retrieve from [ActionCache.GetActionResult][build.bazel.remote.execution.v2.ActionCache.GetActionResult]
+  // if the observed-input digest generated from the pathset against the client
+  // filesystem matches `observed_input_digest`.
+  Digest action_result_digest = 4;
+}
+
+// A request message for
 // [ActionCache.GetActionResult][build.bazel.remote.execution.v2.ActionCache.GetActionResult].
 message GetActionResultRequest {
   // The instance of the execution system to operate against. A server may
@@ -1314,6 +1918,13 @@ message GetActionResultRequest {
   // Each path needs to exactly match one path in `output_files` in the
   // [Command][build.bazel.remote.execution.v2.Command] message.
   repeated string inline_output_files = 5;
+
+  // A hint to the server to request inlining of the
+  // [ConsoleOutputs][build.bazel.remote.execution.v2.ConsoleOutputs] in the
+  // [ActionResult][build.bazel.remote.execution.v2.ActionResult] message.
+  // If the server does not support `ConsoleOutputs` in its capabilities,
+  // the value of this hint is ignored.
+  bool inline_console_outputs = 6;
 }
 
 // A request message for
@@ -1449,7 +2060,7 @@ message GetTreeRequest {
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
   Digest root_digest = 2;
 
-  // A maximum page size to request. If present, the server will request no more
+  // A maximum page size to request. If present, the server will respond with no more
   // than this many items. Regardless of whether a page size is specified, the
   // server may place its own limit on the number of items to be returned and
   // require the client to retrieve more items using a subsequent request.
@@ -1578,6 +2189,65 @@ message SymlinkAbsolutePathStrategy {
   }
 }
 
+// Describes support for two-phase caching, specifically
+// [ActionCache.GetPotentialActionResults][build.bazel.remote.execution.v2.ActionCache.GetPotentialActionResults].
+message TwoPhaseCacheSupport {
+  enum Value {
+    // Invalid value, defaults to NOT_SUPPORTED.
+    UNKNOWN = 0;
+
+    // Server will return a `NOT_IMPLEMENTED` on attempts to call
+    // [ActionCache.GetPotentialActionResults][build.bazel.remote.execution.v2.ActionCache.GetPotentialActionResults].
+    NOT_SUPPORTED = 1;
+
+    // Server supports
+    // [ActionCache.GetPotentialActionResults][build.bazel.remote.execution.v2.ActionCache.GetPotentialActionResults].
+    SUPPORTED = 2;
+  }
+}
+
+// Describes support for the
+// [ConsoleOutputs][build.bazel.remote.execution.v2.ActionCache.ConsoleOutputs]
+// format in
+// [ActionResult][build.bazel.remote.execution.v2.ActionCache.ActionResult].
+message ConsoleOutputSupport {
+  enum Value {
+    // Invalid value, defaults to NOT_SUPPORTED.
+    UNKNOWN = 0;
+
+    // Server will not return interleaved console outputs in
+    // [ActionResult][build.bazel.remote.execution.v2.ActionCache.ActionResult].
+    NOT_SUPPORTED = 1;
+
+    // Server supports interleaved console outputs in
+    // [ActionResult][build.bazel.remote.execution.v2.ActionCache.ActionResult] and,
+    // if dynamic execution is supported,
+    // [DynamicExecuteOperationMetadata][build.bazel.remote.execution.v2.ExecuteOperationMetadata].
+    SUPPORTED = 2;
+  }
+}
+
+// Describes support for
+// [ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval]
+// API support.
+message DynamicExecutionSupport {
+  enum Value {
+    // Invalid value, defaults to NOT_SUPPORTED.
+    UNKNOWN = 0;
+
+    // Server does not support dynamic execution with
+    // [ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval].
+    NOT_SUPPORTED = 1;
+
+    // Server supports dynamic execution with
+    // [ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval].
+    // The server MUST also indicate support for 
+    // [CacheCapabilities.two_phase_cache_support][build.bazel.remote.execution.v2.CacheCapabilities.two_phase_cache_support] and
+    // [ExecutionCapabilities.console_output_support][build.bazel.remote.execution.v2.ExecutionCapabilities.console_output_support].
+    SUPPORTED = 2;
+  }
+}
+
 // Capabilities of the remote cache system.
 message CacheCapabilities {
   // All the digest functions supported by the remote cache.
@@ -1598,6 +2268,10 @@ message CacheCapabilities {
 
   // Whether absolute symlink targets are supported.
   SymlinkAbsolutePathStrategy.Value symlink_absolute_path_strategy = 5;
+
+  // Support for two-phase caching for actions with possibly under-specified
+  // inputs.
+  TwoPhaseCacheSupport.Value two_phase_cache_support = 6;
 }
 
 // Capabilities of the remote execution system.
@@ -1613,6 +2287,12 @@ message ExecutionCapabilities {
 
   // Supported node properties.
   repeated string supported_node_properties = 4;
+
+  // Support for use of interleaved console output formats.
+  ConsoleOutputSupport.Value console_output_support = 5;
+
+  // Support for dynamic action execution for actions with possibly under-specified inputs.
+  DynamicExecutionSupport.Value dynamic_execution_support = 6;
 }
 
 // Details for the tool used to call the API.
