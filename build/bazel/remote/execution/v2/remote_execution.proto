@@ -1530,6 +1530,11 @@ message DigestFunction {
 
     // The SHA-512 digest function.
     SHA512 = 6;
+
+    // Murmur3 128-bit digest function, x64 variant. Note that this is not a
+    // cryptographic hash function and its collision properties are not strongly guaranteed.
+    // See https://github.com/aappleby/smhasher/wiki/MurmurHash3 .
+    MURMUR3 = 7;
   }
 }
 
