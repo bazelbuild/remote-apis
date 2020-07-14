@@ -18,6 +18,14 @@ syntax = "proto3";
 
 package build.bazel.remote.logstream.v1;
 
+option csharp_namespace = "Build.Bazel.Remote.LogStream.v1";
+option go_package = "remotelogstream";
+option java_multiple_files = true;
+option java_outer_classname = "RemoteLogStreamProto";
+option java_package = "build.bazel.remote.logstream.v1";
+option objc_class_prefix = "RL";
+
+
 // #### Introduction
 //
 // The Log Stream API manages LogStream resources which are used to stream
@@ -102,15 +110,15 @@ message CreateLogStreamRequest {
 // A handle to a log (an ordered sequence of bytes).
 message LogStream {
   // Structured name of the resource in the format:
-  //   {parent=**}/logStreams/{logstream_id}
-  //   Example: projects/123/logStreams/456-def
+  //   {parent=**}/logstreams/{logstream_id}
+  //   Example: projects/123/logstreams/456-def
   // Attempting to call the Byte Stream API's `Write` RPC with a LogStream's
   //   `name` as the value for `ByteStream.Write.resource_name` is an error.
   string name = 1;
 
   // Resource name to pass to `ByteStream.Write` in the format:
-  //   {parent=**}/logStreams/{logstream_id}/{write_token}
-  //   Example: projects/123/logStreams/456-def/789-ghi
+  //   {parent=**}/logstreams/{logstream_id}/{write_token}
+  //   Example: projects/123/logstreams/456-def/789-ghi
   // Attempting to call the Byte Stream API's `Read` RPC with a LogStream's
   //   `write_resource_name` as the value for `ByteStream.Write.resource_name`
   //   is an error.
