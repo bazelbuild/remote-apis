@@ -1311,7 +1311,8 @@ message GetActionResultRequest {
   bool inline_stderr = 4;
 
   // A hint to the server to inline the contents of the listed output files.
-  // Each path needs to exactly match one path in `output_files` in the
+  // Each path needs to exactly match one file path in either `output_paths` or
+  // `output_files` (DEPRECATED since v2.1) in the
   // [Command][build.bazel.remote.execution.v2.Command] message.
   repeated string inline_output_files = 5;
 }
