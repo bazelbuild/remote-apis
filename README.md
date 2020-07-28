@@ -18,11 +18,12 @@ These tools use the Remote Execution API to distribute builds to workers.
 * [BuildStream](https://buildstream.build/)
 * [Goma Server](https://chromium.googlesource.com/infra/goma/server/)
 * [Pants](https://www.pantsbuild.org)
+* [Please](https://please.build)
 * [Recc](https://gitlab.com/bloomberg/recc)
 
 ### Servers
 These applications implement the Remote Execution API to server build requests
-from the clients above. These are then distributed to workers; some of these 
+from the clients above. These are then distributed to workers; some of these
 workers implement the Remote Worker API.
 
 * [Buildbarn](https://github.com/buildbarn) (open source)
