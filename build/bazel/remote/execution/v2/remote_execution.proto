@@ -1065,14 +1065,15 @@ message OutputFile {
 // [Directory][build.bazel.remote.execution.v2.Directory] protos in a
 // single directory Merkle tree, compressed into one message.
 message Tree {
-  // The root directory in the tree.
-  Directory root = 1;
+  reserved 1, 2; // Used for removed fields in an earlier version of the API.
+
+  // The digest of the root directory in the tree.
+  Digest rootDigest = 3;
 
   // All the child directories: the directories referred to by the root and,
-  // recursively, all its children. In order to reconstruct the directory tree,
-  // the client must take the digests of each of the child directories and then
-  // build up a tree starting from the `root`.
-  repeated Directory children = 2;
+  // recursively, all its children. The keys of the map are the hash of the digest
+  // of each directory.
+  map<string, Directory> directories = 4;
 }
 
 // An `OutputDirectory` is the output in an `ActionResult` corresponding to a
