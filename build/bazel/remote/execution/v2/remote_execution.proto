@@ -425,6 +425,14 @@ message Action {
   bool do_not_cache = 7;
 
   reserved 8; // Used for field moved to [Command][build.bazel.remote.execution.v2.Command].
+
+  // An optional additional salt value used to place this `Action` into a
+  // separate cache namespace from other instances having the same field
+  // contents. This salt typically comes from operational configuration
+  // specific to sources such as repo and service configuration,
+  // and allows disowning an entire set of ActionResults that might have been
+  // poisoned by buggy software or tool failures.
+  bytes salt = 9;
 }
 
 // A `Command` is the actual command executed by a worker running an
