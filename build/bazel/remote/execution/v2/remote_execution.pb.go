@@ -2362,7 +2362,8 @@ type GetActionResultRequest struct {
 	// [ActionResult][build.bazel.remote.execution.v2.ActionResult] message.
 	InlineStderr bool `protobuf:"varint,4,opt,name=inline_stderr,json=inlineStderr,proto3" json:"inline_stderr,omitempty"`
 	// A hint to the server to inline the contents of the listed output files.
-	// Each path needs to exactly match one path in `output_files` in the
+	// Each path needs to exactly match one file path in either `output_paths` or
+	// `output_files` (DEPRECATED since v2.1) in the
 	// [Command][build.bazel.remote.execution.v2.Command] message.
 	InlineOutputFiles    []string `protobuf:"bytes,5,rep,name=inline_output_files,json=inlineOutputFiles,proto3" json:"inline_output_files,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
