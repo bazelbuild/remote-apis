@@ -24,7 +24,12 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+// Contains all information necessary to create a new LogStream resource.
 type CreateLogStreamRequest struct {
+	// Required. The parent resource of the created LogStream.
+	// The list of valid types of parent resources of LogStreams is up to the
+	// implementing server.
+	// Example: projects/123
 	Parent               string   `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -63,8 +68,33 @@ func (m *CreateLogStreamRequest) GetParent() string {
 	return ""
 }
 
+// A handle to a log (an ordered sequence of bytes).
 type LogStream struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Structured name of the resource in the format:
+	//   {parent=**}/logstreams/{logstream_id}
+	//   Example: projects/123/logstreams/456-def
+	// Attempting to call the Byte Stream API's `Write` RPC with a LogStream's
+	//   `name` as the value for `ByteStream.Write.resource_name` is an error.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Resource name to pass to `ByteStream.Write` in the format:
+	//   {parent=**}/logstreams/{logstream_id}/{write_token}
+	//   Example: projects/123/logstreams/456-def/789-ghi
+	// Attempting to call the Byte Stream API's `Read` RPC with a LogStream's
+	//   `write_resource_name` as the value for `ByteStream.Write.resource_name`
+	//   is an error.
+	//
+	// `write_resource_name` is separate from `name` to ensure that only the
+	// intended writers can write to a given LogStream. Writers must address write
+	// operations to the `write_resource_name`, not the `name`, and must have
+	// permission to write LogStreams. `write_resource_name` embeds a secret token
+	// and should be protected accordingly; a mishandled `write_resource_name` can
+	// result in unintended writers corrupting the LogStream. Therefore, the field
+	// should be excluded from calls to any calls which retrieve LogStream
+	// metadata (i.e.: `GetLogStream`).
+	//
+	// Bytes written to this resource must to be readable when `ByteStream.Read`
+	// is called with the `name` resource.
+	// Reading a write_resource_name must return an INVALID_ARGUMENT error.
 	WriteResourceName    string   `protobuf:"bytes,2,opt,name=write_resource_name,json=writeResourceName,proto3" json:"write_resource_name,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -152,6 +182,12 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type LogStreamServiceClient interface {
+	// Create a LogStream which may be written to.
+	//
+	// The returned LogStream resource name will include a `write_resource_name`
+	// which is the resource to use when writing to the LogStream.
+	// Callers of CreateLogStream are expected to NOT publish the
+	// `write_resource_name`.
 	CreateLogStream(ctx context.Context, in *CreateLogStreamRequest, opts ...grpc.CallOption) (*LogStream, error)
 }
 
@@ -174,6 +210,12 @@ func (c *logStreamServiceClient) CreateLogStream(ctx context.Context, in *Create
 
 // LogStreamServiceServer is the server API for LogStreamService service.
 type LogStreamServiceServer interface {
+	// Create a LogStream which may be written to.
+	//
+	// The returned LogStream resource name will include a `write_resource_name`
+	// which is the resource to use when writing to the LogStream.
+	// Callers of CreateLogStream are expected to NOT publish the
+	// `write_resource_name`.
 	CreateLogStream(context.Context, *CreateLogStreamRequest) (*LogStream, error)
 }
 
