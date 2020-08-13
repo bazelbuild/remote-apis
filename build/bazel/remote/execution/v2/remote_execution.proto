@@ -1021,6 +1021,7 @@ message ActionResult {
   // The digest for a blob containing the standard output of the action, which
   // can be retrieved from the
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+  // When ommited, MUST be treated as the digest of the empty blob.
   Digest stdout_digest = 6;
 
   // The standard error buffer of the action. The server SHOULD NOT inline
@@ -1033,6 +1034,7 @@ message ActionResult {
   // The digest for a blob containing the standard error of the action, which
   // can be retrieved from the
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+  // When ommited, MUST be treated as the digest of the empty blob. 
   Digest stderr_digest = 8;
 
   // The details of the execution that originally produced this result.
