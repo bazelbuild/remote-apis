@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+
+    - name: Configure git
+      run: |
+        git config user.name "GitHub Actions Bot"
+        git config user.email "<>"
+
+    - name: Install bazelisk
+      run: |
+        curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/v1.6.0/bazelisk-linux-amd64"
+        mkdir -p "${HOME}/bin"
+        mv bazelisk-linux-amd64 "${HOME}/bin/bazel"
+        chmod +x "${HOME}/bin/bazel"
+
+    - name: Run hooks
+      run: |
+        env
+        PATH=${HOME}/bin:$PATH ./hooks/pre-commit
+
+    - name: Check for changes
+      run: |
+        if ! git commit -m "regenerate pb.go files"
+        then
+          exit
+        fi
+        git push origin master
