@@ -433,6 +433,16 @@ message Action {
   // and allows disowning an entire set of ActionResults that might have been
   // poisoned by buggy software or tool failures.
   bytes salt = 9;
+
+  // The optional platform requirements for the execution environment. The
+  // server MAY choose to execute the action on any worker satisfying the
+  // requirements, so the client SHOULD ensure that running the action on any
+  // such worker will have the same result.  A detailed lexicon for this can be
+  // found in the accompanying platform.md.
+  // New in version 2.2: clients SHOULD set these platform properties as well
+  // as those in the [Command][build.bazel.remote.execution.v2.Command]. Servers
+  // SHOULD prefer those set here.
+  Platform platform = 10;
 }
 
 // A `Command` is the actual command executed by a worker running an
@@ -557,8 +567,11 @@ message Command {
   // The platform requirements for the execution environment. The server MAY
   // choose to execute the action on any worker satisfying the requirements, so
   // the client SHOULD ensure that running the action on any such worker will
-  // have the same result.
-  // A detailed lexicon for this can be found in the accompanying platform.md.
+  // have the same result.  A detailed lexicon for this can be found in the
+  // accompanying platform.md.
+  // DEPRECATED as of v2.2: platform properties are now specified directly in
+  // the action. See documentation note in the
+  // [Action][build.bazel.remote.execution.v2.Action] for migration.
   Platform platform = 5;
 
   // The working directory, relative to the input root, for the command to run
