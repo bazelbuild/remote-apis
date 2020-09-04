@@ -30,6 +30,7 @@ workers implement the Remote Worker API.
 * [Buildfarm](https://github.com/bazelbuild/bazel-buildfarm) (open source)
 * [BuildGrid](https://buildgrid.build/) (open source)
 * [EngFlow](https://www.engflow.com/) (commercial)
+* [Flare Build Execution](https://flare.build/products/flare-build-execution) (commercial)
 * [Remote Build Execution (Alpha)](https://blog.bazel.build/2018/10/05/remote-build-execution.html) (commercial)
 * [Scoot](https://github.com/twitter/scoot) (open source)
 
