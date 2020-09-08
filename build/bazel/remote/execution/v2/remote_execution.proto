@@ -1029,6 +1029,49 @@ message ActionResult {
 
   // The details of the execution that originally produced this result.
   ExecutedActionMetadata execution_metadata = 9;
+
+  // Inlined [ConsoleOutputs][build.bazel.remote.execution.v2.ConsoleOutputs]
+  // containing a series of stdout and stderr outputs in order of write from
+  // the action. The server SHOULD NOT inline `console_outputs` unless
+  // requested by the client in the
+  // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
+  // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
+  // would cause the response to exceed message size limits.
+  ConsoleOutputs console_outputs = 10;
+
+  // The digest for a blob containing the
+  // [ConsoleOutputs][build.bazel.remote.execution.v2.ConsoleOutputs] for the action,
+  // which can be retrieved from the
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+  Digest console_outputs_digest = 11;
+}
+
+// A sequence of console outputs in the order received for a remoted process.
+// This may contain the interleaved outputs from a process in the order
+// received during execution. If the service does not implement
+// interleaving, this may contain a summary of the stdout and stderr output
+// streams as single large writes in a server-defined order.
+message ConsoleOutputs
+{
+  // An output record for one or more outputs to stdout or stderr.
+  //
+  // Design note: For text coloring and other effects, ANSI codes may be
+  // embedded within these strings. Windows console API calls are not
+  // supported in this protocol, but a server implementation MAY choose to
+  // translate console API calls into ANSI codes, as more recent Windows 10
+  // releases included ANSI code support.
+  message ConsoleOutput {
+    // When true, the `Writes` were directed at the stderr stream.
+    bool is_stderr = 1;
+    
+    // One or more written strings. There is an implicit operating system
+    // dependent newline after each string. Each string may contain embedded
+    // OS-dependent newline character sequences.
+    repeated string writes = 2;
+  }
+
+  // A series of stdout and stderr outputs in order of write from the remoted process.
+  repeated ConsoleOutput outputs = 2;
 }
 
 // An `OutputFile` is similar to a
@@ -1314,6 +1357,13 @@ message GetActionResultRequest {
   // Each path needs to exactly match one path in `output_files` in the
   // [Command][build.bazel.remote.execution.v2.Command] message.
   repeated string inline_output_files = 5;
+
+  // A hint to the server to request inlining of the
+  // [ConsoleOutputs][build.bazel.remote.execution.v2.ConsoleOutputs] in the
+  // [ActionResult][build.bazel.remote.execution.v2.ActionResult] message.
+  // If the server does not support `ConsoleOutputs` in its capabilities,
+  // the value of this hint is ignored.
+  bool inline_console_outputs = 6;
 }
 
 // A request message for
@@ -1613,6 +1663,9 @@ message ExecutionCapabilities {
 
   // Supported node properties.
   repeated string supported_node_properties = 4;
+
+  // Support for use of interleaved console output formats.
+  bool console_output_support = 5;
 }
 
 // Details for the tool used to call the API.
