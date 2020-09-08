@@ -2188,44 +2188,6 @@ message SymlinkAbsolutePathStrategy {
   }
 }
 
-// Describes support for two-phase caching, specifically
-// [ActionCache.GetPotentialActionResults][build.bazel.remote.execution.v2.ActionCache.GetPotentialActionResults].
-message TwoPhaseCacheSupport {
-  enum Value {
-    // Invalid value, defaults to NOT_SUPPORTED.
-    UNKNOWN = 0;
-
-    // Server will return a `NOT_IMPLEMENTED` on attempts to call
-    // [ActionCache.GetPotentialActionResults][build.bazel.remote.execution.v2.ActionCache.GetPotentialActionResults].
-    NOT_SUPPORTED = 1;
-
-    // Server supports
-    // [ActionCache.GetPotentialActionResults][build.bazel.remote.execution.v2.ActionCache.GetPotentialActionResults].
-    SUPPORTED = 2;
-  }
-}
-
-// Describes support for
-// [ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval]
-// API support.
-message DynamicExecutionSupport {
-  enum Value {
-    // Invalid value, defaults to NOT_SUPPORTED.
-    UNKNOWN = 0;
-
-    // Server does not support dynamic execution with
-    // [ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval].
-    NOT_SUPPORTED = 1;
-
-    // Server supports dynamic execution with
-    // [ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval].
-    // The server MUST also indicate support for 
-    // [CacheCapabilities.two_phase_cache_support][build.bazel.remote.execution.v2.CacheCapabilities.two_phase_cache_support] and
-    // [ExecutionCapabilities.console_output_support][build.bazel.remote.execution.v2.ExecutionCapabilities.console_output_support].
-    SUPPORTED = 2;
-  }
-}
-
 // Capabilities of the remote cache system.
 message CacheCapabilities {
   // All the digest functions supported by the remote cache.
@@ -2249,7 +2211,7 @@ message CacheCapabilities {
 
   // Support for two-phase caching for actions with possibly under-specified
   // inputs.
-  TwoPhaseCacheSupport.Value two_phase_cache_support = 6;
+  bool two_phase_cache_support = 6;
 }
 
 // Capabilities of the remote execution system.
@@ -2270,7 +2232,7 @@ message ExecutionCapabilities {
   bool console_output_support = 5;
 
   // Support for dynamic action execution for actions with possibly under-specified inputs.
-  DynamicExecutionSupport.Value dynamic_execution_support = 6;
+  bool dynamic_execution_support = 6;
 }
 
 // Details for the tool used to call the API.
