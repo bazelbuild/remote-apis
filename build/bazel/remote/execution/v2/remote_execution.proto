@@ -1249,8 +1249,13 @@ message ConsoleOutputs
   // translate console API calls into ANSI codes, as more recent Windows 10
   // releases included ANSI code support.
   message ConsoleOutput {
-    // When true, the `Writes` were directed at the stderr stream.
-    bool is_stderr = 1;
+    enum Stream {
+      STDOUT = 0;
+      STDERR = 1;
+    }
+    
+    // The output stream to which the `Writes` were directed.
+    Stream stream = 1;
     
     // One or more written strings. There is an implicit operating system
     // dependent newline after each string. Each string may contain embedded
