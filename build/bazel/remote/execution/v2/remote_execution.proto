@@ -195,7 +195,7 @@ service Execution {
   //
   // * `INVALID_ARGUMENT`: One or more arguments are invalid.
   // * `FAILED_PRECONDITION`: One or more errors occurred in setting up the
-  //   action requested, such as a missing input or command or no worker being
+  //   action requested, such as a missing command or no worker being
   //   available. The client may be able to fix the errors and retry.
   // * `RESOURCE_EXHAUSTED`: There is insufficient quota of some resource to run
   //   the action.
