@@ -1425,17 +1425,6 @@ message ExecuteRequest {
 // [dynamic execution][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval],
 // which will be contained in the [metadata field][google.longrunning.Operation.response] of the
 // [Operation][google.longrunning.Operation].
-//
-// Design note: Dynamic directory and file requests are made using individual
-// messages for each directory or file path. The typical implementation
-// utilizes a virtual filesystem and a directory or file read request is
-// held pending in the VFS awaiting the information from the client.
-// VFS rendering callbacks may occur in a multithreaded fashion, but this is
-// unusual, and a chatty back-and-forth request series to the client resolves
-// pending I/O faster for each thread rather than adding in a Nagle
-// algorithm implementation and using repeated fields for the dynamic requests.
-// Dynamic callbacks for content are expected to be unusual or rare by
-// construction, and inherently slow down action execution.
 message DynamicExecuteOperationMetadata {
   // Used by the worker to request that the client upload specific content
   // to the CAS.
@@ -1470,7 +1459,7 @@ message DynamicExecuteOperationMetadata {
   // any incremental messages in this field.
   ConsoleOutputs streamed_console_outputs = 3;
 
-  // A directory path for which the worker does not have metadata. This
+  // Directory paths for which the worker does not have metadata. This
   // indicates a directory that the `Action` was not predicted to use
   // from the client filesystem. The client is requested to enumerate
   // directory metadata and respond in
@@ -1478,25 +1467,25 @@ message DynamicExecuteOperationMetadata {
   // The client MAY include individual file digests but this is not required,
   // the worker will request individual file hashes as needed using
   // `dynamic_file_hash_path`.
-  // Depending on the server and client implementation this may be a
-  // relative or fully qualified path.
-  string dynamic_directory_content_path = 4;
+  // Depending on the server and client implementation these may be
+  // relative or fully qualified paths.
+  repeated string dynamic_directory_content_paths = 4;
 
-  // A file path for which the worker does not have a hash. This indicates
+  // File paths for which the worker does not have a hash. This indicates
   // a file that the `Action` was not predicted to use from the client
   // filesystem. The client is requested to hash the file and respond in
   // [StreamedDynamicExecutionData.dynamic_file_hash_response][build.bazel.remote.execution.StreamedDynamicExecutionData].
-  // Depending on the server and client implementation this may be a
-  // relative or fully qualified path.
-  string dynamic_file_hash_path = 5;
+  // Depending on the server and client implementation these may be
+  // relative or fully qualified paths.
+  repeated string dynamic_file_hash_path = 5;
 
-  // A file path and expected content hash that the worker does not have in
+  // File paths and expected content hashes that the worker does not have in
   // the CAS. This indicates file content that the `Action` was not predicted
   // to use from the client, or content that was subsequently removed from
   // the CAS. The client is requested to upload the file content into the
   // CAS and respond in 
   // [StreamedDynamicExecutionData.dynamic_file_content_response][build.bazel.remote.execution.StreamedDynamicExecutionData].
-  DynamicFileContentRequest dynamic_file_content_request = 6;
+  repeated DynamicFileContentRequest dynamic_file_content_request = 6;
 }
 
 // A streaming request message for
