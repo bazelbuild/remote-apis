@@ -1218,21 +1218,20 @@ message ActionResult {
   // The details of the execution that originally produced this result.
   ExecutedActionMetadata execution_metadata = 9;
 
-  // The inlined contents of a
-  // [ConsoleOutputs][build.bazel.remote.execution.v2.ConsoleOutputs] message
+  // Inlined [ConsoleOutputs][build.bazel.remote.execution.v2.ConsoleOutputs]
   // containing a series of stdout and stderr outputs in order of write from
   // the action. The server SHOULD NOT inline `console_outputs` unless
   // requested by the client in the
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
   // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
   // would cause the response to exceed message size limits.
-  bytes console_outputs = 13;
+  ConsoleOutputs console_outputs = 10;
 
   // The digest for a blob containing the
   // [ConsoleOutputs][build.bazel.remote.execution.v2.ConsoleOutputs] for the action,
   // which can be retrieved from the
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
-  Digest console_outputs_digest = 14;
+  Digest console_outputs_digest = 11;
 }
 
 // A sequence of console outputs in the order received for a remoted process.
@@ -2206,27 +2205,6 @@ message TwoPhaseCacheSupport {
   }
 }
 
-// Describes support for the
-// [ConsoleOutputs][build.bazel.remote.execution.v2.ActionCache.ConsoleOutputs]
-// format in
-// [ActionResult][build.bazel.remote.execution.v2.ActionCache.ActionResult].
-message ConsoleOutputSupport {
-  enum Value {
-    // Invalid value, defaults to NOT_SUPPORTED.
-    UNKNOWN = 0;
-
-    // Server will not return interleaved console outputs in
-    // [ActionResult][build.bazel.remote.execution.v2.ActionCache.ActionResult].
-    NOT_SUPPORTED = 1;
-
-    // Server supports interleaved console outputs in
-    // [ActionResult][build.bazel.remote.execution.v2.ActionCache.ActionResult] and,
-    // if dynamic execution is supported,
-    // [DynamicExecuteOperationMetadata][build.bazel.remote.execution.v2.ExecuteOperationMetadata].
-    SUPPORTED = 2;
-  }
-}
-
 // Describes support for
 // [ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval]
 // API support.
@@ -2289,7 +2267,7 @@ message ExecutionCapabilities {
   repeated string supported_node_properties = 4;
 
   // Support for use of interleaved console output formats.
-  ConsoleOutputSupport.Value console_output_support = 5;
+  bool console_output_support = 5;
 
   // Support for dynamic action execution for actions with possibly under-specified inputs.
   DynamicExecutionSupport.Value dynamic_execution_support = 6;
