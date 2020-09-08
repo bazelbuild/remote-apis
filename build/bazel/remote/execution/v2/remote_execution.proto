@@ -148,7 +148,7 @@ service Execution {
   // the server to present a virtual filesystem spanning all drive roots
   // for dynamic request by the server. There must be exactly one such
   // empty-string root at the root of the directory tree; any use of empty
-  // strings other than the root SHOULD result in an `INVALID_ARGUMENT`
+  // strings other than the root MUST result in an `INVALID_ARGUMENT`
   // error.
   //
   // This API is bidirectional both from the client to server and from server
@@ -1833,7 +1833,7 @@ message ObservedPathSet
 
   // Observed path set entries. In order to ensure consistent hashing of the
   // same `ObservedPathSet`, the entries MUST be sorted lexicographically by
-  // Path code point (or, equivalently, by UTF-8 bytes).
+  // `path` code point (or, equivalently, by UTF-8 bytes).
   repeated Entry entries = 1;
 
   // For directory comparisons in Entries marked with `OpKind.DIRECTORY_SEARCH`,
