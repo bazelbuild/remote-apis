@@ -1784,8 +1784,9 @@ message ObservedPathSet
       // for how to generate a directory hash.
       DIRECTORY_ENUMERATION = 1;
 
-      // `Path` is a directory that was enumerated by the action. If the
-      // directory is missing, this pathset does not match the filesystem.
+      // `Path` is a directory that was enumerated by the action using
+      // one or more specific filenames specified in `ObservedAccessFileNames`.
+      // If the directory is missing, this pathset does not match the filesystem.
       // Otherwise the hash of the string constant "E" followed by a hash of
       // the directory contents filtered to only the file names in
       // `ObservedAccessFileNames` (compared to only the directory's filenames
@@ -1818,22 +1819,22 @@ message ObservedPathSet
     }
 
     // File or directory path.
-    string Path = 1;
+    string path = 1;
 
     // Defines the meaning of `Path` and how to compare to the local
     // filesystem.
-    OpKind Kind = 2;
+    OpKind kind = 2;
 
     // For entries of `OpKind.DIRECTORY_ENUMERATION`, the enumeration pattern
     // used. When null/empty/missing the search pattern was "*" meaning the
     // full directory.
-    string DirectorySearchPattern = 3;
+    string directory_search_pattern = 3;
   }
 
   // Observed path set entries. In order to ensure consistent hashing of the
   // same `ObservedPathSet`, the entries MUST be sorted lexicographically by
   // Path code point (or, equivalently, by UTF-8 bytes).
-  repeated Entry Entries = 1;
+  repeated Entry entries = 1;
 
   // For directory comparisons in Entries marked with `OpKind.DIRECTORY_SEARCH`,
   // this defines the filenames, with extensions removed, that were read by the
@@ -1844,7 +1845,7 @@ message ObservedPathSet
   // of search path implementations in tools that search for a varied list of
   // extensions (e.g. .h, .hpp, no extension in C++; .dll, .exe in .NET
   // assembly search).
-  repeated string ObservedAccessedFileNames = 2;
+  repeated string observed_accessed_file_names = 2;
 }
 
 // Represents a two-phase cache pathset, referenced or inlined, with an
