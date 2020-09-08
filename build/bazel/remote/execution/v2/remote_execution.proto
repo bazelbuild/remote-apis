@@ -1444,10 +1444,6 @@ message DynamicExecuteOperationMetadata {
   // The current stage of execution.
   ExecutionStage.Value stage = 1;
 
-  // The digest of the [Action][build.bazel.remote.execution.v2.Action]
-  // being executed.
-  Digest action_digest = 2;
-
   // A series of incremental (streamed) stdout and stderr outputs in order of
   // write from the action during execution. The full set of console outputs
   // from the action will also be written in the final
@@ -1457,7 +1453,7 @@ message DynamicExecuteOperationMetadata {
   // messages and instead wait to the final `ExecuteResponse` to return all
   // outputs from the action, however in this case the server MUST NOT return
   // any incremental messages in this field.
-  ConsoleOutputs streamed_console_outputs = 3;
+  ConsoleOutputs streamed_console_outputs = 2;
 
   // Directory paths for which the worker does not have metadata. This
   // indicates a directory that the `Action` was not predicted to use
@@ -1469,7 +1465,7 @@ message DynamicExecuteOperationMetadata {
   // `dynamic_file_hash_path`.
   // Depending on the server and client implementation these may be
   // relative or fully qualified paths.
-  repeated string dynamic_directory_content_paths = 4;
+  repeated string dynamic_directory_content_paths = 3;
 
   // File paths for which the worker does not have a hash. This indicates
   // a file that the `Action` was not predicted to use from the client
@@ -1477,7 +1473,7 @@ message DynamicExecuteOperationMetadata {
   // [StreamedDynamicExecutionData.dynamic_file_hash_response][build.bazel.remote.execution.StreamedDynamicExecutionData].
   // Depending on the server and client implementation these may be
   // relative or fully qualified paths.
-  repeated string dynamic_file_hash_path = 5;
+  repeated string dynamic_file_hash_path = 4;
 
   // File paths and expected content hashes that the worker does not have in
   // the CAS. This indicates file content that the `Action` was not predicted
@@ -1485,7 +1481,7 @@ message DynamicExecuteOperationMetadata {
   // the CAS. The client is requested to upload the file content into the
   // CAS and respond in 
   // [StreamedDynamicExecutionData.dynamic_file_content_response][build.bazel.remote.execution.StreamedDynamicExecutionData].
-  repeated DynamicFileContentRequest dynamic_file_content_request = 6;
+  repeated DynamicFileContentRequest dynamic_file_content_request = 5;
 }
 
 // A streaming request message for
