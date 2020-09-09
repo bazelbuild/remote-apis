@@ -1725,8 +1725,9 @@ message GetPotentialActionResultsRequest {
 // observed-input digest, the associated `ActionResult` is used to retrieve
 // cached outputs.
 message GetPotentialActionResultsResponse {
-  // A set of possible matches to the client filesystem along with a reference to build outputs.
-  repeated ObservedPathSetAndInputDigest potential_action_matches = 1;
+  // A set of possible matches to the client filesystem along with a reference
+  // to build outputs.
+  repeated PotentialActionMatch potential_action_matches = 1;
 
   // If present, signifies that there are more results which the client can
   // retrieve by passing this as the page_token in a subsequent
@@ -1746,7 +1747,7 @@ message GetPotentialActionResultsResponse {
 // to the observed-input digest. At the end of pathset enumeration the
 // observed-input digest is compared to the observed-input digest provided in
 // the two-phase cache lookup (`observed_input_digest` in
-// [ObservedPathSetAndInputDigest][build.bazel.remote.execution.v2.ObservedPathSetAndInputDigest])
+// [PotentialActionMatch][build.bazel.remote.execution.v2.PotentialActionMatch])
 // and if they match, this is a cache hit, and the resulting
 // [ActionResult][build.bazel.remote.execution.v2.ActionResult] should be
 // retrieved and used.
@@ -1856,7 +1857,7 @@ message ObservedPathSet
 // observed-input digest and a reference to build outputs to retrieve from the
 // cache if the observed-input digest calculated from the client's filesystem
 // matches.
-message ObservedPathSetAndInputDigest {
+message PotentialActionMatch {
   // The digest for a blob containing the
   // [ObservedPathSet][build.bazel.remote.execution.v2.ObservedPathSet],
   // which can be retrieved from the
