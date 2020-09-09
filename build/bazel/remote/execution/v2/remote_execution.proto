@@ -156,10 +156,11 @@ service Execution {
   // the contents of unspecified directories, file hashes, or to upload file
   // content on demand, based on the observed filesystem calls of the action.
   // This allows the server to execute actions whose inputs are incompletely
-  // specified. It also prevents execution of the action in a fire-and-forget
-  // fashion; the client must remain connected to the server for the entire
-  // execution of the action, or else the server MUST cancel the in-progress
-  // execution.
+  // specified, or where CAS contents were evicted before they were needed.
+  // It also impedes execution of the action in a fire-and-forget
+  // fashion; the client should remain connected to the server for the entire
+  // execution of the action, or else the server may cancel the in-progress
+  // execution if a dynamic input is required from the client.
   // [WaitExecution][build.bazel.remote.execution.v2.Execution.WaitExecution]
   // is not allowed for dynamic execution operations.
   //
