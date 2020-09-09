@@ -1461,7 +1461,8 @@ message DynamicExecuteOperationMetadata {
   // from the client filesystem. The client is requested to enumerate
   // the directory's contents and respond in
   // [StreamedDynamicExecutionData.dynamic_directory_content_response][build.bazel.remote.execution.StreamedDynamicExecutionData].
-  // The client MAY include individual file digests but this is not required,
+  // The client may include individual file digests, e.g. if the client
+  // already has them calculated in a cache, but this is not required,
   // the worker will request individual file hashes as needed using
   // `dynamic_file_hash_path`.
   // Depending on the server and client implementation these may be
