@@ -1437,7 +1437,7 @@ message DynamicExecuteOperationMetadata {
     // The file hash and size of the content expected by the worker.
     // If this is not the current hash or size of the file content at `path`
     // then the corrected hash is returned in
-    // `DynamicExecuteOperationMetadata.dynamic_directory_metadata_response`.
+    // `DynamicExecuteOperationMetadata.dynamic_directory_content_response`.
     Digest file_digest = 2;
   }
 
@@ -1455,11 +1455,11 @@ message DynamicExecuteOperationMetadata {
   // any incremental messages in this field.
   ConsoleOutputs streamed_console_outputs = 2;
 
-  // Directory paths for which the worker does not have metadata. This
+  // Directory paths for which the worker does not have content. This
   // indicates a directory that the `Action` was not predicted to use
   // from the client filesystem. The client is requested to enumerate
-  // directory metadata and respond in
-  // [StreamedDynamicExecutionData.dynamic_directory_metadata_response][build.bazel.remote.execution.StreamedDynamicExecutionData].
+  // the directory's contents and respond in
+  // [StreamedDynamicExecutionData.dynamic_directory_content_response][build.bazel.remote.execution.StreamedDynamicExecutionData].
   // The client MAY include individual file digests but this is not required,
   // the worker will request individual file hashes as needed using
   // `dynamic_file_hash_path`.
@@ -1487,19 +1487,19 @@ message DynamicExecuteOperationMetadata {
 // A streaming request message for
 // [Execution.ExecuteWithDynamicRetrieval][build.bazel.remote.execution.v2.Execution.ExecuteWithDynamicRetrieval].
 message StreamedDynamicExecutionData {
-  // Sent in response to a dynamic directory metadata request.
-  message DynamicDirectoryMetadataResponse {
-    // The directory path, copied from the directory metadata request.
+  // Sent in response to a dynamic directory content request.
+  message DynamicDirectoryContentResponse {
+    // The directory path, copied from the directory content request.
     string path = 1;
 
-    // Metadata for the directory. [DirectoryNode][build.bazel.remote.execution.v2.Execution.DirectoryNode]
+    // Directory contents. [DirectoryNode][build.bazel.remote.execution.v2.Execution.DirectoryNode]
     // instances in this field MAY omit digest reference information, as
     // the directory name is the required information needed to feed into
     // the filesystem, and the contents of the subdirectory contained in the
     // `DirectoryNode` are not required to be in the CAS. If the
     // `DirectoryNode` digest is sent to the worker, the referenced `Directory`
     // information MUST have been previously uploaded to the CAS.
-    Directory directory_metadata = 2;
+    Directory directory_contents = 2;
   }
 
   // Sent in response to a dynamic file hash request.
@@ -1510,7 +1510,7 @@ message StreamedDynamicExecutionData {
     // Set to true if the requested file path does not exist.
     bool file_does_not_exist = 2;
 
-    // The file digest and associated metadata.
+    // The file digest and associated data.
     FileNode file = 3;
   }
 
@@ -1547,7 +1547,7 @@ message StreamedDynamicExecutionData {
   // Provides dynamic directory content information in response to a previous
   // request from the worker in
   // [DynamicExecuteOperationMetadata.dynamic_directory_content_path][build.bazel.remote.execution.v2.DynamicExecuteOperationMetadata].
-  DynamicDirectoryMetadataResponse dynamic_directory_metadata_response = 2;
+  DynamicDirectoryContentResponse dynamic_directory_content_response = 2;
   
   // Provides dynamic file hash information in response to a previous
   // request from the worker in
