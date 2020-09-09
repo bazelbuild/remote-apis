@@ -1434,11 +1434,11 @@ message DynamicExecuteOperationMetadata {
     // relative or fully qualified path.
     string path = 1;
 
-    // The file hash of the content expected by the worker.
-    // If this is not the current hash of the file content at `path`
+    // The file hash and size of the content expected by the worker.
+    // If this is not the current hash or size of the file content at `path`
     // then the corrected hash is returned in
     // `DynamicExecuteOperationMetadata.dynamic_directory_metadata_response`.
-    string file_hash = 2;
+    Digest file_digest = 2;
   }
 
   // The current stage of execution.
@@ -1530,9 +1530,12 @@ message StreamedDynamicExecutionData {
     // which may cause the action to fail.
     bool could_not_upload = 2;
 
-    // The hash and size of the file. This is important for  the case where
+    // The hash and size of the file. This is important for the case where
     // the file path requested by the server did not have the same hash as
-    // expected.
+    // expected. The client SHOULD ensure the content has been uploaded to
+    // the CAS before informing the server about it. The server MAY request
+    // re-upload of content not found, e.g. if it was purged by the CAS
+    // before use.
     Digest file_digest = 3;
   }
 
