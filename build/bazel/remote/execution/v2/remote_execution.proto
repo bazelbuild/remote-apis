@@ -1226,13 +1226,13 @@ message ActionResult {
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
   // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
   // would cause the response to exceed message size limits.
-  ConsoleOutputs console_outputs = 10;
+  ConsoleOutputs console_outputs = 13;
 
   // The digest for a blob containing the
   // [ConsoleOutputs][build.bazel.remote.execution.v2.ConsoleOutputs] for the action,
   // which can be retrieved from the
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
-  Digest console_outputs_digest = 11;
+  Digest console_outputs_digest = 14;
 }
 
 // A sequence of console outputs in the order received for a remoted process.
