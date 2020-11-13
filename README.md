@@ -27,7 +27,7 @@ from the clients above. These are then distributed to workers; some of these
 workers implement the Remote Worker API.
 
 * [Buildbarn](https://github.com/buildbarn) (open source)
-* [BuildBuddy](https://www.buildbuddy.io/) (commerical & open source)
+* [BuildBuddy](https://www.buildbuddy.io/) (commercial & open source)
 * [Buildfarm](https://github.com/bazelbuild/bazel-buildfarm) (open source)
 * [BuildGrid](https://buildgrid.build/) (open source)
 * [EngFlow](https://www.engflow.com/) (commercial)
