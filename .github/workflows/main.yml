@@ -13,11 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Configure git
-      run: |
-        git config user.name "GitHub Actions Bot"
-        git config user.email "<>"
-
     - name: Install bazelisk
       run: |
         curl -LO https://github.com/bazelbuild/bazelisk/releases/download/v1.7.4/bazelisk-linux-amd64
@@ -29,5 +24,3 @@ jobs:
       run: |
         set -e
         PATH=${HOME}/bin:$PATH ./hooks/pre-commit
-        # This might stage some files, if the bindings need to be regenerated.
-        # Should we make that a failure?
