@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install bazelisk
+      run: |
+        curl -LO https://github.com/bazelbuild/bazelisk/releases/download/v1.7.4/bazelisk-linux-amd64
+        mkdir -p "${HOME}/bin"
+        mv bazelisk-linux-amd64 "${HOME}/bin/bazel"
+        chmod +x "${HOME}/bin/bazel"
+
+    - name: Check bindings generation
+      run: |
+        set -e
+        PATH=${HOME}/bin:$PATH ./hooks/pre-commit
