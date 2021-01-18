@@ -84,7 +84,7 @@ bind(
     actual = "@com_github_grpc_grpc//:grpc++",
 )
 
-load("//:repository_rules.bzl", "switched_rules_by_language")
+load("@googleapis//:repository_rules.bzl", "switched_rules_by_language")
 
 switched_rules_by_language(
     name = "com_google_googleapis_imports",
