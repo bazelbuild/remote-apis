@@ -22,17 +22,6 @@ go_rules_dependencies()
 
 go_register_toolchains(version = "1.15.6")
 
-#http_archive(
-#    name = "upb",
-#    sha256 = "72d86e89d0345cba15106dfb5fc5f550dc3de0f1871599b8a481bdda54e7dee0"
-#    strip_prefix = "upb-0f40d59258173b13f989a9f801967f44291fa30d",
-#    urls = ["https://github.com/protocolbuffers/upb/archive/0f40d59258173b13f989a9f801967f44291fa30d.zip"],
-#)
-#
-#load("@upb//bazel:workspace_deps.bzl", "upb_deps")
-#
-#upb_deps()
-
 http_archive(
     name = "bazel_skylib",
     sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
@@ -49,13 +38,21 @@ bazel_skylib_workspace()
 # Gazelle, which we need in order to selectively pull in Gazelle dependencies for Go.
 http_archive(
     name = "bazel_gazelle",
-    sha256 = "41bff2a0b32b02f20c227d234aa25ef3783998e5453f7eade929704dcff7cd4b",
-    urls = ["https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.19.0/bazel-gazelle-v0.19.0.tar.gz"],
+    sha256 = "222e49f034ca7a1d1231422cdb67066b885819885c356673cb1f72f748a3c9d4",
+    urls = ["https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.3/bazel-gazelle-v0.22.3.tar.gz"],
 )
 
-load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
 
 gazelle_dependencies()
+
+load("@io_bazel_rules_go//tests/integration/popular_repos:popular_repos.bzl", "popular_repos")
+
+popular_repos()
+
+load("@io_bazel_rules_go//tests:grpc_repos.bzl", "grpc_dependencies")
+
+grpc_dependencies()
 
 # Needed for protobuf.
 http_archive(
@@ -83,11 +80,11 @@ load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
 grpc_deps()
 
 # More gRPC dependencies. grpc_extra_deps does not work out of the box.
-#load("@upb//bazel:workspace_deps.bzl", "upb_deps")
+load("@upb//bazel:workspace_deps.bzl", "upb_deps")
 load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")
 load("@build_bazel_apple_support//lib:repositories.bzl", "apple_support_dependencies")
 
-#upb_deps()
+upb_deps()
 
 apple_rules_dependencies()
 
