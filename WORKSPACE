@@ -42,6 +42,10 @@ http_archive(
     urls = ["https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.19.0/bazel-gazelle-v0.19.0.tar.gz"],
 )
 
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+
+gazelle_dependencies()
+
 # Needed for protobuf.
 http_archive(
     name = "com_google_protobuf",
