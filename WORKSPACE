@@ -84,6 +84,14 @@ bind(
     actual = "@com_github_grpc_grpc//:grpc++",
 )
 
+# Needed for the googleapis protos.
+http_archive(
+    name = "googleapis",
+    sha256 = "825be3bf70632d273a10e41db1f458211446d129063c4f29cee854f9bcbf834b",
+    strip_prefix = "googleapis-61ab0348bd228c942898aee291d677f0afdb888c",
+    urls = ["https://github.com/googleapis/googleapis/archive/61ab0348bd228c942898aee291d677f0afdb888c.zip"],
+)
+
 load("@googleapis//:repository_rules.bzl", "switched_rules_by_language")
 
 switched_rules_by_language(
@@ -91,12 +99,4 @@ switched_rules_by_language(
     cc = True,
     go = True,
     java = True,
-)
-
-# Needed for the googleapis protos.
-http_archive(
-    name = "googleapis",
-    sha256 = "825be3bf70632d273a10e41db1f458211446d129063c4f29cee854f9bcbf834b",
-    strip_prefix = "googleapis-61ab0348bd228c942898aee291d677f0afdb888c",
-    urls = ["https://github.com/googleapis/googleapis/archive/61ab0348bd228c942898aee291d677f0afdb888c.zip"],
 )
