@@ -23,6 +23,16 @@ go_rules_dependencies()
 go_register_toolchains(version = "1.15.6")
 
 http_archive(
+    name = "upb",
+    strip_prefix = "upb-0f40d59258173b13f989a9f801967f44291fa30d",
+    urls = ["https://github.com/protocolbuffers/upb/archive/0f40d59258173b13f989a9f801967f44291fa30d.zip"],
+)
+
+load("@upb//bazel:workspace_deps.bzl", "upb_deps")
+
+upb_deps()
+
+http_archive(
     name = "bazel_skylib",
     sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
     urls = [
@@ -53,13 +63,21 @@ http_archive(
     urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/2.0.0.tar.gz"],
 )
 
-load("@rules_proto_grpc//:repositories.bzl", "rules_proto_grpc_repos", "rules_proto_grpc_toolchains")
+load(
+    "@rules_proto_grpc//:repositories.bzl",
+    "rules_proto_grpc_repos",
+    "rules_proto_grpc_toolchains",
+)
 
 rules_proto_grpc_toolchains()
 
 rules_proto_grpc_repos()
 
-load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
+load(
+    "@rules_proto//proto:repositories.bzl",
+    "rules_proto_dependencies",
+    "rules_proto_toolchains",
+)
 
 rules_proto_dependencies()
 
