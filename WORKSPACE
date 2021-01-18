@@ -1,4 +1,4 @@
-workspace(name="bazel_remote_apis")
+workspace(name = "bazel_remote_apis")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
