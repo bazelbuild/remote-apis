@@ -14,6 +14,10 @@ http_archive(
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 
+go_rules_dependencies()
+
+go_register_toolchains()
+
 http_archive(
     name = "bazel_skylib",
     sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
