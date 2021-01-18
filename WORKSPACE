@@ -22,15 +22,16 @@ go_rules_dependencies()
 
 go_register_toolchains(version = "1.15.6")
 
-http_archive(
-    name = "upb",
-    strip_prefix = "upb-0f40d59258173b13f989a9f801967f44291fa30d",
-    urls = ["https://github.com/protocolbuffers/upb/archive/0f40d59258173b13f989a9f801967f44291fa30d.zip"],
-)
-
-load("@upb//bazel:workspace_deps.bzl", "upb_deps")
-
-upb_deps()
+#http_archive(
+#    name = "upb",
+#    sha256 = "72d86e89d0345cba15106dfb5fc5f550dc3de0f1871599b8a481bdda54e7dee0"
+#    strip_prefix = "upb-0f40d59258173b13f989a9f801967f44291fa30d",
+#    urls = ["https://github.com/protocolbuffers/upb/archive/0f40d59258173b13f989a9f801967f44291fa30d.zip"],
+#)
+#
+#load("@upb//bazel:workspace_deps.bzl", "upb_deps")
+#
+#upb_deps()
 
 http_archive(
     name = "bazel_skylib",
@@ -55,33 +56,6 @@ http_archive(
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 
 gazelle_dependencies()
-
-http_archive(
-    name = "rules_proto_grpc",
-    sha256 = "d771584bbff98698e7cb3cb31c132ee206a972569f4dc8b65acbdd934d156b33",
-    strip_prefix = "rules_proto_grpc-2.0.0",
-    urls = ["https://github.com/rules-proto-grpc/rules_proto_grpc/archive/2.0.0.tar.gz"],
-)
-
-load(
-    "@rules_proto_grpc//:repositories.bzl",
-    "rules_proto_grpc_repos",
-    "rules_proto_grpc_toolchains",
-)
-
-rules_proto_grpc_toolchains()
-
-rules_proto_grpc_repos()
-
-load(
-    "@rules_proto//proto:repositories.bzl",
-    "rules_proto_dependencies",
-    "rules_proto_toolchains",
-)
-
-rules_proto_dependencies()
-
-rules_proto_toolchains()
 
 # Needed for protobuf.
 http_archive(
@@ -109,11 +83,11 @@ load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
 grpc_deps()
 
 # More gRPC dependencies. grpc_extra_deps does not work out of the box.
-load("@upb//bazel:workspace_deps.bzl", "upb_deps")
+#load("@upb//bazel:workspace_deps.bzl", "upb_deps")
 load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")
 load("@build_bazel_apple_support//lib:repositories.bzl", "apple_support_dependencies")
 
-upb_deps()
+#upb_deps()
 
 apple_rules_dependencies()
 
