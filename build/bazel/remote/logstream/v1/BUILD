@@ -2,7 +2,7 @@ package(default_visibility = ["//visibility:public"])
 
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load(
-    "@bcom_google_googleapis_imports//:imports.bzl",
+    "@com_google_googleapis_imports//:imports.bzl",
     "cc_grpc_library",
     "go_library",
     "go_proto_library",
