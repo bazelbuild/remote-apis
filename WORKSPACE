@@ -35,16 +35,6 @@ load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 
 bazel_skylib_workspace()
 
-# Pull in go rules, which we need in order to selectively pull in Go dependencies.
-http_archive(
-    name = "io_bazel_rules_go",
-    sha256 = "842ec0e6b4fbfdd3de6150b61af92901eeb73681fd4d185746644c338f51d4c0",
-    urls = [
-        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/rules_go/releases/download/v0.20.1/rules_go-v0.20.1.tar.gz",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.20.1/rules_go-v0.20.1.tar.gz",
-    ],
-)
-
 # Gazelle, which we need in order to selectively pull in Gazelle dependencies for Go.
 http_archive(
     name = "bazel_gazelle",
