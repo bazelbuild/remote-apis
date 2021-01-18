@@ -33,17 +33,17 @@ cc_grpc_library(
     ],
 )
 
-go_proto_library(
-    name = "remote_logstream_go_proto",
-    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
-    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/logstream/v1",
-    proto = ":remote_logstream_proto",
-    deps = [
-    ],
-)
-
-go_library(
-    name = "go_default_library",
-    embed = [":remote_logstream_go_proto"],
-    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/logstream/v1",
-)
+#go_proto_library(
+#    name = "remote_logstream_go_proto",
+#    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
+#    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/logstream/v1",
+#    proto = ":remote_logstream_proto",
+#    deps = [
+#    ],
+#)
+#
+#go_library(
+#    name = "go_default_library",
+#    embed = [":remote_logstream_go_proto"],
+#    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/logstream/v1",
+#)
