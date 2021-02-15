@@ -1696,6 +1696,7 @@ message RequestMetadata {
   string action_mnemonic = 5;
 
   // A namespace within which the build was performed, for instance a repository/workspace name.
+  // There are no guarantees that these are globally unique, e.g. two users may create namespaces with the same name.
   string invocation_namespace_id = 6;
 
   // An identifier for the target, unique within the invocation_namespace_id, which produced this action.
