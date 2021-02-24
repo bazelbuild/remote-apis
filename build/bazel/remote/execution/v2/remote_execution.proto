@@ -1691,21 +1691,17 @@ message RequestMetadata {
   // runs of foo_test, bar_test and baz_test on a post-submit of a given patch.
   string correlated_invocations_id = 4;
 
-  // A one-word description of the kind of action, for example, CppCompile or GoLink.
+  // A brief description of the kind of action, for example, CppCompile or GoLink.
   // There is no standard agreed set of values for this, and they are expected to vary between different client tools.
   string action_mnemonic = 5;
 
-  // A namespace within which the build was performed, for instance a repository/workspace name.
-  // There are no guarantees that these are globally unique, e.g. two users may create namespaces with the same name.
-  string invocation_namespace_id = 6;
-
-  // An identifier for the target, unique within the invocation_namespace_id, which produced this action.
+  // An identifier for the target which produced this action.
   // No guarantees are made around how many actions may relate to a single target.
-  string target = 7;
+  string target_id = 6;
 
   // An identifier for the configuration in which the target was built,
   // e.g. for differentiating building host tools or different target platforms.
   // There is no expectation that this value will have any particular structure,
   // or equality across invocations, though some client tools may offer these guarantees.
-  string configuration_id = 8;
+  string configuration_id = 7;
 }
