@@ -6,9 +6,13 @@ This is adapted from
 https://github.com/googleapis/googleapis/blob/master/repository_rules.bzl
 """
 
-load("//:remote_apis_deps.bzl", "remote_apis_go_deps")
 
 def _switched_rules_impl(ctx):
+    no_go_deps = """
+def load_deps():
+    pass
+    """
+
     disabled_rule_script = """
 def {rule_name}(**kwargs):
     pass
@@ -22,6 +26,7 @@ load("{file_label}", _{rule_name} = "{rule_name}")
     elabled_rule_scrip_alias = """
 {rule_name} = _{rule_name}
 """
+
     load_rules = []  # load() must go before everything else in .bzl files since Bazel 0.25.0
     rules = []
 
@@ -41,6 +46,11 @@ load("{file_label}", _{rule_name} = "{rule_name}")
     ctx.file("BUILD.bazel", "")
     ctx.file("imports.bzl", "".join(load_rules + rules))
 
+    if(ctx.attr.enable_go):
+        ctx.file("deps.bzl", ctx.read(ctx.path(ctx.attr._go_deps)))
+    else:
+        ctx.file("deps.bzl", no_go_deps)
+
 switched_rules = repository_rule(
     implementation = _switched_rules_impl,
     attrs = {
@@ -48,6 +58,14 @@ switched_rules = repository_rule(
             allow_empty = True,
             mandatory = False,
             default = {},
+        ),
+        "_go_deps": attr.label(
+            default = "//:go_deps.bzl",
+            allow_single_file = True,
+        ),
+        "enable_go": attr.bool(
+            mandatory = False,
+            default = False,
         ),
     },
 )
@@ -117,9 +135,10 @@ def switched_rules_by_language(
     switched_rules(
         name = name,
         rules = rules,
+        enable_go = go,
     )
-    if go:
-        remote_apis_go_deps()
+
+
 
 def _switch(enabled, enabled_value):
     return enabled_value if enabled else ""

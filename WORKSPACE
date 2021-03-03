@@ -92,6 +92,8 @@ switched_rules_by_language(
     go = True,
     java = True,
 )
+load("@bazel_remote_apis_imports//deps.bzl", "load_deps")
+load_deps()
 
 # Needed for the googleapis protos.
 http_archive(

@@ -70,6 +70,8 @@ switched_rules_by_language(
     name = "bazel_remote_apis_imports",
     java = True,
 )
+load("@bazel_remote_apis_imports//deps.bzl", "load_deps")
+load_deps()
 ```
 
 You can find the complete list of supported languages in `repository_rules.bzl`.
