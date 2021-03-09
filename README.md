@@ -22,11 +22,12 @@ These tools use the Remote Execution API to distribute builds to workers.
 * [Recc](https://gitlab.com/bloomberg/recc)
 
 ### Servers
-These applications implement the Remote Execution API to server build requests
+These applications implement the Remote Execution API to serve build requests
 from the clients above. These are then distributed to workers; some of these
 workers implement the Remote Worker API.
 
 * [Buildbarn](https://github.com/buildbarn) (open source)
+* [BuildBuddy](https://www.buildbuddy.io/) (commercial & open source)
 * [Buildfarm](https://github.com/bazelbuild/bazel-buildfarm) (open source)
 * [BuildGrid](https://buildgrid.build/) (open source)
 * [EngFlow](https://www.engflow.com/) (commercial)
