@@ -8,6 +8,7 @@ import (
 	fmt "fmt"
 	semver "github.com/bazelbuild/remote-apis/build/bazel/semver"
 	proto "github.com/golang/protobuf/proto"
+	any "github.com/golang/protobuf/ptypes/any"
 	duration "github.com/golang/protobuf/ptypes/duration"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"
@@ -34,11 +35,16 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 type ExecutionStage_Value int32
 
 const (
-	ExecutionStage_UNKNOWN     ExecutionStage_Value = 0
+	// Invalid value.
+	ExecutionStage_UNKNOWN ExecutionStage_Value = 0
+	// Checking the result against the cache.
 	ExecutionStage_CACHE_CHECK ExecutionStage_Value = 1
-	ExecutionStage_QUEUED      ExecutionStage_Value = 2
-	ExecutionStage_EXECUTING   ExecutionStage_Value = 3
-	ExecutionStage_COMPLETED   ExecutionStage_Value = 4
+	// Currently idle, awaiting a free machine to execute.
+	ExecutionStage_QUEUED ExecutionStage_Value = 2
+	// Currently being executed by a worker.
+	ExecutionStage_EXECUTING ExecutionStage_Value = 3
+	// Finished execution.
+	ExecutionStage_COMPLETED ExecutionStage_Value = 4
 )
 
 var ExecutionStage_Value_name = map[int32]string{
@@ -68,13 +74,25 @@ func (ExecutionStage_Value) EnumDescriptor() ([]byte, []int) {
 type DigestFunction_Value int32
 
 const (
+	// It is an error for the server to return this value.
 	DigestFunction_UNKNOWN DigestFunction_Value = 0
-	DigestFunction_SHA256  DigestFunction_Value = 1
-	DigestFunction_SHA1    DigestFunction_Value = 2
-	DigestFunction_MD5     DigestFunction_Value = 3
-	DigestFunction_VSO     DigestFunction_Value = 4
-	DigestFunction_SHA384  DigestFunction_Value = 5
-	DigestFunction_SHA512  DigestFunction_Value = 6
+	// The SHA-256 digest function.
+	DigestFunction_SHA256 DigestFunction_Value = 1
+	// The SHA-1 digest function.
+	DigestFunction_SHA1 DigestFunction_Value = 2
+	// The MD5 digest function.
+	DigestFunction_MD5 DigestFunction_Value = 3
+	// The Microsoft "VSO-Hash" paged SHA256 digest function.
+	// See https://github.com/microsoft/BuildXL/blob/master/Documentation/Specs/PagedHash.md .
+	DigestFunction_VSO DigestFunction_Value = 4
+	// The SHA-384 digest function.
+	DigestFunction_SHA384 DigestFunction_Value = 5
+	// The SHA-512 digest function.
+	DigestFunction_SHA512 DigestFunction_Value = 6
+	// Murmur3 128-bit digest function, x64 variant. Note that this is not a
+	// cryptographic hash function and its collision properties are not strongly guaranteed.
+	// See https://github.com/aappleby/smhasher/wiki/MurmurHash3 .
+	DigestFunction_MURMUR3 DigestFunction_Value = 7
 )
 
 var DigestFunction_Value_name = map[int32]string{
@@ -85,6 +103,7 @@ var DigestFunction_Value_name = map[int32]string{
 	4: "VSO",
 	5: "SHA384",
 	6: "SHA512",
+	7: "MURMUR3",
 }
 
 var DigestFunction_Value_value = map[string]int32{
@@ -95,6 +114,7 @@ var DigestFunction_Value_value = map[string]int32{
 	"VSO":     4,
 	"SHA384":  5,
 	"SHA512":  6,
+	"MURMUR3": 7,
 }
 
 func (x DigestFunction_Value) String() string {
@@ -108,9 +128,16 @@ func (DigestFunction_Value) EnumDescriptor() ([]byte, []int) {
 type SymlinkAbsolutePathStrategy_Value int32
 
 const (
-	SymlinkAbsolutePathStrategy_UNKNOWN    SymlinkAbsolutePathStrategy_Value = 0
+	// Invalid value.
+	SymlinkAbsolutePathStrategy_UNKNOWN SymlinkAbsolutePathStrategy_Value = 0
+	// Server will return an `INVALID_ARGUMENT` on input symlinks with absolute
+	// targets.
+	// If an action tries to create an output symlink with an absolute target, a
+	// `FAILED_PRECONDITION` will be returned.
 	SymlinkAbsolutePathStrategy_DISALLOWED SymlinkAbsolutePathStrategy_Value = 1
-	SymlinkAbsolutePathStrategy_ALLOWED    SymlinkAbsolutePathStrategy_Value = 2
+	// Server will allow symlink targets to escape the input root tree, possibly
+	// resulting in non-hermetic builds.
+	SymlinkAbsolutePathStrategy_ALLOWED SymlinkAbsolutePathStrategy_Value = 2
 )
 
 var SymlinkAbsolutePathStrategy_Value_name = map[int32]string{
@@ -133,14 +160,79 @@ func (SymlinkAbsolutePathStrategy_Value) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_c43847ba40caac95, []int{39, 0}
 }
 
+// An `Action` captures all the information about an execution which is required
+// to reproduce it.
+//
+// `Action`s are the core component of the [Execution] service. A single
+// `Action` represents a repeatable action that can be performed by the
+// execution service. `Action`s can be succinctly identified by the digest of
+// their wire format encoding and, once an `Action` has been executed, will be
+// cached in the action cache. Future requests can then use the cached result
+// rather than needing to run afresh.
+//
+// When a server completes execution of an
+// [Action][build.bazel.remote.execution.v2.Action], it MAY choose to
+// cache the [result][build.bazel.remote.execution.v2.ActionResult] in
+// the [ActionCache][build.bazel.remote.execution.v2.ActionCache] unless
+// `do_not_cache` is `true`. Clients SHOULD expect the server to do so. By
+// default, future calls to
+// [Execute][build.bazel.remote.execution.v2.Execution.Execute] the same
+// `Action` will also serve their results from the cache. Clients must take care
+// to understand the caching behaviour. Ideally, all `Action`s will be
+// reproducible so that serving a result from cache is always desirable and
+// correct.
 type Action struct {
-	CommandDigest        *Digest            `protobuf:"bytes,1,opt,name=command_digest,json=commandDigest,proto3" json:"command_digest,omitempty"`
-	InputRootDigest      *Digest            `protobuf:"bytes,2,opt,name=input_root_digest,json=inputRootDigest,proto3" json:"input_root_digest,omitempty"`
-	Timeout              *duration.Duration `protobuf:"bytes,6,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	DoNotCache           bool               `protobuf:"varint,7,opt,name=do_not_cache,json=doNotCache,proto3" json:"do_not_cache,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
-	XXX_unrecognized     []byte             `json:"-"`
-	XXX_sizecache        int32              `json:"-"`
+	// The digest of the [Command][build.bazel.remote.execution.v2.Command]
+	// to run, which MUST be present in the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+	CommandDigest *Digest `protobuf:"bytes,1,opt,name=command_digest,json=commandDigest,proto3" json:"command_digest,omitempty"`
+	// The digest of the root
+	// [Directory][build.bazel.remote.execution.v2.Directory] for the input
+	// files. The files in the directory tree are available in the correct
+	// location on the build machine before the command is executed. The root
+	// directory, as well as every subdirectory and content blob referred to, MUST
+	// be in the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+	InputRootDigest *Digest `protobuf:"bytes,2,opt,name=input_root_digest,json=inputRootDigest,proto3" json:"input_root_digest,omitempty"`
+	// A timeout after which the execution should be killed. If the timeout is
+	// absent, then the client is specifying that the execution should continue
+	// as long as the server will let it. The server SHOULD impose a timeout if
+	// the client does not specify one, however, if the client does specify a
+	// timeout that is longer than the server's maximum timeout, the server MUST
+	// reject the request.
+	//
+	// The timeout is a part of the
+	// [Action][build.bazel.remote.execution.v2.Action] message, and
+	// therefore two `Actions` with different timeouts are different, even if they
+	// are otherwise identical. This is because, if they were not, running an
+	// `Action` with a lower timeout than is required might result in a cache hit
+	// from an execution run with a longer timeout, hiding the fact that the
+	// timeout is too short. By encoding it directly in the `Action`, a lower
+	// timeout will result in a cache miss and the execution timeout will fail
+	// immediately, rather than whenever the cache entry gets evicted.
+	Timeout *duration.Duration `protobuf:"bytes,6,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	// If true, then the `Action`'s result cannot be cached, and in-flight
+	// requests for the same `Action` may not be merged.
+	DoNotCache bool `protobuf:"varint,7,opt,name=do_not_cache,json=doNotCache,proto3" json:"do_not_cache,omitempty"`
+	// An optional additional salt value used to place this `Action` into a
+	// separate cache namespace from other instances having the same field
+	// contents. This salt typically comes from operational configuration
+	// specific to sources such as repo and service configuration,
+	// and allows disowning an entire set of ActionResults that might have been
+	// poisoned by buggy software or tool failures.
+	Salt []byte `protobuf:"bytes,9,opt,name=salt,proto3" json:"salt,omitempty"`
+	// The optional platform requirements for the execution environment. The
+	// server MAY choose to execute the action on any worker satisfying the
+	// requirements, so the client SHOULD ensure that running the action on any
+	// such worker will have the same result.  A detailed lexicon for this can be
+	// found in the accompanying platform.md.
+	// New in version 2.2: clients SHOULD set these platform properties as well
+	// as those in the [Command][build.bazel.remote.execution.v2.Command]. Servers
+	// SHOULD prefer those set here.
+	Platform             *Platform `protobuf:"bytes,10,opt,name=platform,proto3" json:"platform,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
+	XXX_unrecognized     []byte    `json:"-"`
+	XXX_sizecache        int32     `json:"-"`
 }
 
 func (m *Action) Reset()         { *m = Action{} }
@@ -196,18 +288,152 @@ func (m *Action) GetDoNotCache() bool {
 	return false
 }
 
+func (m *Action) GetSalt() []byte {
+	if m != nil {
+		return m.Salt
+	}
+	return nil
+}
+
+func (m *Action) GetPlatform() *Platform {
+	if m != nil {
+		return m.Platform
+	}
+	return nil
+}
+
+// A `Command` is the actual command executed by a worker running an
+// [Action][build.bazel.remote.execution.v2.Action] and specifications of its
+// environment.
+//
+// Except as otherwise required, the environment (such as which system
+// libraries or binaries are available, and what filesystems are mounted where)
+// is defined by and specific to the implementation of the remote execution API.
 type Command struct {
-	Arguments            []string                       `protobuf:"bytes,1,rep,name=arguments,proto3" json:"arguments,omitempty"`
+	// The arguments to the command. The first argument must be the path to the
+	// executable, which must be either a relative path, in which case it is
+	// evaluated with respect to the input root, or an absolute path.
+	Arguments []string `protobuf:"bytes,1,rep,name=arguments,proto3" json:"arguments,omitempty"`
+	// The environment variables to set when running the program. The worker may
+	// provide its own default environment variables; these defaults can be
+	// overridden using this field. Additional variables can also be specified.
+	//
+	// In order to ensure that equivalent
+	// [Command][build.bazel.remote.execution.v2.Command]s always hash to the same
+	// value, the environment variables MUST be lexicographically sorted by name.
+	// Sorting of strings is done by code point, equivalently, by the UTF-8 bytes.
 	EnvironmentVariables []*Command_EnvironmentVariable `protobuf:"bytes,2,rep,name=environment_variables,json=environmentVariables,proto3" json:"environment_variables,omitempty"`
-	OutputFiles          []string                       `protobuf:"bytes,3,rep,name=output_files,json=outputFiles,proto3" json:"output_files,omitempty"`
-	OutputDirectories    []string                       `protobuf:"bytes,4,rep,name=output_directories,json=outputDirectories,proto3" json:"output_directories,omitempty"`
-	OutputPaths          []string                       `protobuf:"bytes,7,rep,name=output_paths,json=outputPaths,proto3" json:"output_paths,omitempty"`
-	Platform             *Platform                      `protobuf:"bytes,5,opt,name=platform,proto3" json:"platform,omitempty"`
-	WorkingDirectory     string                         `protobuf:"bytes,6,opt,name=working_directory,json=workingDirectory,proto3" json:"working_directory,omitempty"`
-	OutputNodeProperties []string                       `protobuf:"bytes,8,rep,name=output_node_properties,json=outputNodeProperties,proto3" json:"output_node_properties,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                       `json:"-"`
-	XXX_unrecognized     []byte                         `json:"-"`
-	XXX_sizecache        int32                          `json:"-"`
+	// A list of the output files that the client expects to retrieve from the
+	// action. Only the listed files, as well as directories listed in
+	// `output_directories`, will be returned to the client as output.
+	// Other files or directories that may be created during command execution
+	// are discarded.
+	//
+	// The paths are relative to the working directory of the action execution.
+	// The paths are specified using a single forward slash (`/`) as a path
+	// separator, even if the execution platform natively uses a different
+	// separator. The path MUST NOT include a trailing slash, nor a leading slash,
+	// being a relative path.
+	//
+	// In order to ensure consistent hashing of the same Action, the output paths
+	// MUST be sorted lexicographically by code point (or, equivalently, by UTF-8
+	// bytes).
+	//
+	// An output file cannot be duplicated, be a parent of another output file, or
+	// have the same path as any of the listed output directories.
+	//
+	// Directories leading up to the output files are created by the worker prior
+	// to execution, even if they are not explicitly part of the input root.
+	//
+	// DEPRECATED since v2.1: Use `output_paths` instead.
+	OutputFiles []string `protobuf:"bytes,3,rep,name=output_files,json=outputFiles,proto3" json:"output_files,omitempty"`
+	// A list of the output directories that the client expects to retrieve from
+	// the action. Only the listed directories will be returned (an entire
+	// directory structure will be returned as a
+	// [Tree][build.bazel.remote.execution.v2.Tree] message digest, see
+	// [OutputDirectory][build.bazel.remote.execution.v2.OutputDirectory]), as
+	// well as files listed in `output_files`. Other files or directories that
+	// may be created during command execution are discarded.
+	//
+	// The paths are relative to the working directory of the action execution.
+	// The paths are specified using a single forward slash (`/`) as a path
+	// separator, even if the execution platform natively uses a different
+	// separator. The path MUST NOT include a trailing slash, nor a leading slash,
+	// being a relative path. The special value of empty string is allowed,
+	// although not recommended, and can be used to capture the entire working
+	// directory tree, including inputs.
+	//
+	// In order to ensure consistent hashing of the same Action, the output paths
+	// MUST be sorted lexicographically by code point (or, equivalently, by UTF-8
+	// bytes).
+	//
+	// An output directory cannot be duplicated or have the same path as any of
+	// the listed output files. An output directory is allowed to be a parent of
+	// another output directory.
+	//
+	// Directories leading up to the output directories (but not the output
+	// directories themselves) are created by the worker prior to execution, even
+	// if they are not explicitly part of the input root.
+	//
+	// DEPRECATED since 2.1: Use `output_paths` instead.
+	OutputDirectories []string `protobuf:"bytes,4,rep,name=output_directories,json=outputDirectories,proto3" json:"output_directories,omitempty"`
+	// A list of the output paths that the client expects to retrieve from the
+	// action. Only the listed paths will be returned to the client as output.
+	// The type of the output (file or directory) is not specified, and will be
+	// determined by the server after action execution. If the resulting path is
+	// a file, it will be returned in an
+	// [OutputFile][build.bazel.remote.execution.v2.OutputFile]) typed field.
+	// If the path is a directory, the entire directory structure will be returned
+	// as a [Tree][build.bazel.remote.execution.v2.Tree] message digest, see
+	// [OutputDirectory][build.bazel.remote.execution.v2.OutputDirectory])
+	// Other files or directories that may be created during command execution
+	// are discarded.
+	//
+	// The paths are relative to the working directory of the action execution.
+	// The paths are specified using a single forward slash (`/`) as a path
+	// separator, even if the execution platform natively uses a different
+	// separator. The path MUST NOT include a trailing slash, nor a leading slash,
+	// being a relative path.
+	//
+	// In order to ensure consistent hashing of the same Action, the output paths
+	// MUST be deduplicated and sorted lexicographically by code point (or,
+	// equivalently, by UTF-8 bytes).
+	//
+	// Directories leading up to the output paths are created by the worker prior
+	// to execution, even if they are not explicitly part of the input root.
+	//
+	// New in v2.1: this field supersedes the DEPRECATED `output_files` and
+	// `output_directories` fields. If `output_paths` is used, `output_files` and
+	// `output_directories` will be ignored!
+	OutputPaths []string `protobuf:"bytes,7,rep,name=output_paths,json=outputPaths,proto3" json:"output_paths,omitempty"`
+	// The platform requirements for the execution environment. The server MAY
+	// choose to execute the action on any worker satisfying the requirements, so
+	// the client SHOULD ensure that running the action on any such worker will
+	// have the same result.  A detailed lexicon for this can be found in the
+	// accompanying platform.md.
+	// DEPRECATED as of v2.2: platform properties are now specified directly in
+	// the action. See documentation note in the
+	// [Action][build.bazel.remote.execution.v2.Action] for migration.
+	Platform *Platform `protobuf:"bytes,5,opt,name=platform,proto3" json:"platform,omitempty"`
+	// The working directory, relative to the input root, for the command to run
+	// in. It must be a directory which exists in the input tree. If it is left
+	// empty, then the action is run in the input root.
+	WorkingDirectory string `protobuf:"bytes,6,opt,name=working_directory,json=workingDirectory,proto3" json:"working_directory,omitempty"`
+	// A list of keys for node properties the client expects to retrieve for
+	// output files and directories. Keys are either names of string-based
+	// [NodeProperty][build.bazel.remote.execution.v2.NodeProperty] or
+	// names of fields in [NodeProperties][build.bazel.remote.execution.v2.NodeProperties].
+	// In order to ensure that equivalent `Action`s always hash to the same
+	// value, the node properties MUST be lexicographically sorted by name.
+	// Sorting of strings is done by code point, equivalently, by the UTF-8 bytes.
+	//
+	// The interpretation of string-based properties is server-dependent. If a
+	// property is not recognized by the server, the server will return an
+	// `INVALID_ARGUMENT`.
+	OutputNodeProperties []string `protobuf:"bytes,8,rep,name=output_node_properties,json=outputNodeProperties,proto3" json:"output_node_properties,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *Command) Reset()         { *m = Command{} }
@@ -291,8 +517,12 @@ func (m *Command) GetOutputNodeProperties() []string {
 	return nil
 }
 
+// An `EnvironmentVariable` is one variable to set in the running program's
+// environment.
 type Command_EnvironmentVariable struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The variable name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The variable value.
 	Value                string   `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -338,7 +568,16 @@ func (m *Command_EnvironmentVariable) GetValue() string {
 	return ""
 }
 
+// A `Platform` is a set of requirements, such as hardware, operating system, or
+// compiler toolchain, for an
+// [Action][build.bazel.remote.execution.v2.Action]'s execution
+// environment. A `Platform` is represented as a series of key-value pairs
+// representing the properties that are required of the platform.
 type Platform struct {
+	// The properties that make up this platform. In order to ensure that
+	// equivalent `Platform`s always hash to the same value, the properties MUST
+	// be lexicographically sorted by name, and then by value. Sorting of strings
+	// is done by code point, equivalently, by the UTF-8 bytes.
 	Properties           []*Platform_Property `protobuf:"bytes,1,rep,name=properties,proto3" json:"properties,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
@@ -377,8 +616,32 @@ func (m *Platform) GetProperties() []*Platform_Property {
 	return nil
 }
 
+// A single property for the environment. The server is responsible for
+// specifying the property `name`s that it accepts. If an unknown `name` is
+// provided in the requirements for an
+// [Action][build.bazel.remote.execution.v2.Action], the server SHOULD
+// reject the execution request. If permitted by the server, the same `name`
+// may occur multiple times.
+//
+// The server is also responsible for specifying the interpretation of
+// property `value`s. For instance, a property describing how much RAM must be
+// available may be interpreted as allowing a worker with 16GB to fulfill a
+// request for 8GB, while a property describing the OS environment on which
+// the action must be performed may require an exact match with the worker's
+// OS.
+//
+// The server MAY use the `value` of one or more properties to determine how
+// it sets up the execution environment, such as by making specific system
+// files available to the worker.
+//
+// Both names and values are typically case-sensitive. Note that the platform
+// is implicitly part of the action digest, so even tiny changes in the names
+// or values (like changing case) may result in different action cache
+// entries.
 type Platform_Property struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The property name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The property value.
 	Value                string   `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -424,14 +687,93 @@ func (m *Platform_Property) GetValue() string {
 	return ""
 }
 
+// A `Directory` represents a directory node in a file tree, containing zero or
+// more children [FileNodes][build.bazel.remote.execution.v2.FileNode],
+// [DirectoryNodes][build.bazel.remote.execution.v2.DirectoryNode] and
+// [SymlinkNodes][build.bazel.remote.execution.v2.SymlinkNode].
+// Each `Node` contains its name in the directory, either the digest of its
+// content (either a file blob or a `Directory` proto) or a symlink target, as
+// well as possibly some metadata about the file or directory.
+//
+// In order to ensure that two equivalent directory trees hash to the same
+// value, the following restrictions MUST be obeyed when constructing a
+// a `Directory`:
+//
+// * Every child in the directory must have a path of exactly one segment.
+//   Multiple levels of directory hierarchy may not be collapsed.
+// * Each child in the directory must have a unique path segment (file name).
+//   Note that while the API itself is case-sensitive, the environment where
+//   the Action is executed may or may not be case-sensitive. That is, it is
+//   legal to call the API with a Directory that has both "Foo" and "foo" as
+//   children, but the Action may be rejected by the remote system upon
+//   execution.
+// * The files, directories and symlinks in the directory must each be sorted
+//   in lexicographical order by path. The path strings must be sorted by code
+//   point, equivalently, by UTF-8 bytes.
+// * The [NodeProperties][build.bazel.remote.execution.v2.NodeProperty] of files,
+//   directories, and symlinks must be sorted in lexicographical order by
+//   property name.
+//
+// A `Directory` that obeys the restrictions is said to be in canonical form.
+//
+// As an example, the following could be used for a file named `bar` and a
+// directory named `foo` with an executable file named `baz` (hashes shortened
+// for readability):
+//
+// ```json
+// // (Directory proto)
+// {
+//   files: [
+//     {
+//       name: "bar",
+//       digest: {
+//         hash: "4a73bc9d03...",
+//         size: 65534
+//       },
+//       node_properties: [
+//         {
+//           "name": "MTime",
+//           "value": "2017-01-15T01:30:15.01Z"
+//         }
+//       ]
+//     }
+//   ],
+//   directories: [
+//     {
+//       name: "foo",
+//       digest: {
+//         hash: "4cf2eda940...",
+//         size: 43
+//       }
+//     }
+//   ]
+// }
+//
+// // (Directory proto with hash "4cf2eda940..." and size 43)
+// {
+//   files: [
+//     {
+//       name: "baz",
+//       digest: {
+//         hash: "b2c941073e...",
+//         size: 1294,
+//       },
+//       is_executable: true
+//     }
+//   ]
+// }
+// ```
 type Directory struct {
-	Files                []*FileNode      `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty"`
-	Directories          []*DirectoryNode `protobuf:"bytes,2,rep,name=directories,proto3" json:"directories,omitempty"`
-	Symlinks             []*SymlinkNode   `protobuf:"bytes,3,rep,name=symlinks,proto3" json:"symlinks,omitempty"`
-	NodeProperties       *NodeProperties  `protobuf:"bytes,5,opt,name=node_properties,json=nodeProperties,proto3" json:"node_properties,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
+	// The files in the directory.
+	Files []*FileNode `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty"`
+	// The subdirectories in the directory.
+	Directories []*DirectoryNode `protobuf:"bytes,2,rep,name=directories,proto3" json:"directories,omitempty"`
+	// The symlinks in the directory.
+	Symlinks             []*SymlinkNode  `protobuf:"bytes,3,rep,name=symlinks,proto3" json:"symlinks,omitempty"`
+	NodeProperties       *NodeProperties `protobuf:"bytes,5,opt,name=node_properties,json=nodeProperties,proto3" json:"node_properties,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
 }
 
 func (m *Directory) Reset()         { *m = Directory{} }
@@ -487,8 +829,15 @@ func (m *Directory) GetNodeProperties() *NodeProperties {
 	return nil
 }
 
+// A single property for [FileNodes][build.bazel.remote.execution.v2.FileNode],
+// [DirectoryNodes][build.bazel.remote.execution.v2.DirectoryNode], and
+// [SymlinkNodes][build.bazel.remote.execution.v2.SymlinkNode]. The server is
+// responsible for specifying the property `name`s that it accepts. If
+// permitted by the server, the same `name` may occur multiple times.
 type NodeProperty struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The property name.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The property value.
 	Value                string   `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -534,9 +883,18 @@ func (m *NodeProperty) GetValue() string {
 	return ""
 }
 
+// Node properties for [FileNodes][build.bazel.remote.execution.v2.FileNode],
+// [DirectoryNodes][build.bazel.remote.execution.v2.DirectoryNode], and
+// [SymlinkNodes][build.bazel.remote.execution.v2.SymlinkNode]. The server is
+// responsible for specifying the properties that it accepts.
+//
 type NodeProperties struct {
-	Properties           []*NodeProperty       `protobuf:"bytes,1,rep,name=properties,proto3" json:"properties,omitempty"`
-	Mtime                *timestamp.Timestamp  `protobuf:"bytes,2,opt,name=mtime,proto3" json:"mtime,omitempty"`
+	// A list of string-based
+	// [NodeProperties][build.bazel.remote.execution.v2.NodeProperty].
+	Properties []*NodeProperty `protobuf:"bytes,1,rep,name=properties,proto3" json:"properties,omitempty"`
+	// The file's last modification timestamp.
+	Mtime *timestamp.Timestamp `protobuf:"bytes,2,opt,name=mtime,proto3" json:"mtime,omitempty"`
+	// The UNIX file mode, e.g., 0755.
 	UnixMode             *wrappers.UInt32Value `protobuf:"bytes,3,opt,name=unix_mode,json=unixMode,proto3" json:"unix_mode,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
 	XXX_unrecognized     []byte                `json:"-"`
@@ -589,9 +947,13 @@ func (m *NodeProperties) GetUnixMode() *wrappers.UInt32Value {
 	return nil
 }
 
+// A `FileNode` represents a single file and associated metadata.
 type FileNode struct {
-	Name                 string          `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Digest               *Digest         `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`
+	// The name of the file.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The digest of the file's content.
+	Digest *Digest `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`
+	// True if file is executable, false otherwise.
 	IsExecutable         bool            `protobuf:"varint,4,opt,name=is_executable,json=isExecutable,proto3" json:"is_executable,omitempty"`
 	NodeProperties       *NodeProperties `protobuf:"bytes,6,opt,name=node_properties,json=nodeProperties,proto3" json:"node_properties,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
@@ -652,8 +1014,16 @@ func (m *FileNode) GetNodeProperties() *NodeProperties {
 	return nil
 }
 
+// A `DirectoryNode` represents a child of a
+// [Directory][build.bazel.remote.execution.v2.Directory] which is itself
+// a `Directory` and its associated metadata.
 type DirectoryNode struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The name of the directory.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The digest of the
+	// [Directory][build.bazel.remote.execution.v2.Directory] object
+	// represented. See [Digest][build.bazel.remote.execution.v2.Digest]
+	// for information about how to take the digest of a proto message.
 	Digest               *Digest  `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -699,8 +1069,19 @@ func (m *DirectoryNode) GetDigest() *Digest {
 	return nil
 }
 
+// A `SymlinkNode` represents a symbolic link.
 type SymlinkNode struct {
-	Name                 string          `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The name of the symlink.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The target path of the symlink. The path separator is a forward slash `/`.
+	// The target path can be relative to the parent directory of the symlink or
+	// it can be an absolute path starting with `/`. Support for absolute paths
+	// can be checked using the [Capabilities][build.bazel.remote.execution.v2.Capabilities]
+	// API. `..` components are allowed anywhere in the target path as logical
+	// canonicalization may lead to different behavior in the presence of
+	// directory symlinks (e.g. `foo/../bar` may not be the same as `bar`).
+	// To reduce potential cache misses, canonicalization is still recommended
+	// where this is possible without impacting correctness.
 	Target               string          `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
 	NodeProperties       *NodeProperties `protobuf:"bytes,4,opt,name=node_properties,json=nodeProperties,proto3" json:"node_properties,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
@@ -754,8 +1135,42 @@ func (m *SymlinkNode) GetNodeProperties() *NodeProperties {
 	return nil
 }
 
+// A content digest. A digest for a given blob consists of the size of the blob
+// and its hash. The hash algorithm to use is defined by the server.
+//
+// The size is considered to be an integral part of the digest and cannot be
+// separated. That is, even if the `hash` field is correctly specified but
+// `size_bytes` is not, the server MUST reject the request.
+//
+// The reason for including the size in the digest is as follows: in a great
+// many cases, the server needs to know the size of the blob it is about to work
+// with prior to starting an operation with it, such as flattening Merkle tree
+// structures or streaming it to a worker. Technically, the server could
+// implement a separate metadata store, but this results in a significantly more
+// complicated implementation as opposed to having the client specify the size
+// up-front (or storing the size along with the digest in every message where
+// digests are embedded). This does mean that the API leaks some implementation
+// details of (what we consider to be) a reasonable server implementation, but
+// we consider this to be a worthwhile tradeoff.
+//
+// When a `Digest` is used to refer to a proto message, it always refers to the
+// message in binary encoded form. To ensure consistent hashing, clients and
+// servers MUST ensure that they serialize messages according to the following
+// rules, even if there are alternate valid encodings for the same message:
+//
+// * Fields are serialized in tag order.
+// * There are no unknown fields.
+// * There are no duplicate fields.
+// * Fields are serialized according to the default semantics for their type.
+//
+// Most protocol buffer implementations will always follow these rules when
+// serializing, but care should be taken to avoid shortcuts. For instance,
+// concatenating two messages to merge them may produce duplicate fields.
 type Digest struct {
-	Hash                 string   `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	// The hash. In the case of SHA-256, it will always be a lowercase hex string
+	// exactly 64 characters long.
+	Hash string `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	// The size of the blob, in bytes.
 	SizeBytes            int64    `protobuf:"varint,2,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -801,20 +1216,35 @@ func (m *Digest) GetSizeBytes() int64 {
 	return 0
 }
 
+// ExecutedActionMetadata contains details about a completed execution.
 type ExecutedActionMetadata struct {
-	Worker                         string               `protobuf:"bytes,1,opt,name=worker,proto3" json:"worker,omitempty"`
-	QueuedTimestamp                *timestamp.Timestamp `protobuf:"bytes,2,opt,name=queued_timestamp,json=queuedTimestamp,proto3" json:"queued_timestamp,omitempty"`
-	WorkerStartTimestamp           *timestamp.Timestamp `protobuf:"bytes,3,opt,name=worker_start_timestamp,json=workerStartTimestamp,proto3" json:"worker_start_timestamp,omitempty"`
-	WorkerCompletedTimestamp       *timestamp.Timestamp `protobuf:"bytes,4,opt,name=worker_completed_timestamp,json=workerCompletedTimestamp,proto3" json:"worker_completed_timestamp,omitempty"`
-	InputFetchStartTimestamp       *timestamp.Timestamp `protobuf:"bytes,5,opt,name=input_fetch_start_timestamp,json=inputFetchStartTimestamp,proto3" json:"input_fetch_start_timestamp,omitempty"`
-	InputFetchCompletedTimestamp   *timestamp.Timestamp `protobuf:"bytes,6,opt,name=input_fetch_completed_timestamp,json=inputFetchCompletedTimestamp,proto3" json:"input_fetch_completed_timestamp,omitempty"`
-	ExecutionStartTimestamp        *timestamp.Timestamp `protobuf:"bytes,7,opt,name=execution_start_timestamp,json=executionStartTimestamp,proto3" json:"execution_start_timestamp,omitempty"`
-	ExecutionCompletedTimestamp    *timestamp.Timestamp `protobuf:"bytes,8,opt,name=execution_completed_timestamp,json=executionCompletedTimestamp,proto3" json:"execution_completed_timestamp,omitempty"`
-	OutputUploadStartTimestamp     *timestamp.Timestamp `protobuf:"bytes,9,opt,name=output_upload_start_timestamp,json=outputUploadStartTimestamp,proto3" json:"output_upload_start_timestamp,omitempty"`
+	// The name of the worker which ran the execution.
+	Worker string `protobuf:"bytes,1,opt,name=worker,proto3" json:"worker,omitempty"`
+	// When was the action added to the queue.
+	QueuedTimestamp *timestamp.Timestamp `protobuf:"bytes,2,opt,name=queued_timestamp,json=queuedTimestamp,proto3" json:"queued_timestamp,omitempty"`
+	// When the worker received the action.
+	WorkerStartTimestamp *timestamp.Timestamp `protobuf:"bytes,3,opt,name=worker_start_timestamp,json=workerStartTimestamp,proto3" json:"worker_start_timestamp,omitempty"`
+	// When the worker completed the action, including all stages.
+	WorkerCompletedTimestamp *timestamp.Timestamp `protobuf:"bytes,4,opt,name=worker_completed_timestamp,json=workerCompletedTimestamp,proto3" json:"worker_completed_timestamp,omitempty"`
+	// When the worker started fetching action inputs.
+	InputFetchStartTimestamp *timestamp.Timestamp `protobuf:"bytes,5,opt,name=input_fetch_start_timestamp,json=inputFetchStartTimestamp,proto3" json:"input_fetch_start_timestamp,omitempty"`
+	// When the worker finished fetching action inputs.
+	InputFetchCompletedTimestamp *timestamp.Timestamp `protobuf:"bytes,6,opt,name=input_fetch_completed_timestamp,json=inputFetchCompletedTimestamp,proto3" json:"input_fetch_completed_timestamp,omitempty"`
+	// When the worker started executing the action command.
+	ExecutionStartTimestamp *timestamp.Timestamp `protobuf:"bytes,7,opt,name=execution_start_timestamp,json=executionStartTimestamp,proto3" json:"execution_start_timestamp,omitempty"`
+	// When the worker completed executing the action command.
+	ExecutionCompletedTimestamp *timestamp.Timestamp `protobuf:"bytes,8,opt,name=execution_completed_timestamp,json=executionCompletedTimestamp,proto3" json:"execution_completed_timestamp,omitempty"`
+	// When the worker started uploading action outputs.
+	OutputUploadStartTimestamp *timestamp.Timestamp `protobuf:"bytes,9,opt,name=output_upload_start_timestamp,json=outputUploadStartTimestamp,proto3" json:"output_upload_start_timestamp,omitempty"`
+	// When the worker finished uploading action outputs.
 	OutputUploadCompletedTimestamp *timestamp.Timestamp `protobuf:"bytes,10,opt,name=output_upload_completed_timestamp,json=outputUploadCompletedTimestamp,proto3" json:"output_upload_completed_timestamp,omitempty"`
-	XXX_NoUnkeyedLiteral           struct{}             `json:"-"`
-	XXX_unrecognized               []byte               `json:"-"`
-	XXX_sizecache                  int32                `json:"-"`
+	// Details that are specific to the kind of worker used. For example,
+	// on POSIX-like systems this could contain a message with
+	// getrusage(2) statistics.
+	AuxiliaryMetadata    []*any.Any `protobuf:"bytes,11,rep,name=auxiliary_metadata,json=auxiliaryMetadata,proto3" json:"auxiliary_metadata,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
 func (m *ExecutedActionMetadata) Reset()         { *m = ExecutedActionMetadata{} }
@@ -912,21 +1342,176 @@ func (m *ExecutedActionMetadata) GetOutputUploadCompletedTimestamp() *timestamp.
 	return nil
 }
 
+func (m *ExecutedActionMetadata) GetAuxiliaryMetadata() []*any.Any {
+	if m != nil {
+		return m.AuxiliaryMetadata
+	}
+	return nil
+}
+
+// An ActionResult represents the result of an
+// [Action][build.bazel.remote.execution.v2.Action] being run.
+//
+// It is advised that at least one field (for example
+// `ActionResult.execution_metadata.Worker`) have a non-default value, to
+// ensure that the serialized value is non-empty, which can then be used
+// as a basic data sanity check.
 type ActionResult struct {
-	OutputFiles             []*OutputFile           `protobuf:"bytes,2,rep,name=output_files,json=outputFiles,proto3" json:"output_files,omitempty"`
-	OutputFileSymlinks      []*OutputSymlink        `protobuf:"bytes,10,rep,name=output_file_symlinks,json=outputFileSymlinks,proto3" json:"output_file_symlinks,omitempty"`
-	OutputSymlinks          []*OutputSymlink        `protobuf:"bytes,12,rep,name=output_symlinks,json=outputSymlinks,proto3" json:"output_symlinks,omitempty"`
-	OutputDirectories       []*OutputDirectory      `protobuf:"bytes,3,rep,name=output_directories,json=outputDirectories,proto3" json:"output_directories,omitempty"`
-	OutputDirectorySymlinks []*OutputSymlink        `protobuf:"bytes,11,rep,name=output_directory_symlinks,json=outputDirectorySymlinks,proto3" json:"output_directory_symlinks,omitempty"`
-	ExitCode                int32                   `protobuf:"varint,4,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
-	StdoutRaw               []byte                  `protobuf:"bytes,5,opt,name=stdout_raw,json=stdoutRaw,proto3" json:"stdout_raw,omitempty"`
-	StdoutDigest            *Digest                 `protobuf:"bytes,6,opt,name=stdout_digest,json=stdoutDigest,proto3" json:"stdout_digest,omitempty"`
-	StderrRaw               []byte                  `protobuf:"bytes,7,opt,name=stderr_raw,json=stderrRaw,proto3" json:"stderr_raw,omitempty"`
-	StderrDigest            *Digest                 `protobuf:"bytes,8,opt,name=stderr_digest,json=stderrDigest,proto3" json:"stderr_digest,omitempty"`
-	ExecutionMetadata       *ExecutedActionMetadata `protobuf:"bytes,9,opt,name=execution_metadata,json=executionMetadata,proto3" json:"execution_metadata,omitempty"`
-	XXX_NoUnkeyedLiteral    struct{}                `json:"-"`
-	XXX_unrecognized        []byte                  `json:"-"`
-	XXX_sizecache           int32                   `json:"-"`
+	// The output files of the action. For each output file requested in the
+	// `output_files` or `output_paths` field of the Action, if the corresponding
+	// file existed after the action completed, a single entry will be present
+	// either in this field, or the `output_file_symlinks` field if the file was
+	// a symbolic link to another file (`output_symlinks` field after v2.1).
+	//
+	// If an output listed in `output_files` was found, but was a directory rather
+	// than a regular file, the server will return a FAILED_PRECONDITION.
+	// If the action does not produce the requested output, then that output
+	// will be omitted from the list. The server is free to arrange the output
+	// list as desired; clients MUST NOT assume that the output list is sorted.
+	OutputFiles []*OutputFile `protobuf:"bytes,2,rep,name=output_files,json=outputFiles,proto3" json:"output_files,omitempty"`
+	// The output files of the action that are symbolic links to other files. Those
+	// may be links to other output files, or input files, or even absolute paths
+	// outside of the working directory, if the server supports
+	// [SymlinkAbsolutePathStrategy.ALLOWED][build.bazel.remote.execution.v2.CacheCapabilities.SymlinkAbsolutePathStrategy].
+	// For each output file requested in the `output_files` or `output_paths`
+	// field of the Action, if the corresponding file existed after
+	// the action completed, a single entry will be present either in this field,
+	// or in the `output_files` field, if the file was not a symbolic link.
+	//
+	// If an output symbolic link of the same name as listed in `output_files` of
+	// the Command was found, but its target type was not a regular file, the
+	// server will return a FAILED_PRECONDITION.
+	// If the action does not produce the requested output, then that output
+	// will be omitted from the list. The server is free to arrange the output
+	// list as desired; clients MUST NOT assume that the output list is sorted.
+	//
+	// DEPRECATED as of v2.1. Servers that wish to be compatible with v2.0 API
+	// should still populate this field in addition to `output_symlinks`.
+	OutputFileSymlinks []*OutputSymlink `protobuf:"bytes,10,rep,name=output_file_symlinks,json=outputFileSymlinks,proto3" json:"output_file_symlinks,omitempty"`
+	// New in v2.1: this field will only be populated if the command
+	// `output_paths` field was used, and not the pre v2.1 `output_files` or
+	// `output_directories` fields.
+	// The output paths of the action that are symbolic links to other paths. Those
+	// may be links to other outputs, or inputs, or even absolute paths
+	// outside of the working directory, if the server supports
+	// [SymlinkAbsolutePathStrategy.ALLOWED][build.bazel.remote.execution.v2.CacheCapabilities.SymlinkAbsolutePathStrategy].
+	// A single entry for each output requested in `output_paths`
+	// field of the Action, if the corresponding path existed after
+	// the action completed and was a symbolic link.
+	//
+	// If the action does not produce a requested output, then that output
+	// will be omitted from the list. The server is free to arrange the output
+	// list as desired; clients MUST NOT assume that the output list is sorted.
+	OutputSymlinks []*OutputSymlink `protobuf:"bytes,12,rep,name=output_symlinks,json=outputSymlinks,proto3" json:"output_symlinks,omitempty"`
+	// The output directories of the action. For each output directory requested
+	// in the `output_directories` or `output_paths` field of the Action, if the
+	// corresponding directory existed after the action completed, a single entry
+	// will be present in the output list, which will contain the digest of a
+	// [Tree][build.bazel.remote.execution.v2.Tree] message containing the
+	// directory tree, and the path equal exactly to the corresponding Action
+	// output_directories member.
+	//
+	// As an example, suppose the Action had an output directory `a/b/dir` and the
+	// execution produced the following contents in `a/b/dir`: a file named `bar`
+	// and a directory named `foo` with an executable file named `baz`. Then,
+	// output_directory will contain (hashes shortened for readability):
+	//
+	// ```json
+	// // OutputDirectory proto:
+	// {
+	//   path: "a/b/dir"
+	//   tree_digest: {
+	//     hash: "4a73bc9d03...",
+	//     size: 55
+	//   }
+	// }
+	// // Tree proto with hash "4a73bc9d03..." and size 55:
+	// {
+	//   root: {
+	//     files: [
+	//       {
+	//         name: "bar",
+	//         digest: {
+	//           hash: "4a73bc9d03...",
+	//           size: 65534
+	//         }
+	//       }
+	//     ],
+	//     directories: [
+	//       {
+	//         name: "foo",
+	//         digest: {
+	//           hash: "4cf2eda940...",
+	//           size: 43
+	//         }
+	//       }
+	//     ]
+	//   }
+	//   children : {
+	//     // (Directory proto with hash "4cf2eda940..." and size 43)
+	//     files: [
+	//       {
+	//         name: "baz",
+	//         digest: {
+	//           hash: "b2c941073e...",
+	//           size: 1294,
+	//         },
+	//         is_executable: true
+	//       }
+	//     ]
+	//   }
+	// }
+	// ```
+	// If an output of the same name as listed in `output_files` of
+	// the Command was found in `output_directories`, but was not a directory, the
+	// server will return a FAILED_PRECONDITION.
+	OutputDirectories []*OutputDirectory `protobuf:"bytes,3,rep,name=output_directories,json=outputDirectories,proto3" json:"output_directories,omitempty"`
+	// The output directories of the action that are symbolic links to other
+	// directories. Those may be links to other output directories, or input
+	// directories, or even absolute paths outside of the working directory,
+	// if the server supports
+	// [SymlinkAbsolutePathStrategy.ALLOWED][build.bazel.remote.execution.v2.CacheCapabilities.SymlinkAbsolutePathStrategy].
+	// For each output directory requested in the `output_directories` field of
+	// the Action, if the directory existed after the action completed, a
+	// single entry will be present either in this field, or in the
+	// `output_directories` field, if the directory was not a symbolic link.
+	//
+	// If an output of the same name was found, but was a symbolic link to a file
+	// instead of a directory, the server will return a FAILED_PRECONDITION.
+	// If the action does not produce the requested output, then that output
+	// will be omitted from the list. The server is free to arrange the output
+	// list as desired; clients MUST NOT assume that the output list is sorted.
+	//
+	// DEPRECATED as of v2.1. Servers that wish to be compatible with v2.0 API
+	// should still populate this field in addition to `output_symlinks`.
+	OutputDirectorySymlinks []*OutputSymlink `protobuf:"bytes,11,rep,name=output_directory_symlinks,json=outputDirectorySymlinks,proto3" json:"output_directory_symlinks,omitempty"`
+	// The exit code of the command.
+	ExitCode int32 `protobuf:"varint,4,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
+	// The standard output buffer of the action. The server SHOULD NOT inline
+	// stdout unless requested by the client in the
+	// [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
+	// message. The server MAY omit inlining, even if requested, and MUST do so if inlining
+	// would cause the response to exceed message size limits.
+	StdoutRaw []byte `protobuf:"bytes,5,opt,name=stdout_raw,json=stdoutRaw,proto3" json:"stdout_raw,omitempty"`
+	// The digest for a blob containing the standard output of the action, which
+	// can be retrieved from the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+	StdoutDigest *Digest `protobuf:"bytes,6,opt,name=stdout_digest,json=stdoutDigest,proto3" json:"stdout_digest,omitempty"`
+	// The standard error buffer of the action. The server SHOULD NOT inline
+	// stderr unless requested by the client in the
+	// [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
+	// message. The server MAY omit inlining, even if requested, and MUST do so if inlining
+	// would cause the response to exceed message size limits.
+	StderrRaw []byte `protobuf:"bytes,7,opt,name=stderr_raw,json=stderrRaw,proto3" json:"stderr_raw,omitempty"`
+	// The digest for a blob containing the standard error of the action, which
+	// can be retrieved from the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+	StderrDigest *Digest `protobuf:"bytes,8,opt,name=stderr_digest,json=stderrDigest,proto3" json:"stderr_digest,omitempty"`
+	// The details of the execution that originally produced this result.
+	ExecutionMetadata    *ExecutedActionMetadata `protobuf:"bytes,9,opt,name=execution_metadata,json=executionMetadata,proto3" json:"execution_metadata,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
+	XXX_unrecognized     []byte                  `json:"-"`
+	XXX_sizecache        int32                   `json:"-"`
 }
 
 func (m *ActionResult) Reset()         { *m = ActionResult{} }
@@ -1031,10 +1616,24 @@ func (m *ActionResult) GetExecutionMetadata() *ExecutedActionMetadata {
 	return nil
 }
 
+// An `OutputFile` is similar to a
+// [FileNode][build.bazel.remote.execution.v2.FileNode], but it is used as an
+// output in an `ActionResult`. It allows a full file path rather than
+// only a name.
 type OutputFile struct {
-	Path                 string          `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
-	Digest               *Digest         `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`
-	IsExecutable         bool            `protobuf:"varint,4,opt,name=is_executable,json=isExecutable,proto3" json:"is_executable,omitempty"`
+	// The full path of the file relative to the working directory, including the
+	// filename. The path separator is a forward slash `/`. Since this is a
+	// relative path, it MUST NOT begin with a leading forward slash.
+	Path string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	// The digest of the file's content.
+	Digest *Digest `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`
+	// True if file is executable, false otherwise.
+	IsExecutable bool `protobuf:"varint,4,opt,name=is_executable,json=isExecutable,proto3" json:"is_executable,omitempty"`
+	// The contents of the file if inlining was requested. The server SHOULD NOT inline
+	// file contents unless requested by the client in the
+	// [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
+	// message. The server MAY omit inlining, even if requested, and MUST do so if inlining
+	// would cause the response to exceed message size limits.
 	Contents             []byte          `protobuf:"bytes,5,opt,name=contents,proto3" json:"contents,omitempty"`
 	NodeProperties       *NodeProperties `protobuf:"bytes,7,opt,name=node_properties,json=nodeProperties,proto3" json:"node_properties,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
@@ -1102,8 +1701,16 @@ func (m *OutputFile) GetNodeProperties() *NodeProperties {
 	return nil
 }
 
+// A `Tree` contains all the
+// [Directory][build.bazel.remote.execution.v2.Directory] protos in a
+// single directory Merkle tree, compressed into one message.
 type Tree struct {
-	Root                 *Directory   `protobuf:"bytes,1,opt,name=root,proto3" json:"root,omitempty"`
+	// The root directory in the tree.
+	Root *Directory `protobuf:"bytes,1,opt,name=root,proto3" json:"root,omitempty"`
+	// All the child directories: the directories referred to by the root and,
+	// recursively, all its children. In order to reconstruct the directory tree,
+	// the client must take the digests of each of the child directories and then
+	// build up a tree starting from the `root`.
 	Children             []*Directory `protobuf:"bytes,2,rep,name=children,proto3" json:"children,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
 	XXX_unrecognized     []byte       `json:"-"`
@@ -1149,8 +1756,17 @@ func (m *Tree) GetChildren() []*Directory {
 	return nil
 }
 
+// An `OutputDirectory` is the output in an `ActionResult` corresponding to a
+// directory's full contents rather than a single file.
 type OutputDirectory struct {
-	Path                 string   `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	// The full path of the directory relative to the working directory. The path
+	// separator is a forward slash `/`. Since this is a relative path, it MUST
+	// NOT begin with a leading forward slash. The empty string value is allowed,
+	// and it denotes the entire working directory.
+	Path string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	// The digest of the encoded
+	// [Tree][build.bazel.remote.execution.v2.Tree] proto containing the
+	// directory's contents.
 	TreeDigest           *Digest  `protobuf:"bytes,3,opt,name=tree_digest,json=treeDigest,proto3" json:"tree_digest,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -1196,8 +1812,21 @@ func (m *OutputDirectory) GetTreeDigest() *Digest {
 	return nil
 }
 
+// An `OutputSymlink` is similar to a
+// [Symlink][build.bazel.remote.execution.v2.SymlinkNode], but it is used as an
+// output in an `ActionResult`.
+//
+// `OutputSymlink` is binary-compatible with `SymlinkNode`.
 type OutputSymlink struct {
-	Path                 string          `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	// The full path of the symlink relative to the working directory, including the
+	// filename. The path separator is a forward slash `/`. Since this is a
+	// relative path, it MUST NOT begin with a leading forward slash.
+	Path string `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	// The target path of the symlink. The path separator is a forward slash `/`.
+	// The target path can be relative to the parent directory of the symlink or
+	// it can be an absolute path starting with `/`. Support for absolute paths
+	// can be checked using the [Capabilities][build.bazel.remote.execution.v2.Capabilities]
+	// API. `..` components are allowed anywhere in the target path.
 	Target               string          `protobuf:"bytes,2,opt,name=target,proto3" json:"target,omitempty"`
 	NodeProperties       *NodeProperties `protobuf:"bytes,4,opt,name=node_properties,json=nodeProperties,proto3" json:"node_properties,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
@@ -1251,7 +1880,17 @@ func (m *OutputSymlink) GetNodeProperties() *NodeProperties {
 	return nil
 }
 
+// An `ExecutionPolicy` can be used to control the scheduling of the action.
 type ExecutionPolicy struct {
+	// The priority (relative importance) of this action. Generally, a lower value
+	// means that the action should be run sooner than actions having a greater
+	// priority value, but the interpretation of a given value is server-
+	// dependent. A priority of 0 means the *default* priority. Priorities may be
+	// positive or negative, and such actions should run later or sooner than
+	// actions having the default priority, respectively. The particular semantics
+	// of this field is up to the server. In particular, every server will have
+	// their own supported range of priorities, and will decide how these map into
+	// scheduling policy.
 	Priority             int32    `protobuf:"varint,1,opt,name=priority,proto3" json:"priority,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -1290,7 +1929,17 @@ func (m *ExecutionPolicy) GetPriority() int32 {
 	return 0
 }
 
+// A `ResultsCachePolicy` is used for fine-grained control over how action
+// outputs are stored in the CAS and Action Cache.
 type ResultsCachePolicy struct {
+	// The priority (relative importance) of this content in the overall cache.
+	// Generally, a lower value means a longer retention time or other advantage,
+	// but the interpretation of a given value is server-dependent. A priority of
+	// 0 means a *default* value, decided by the server.
+	//
+	// The particular semantics of this field is up to the server. In particular,
+	// every server will have their own supported range of priorities, and will
+	// decide how these map into retention/eviction policy.
 	Priority             int32    `protobuf:"varint,1,opt,name=priority,proto3" json:"priority,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -1329,11 +1978,38 @@ func (m *ResultsCachePolicy) GetPriority() int32 {
 	return 0
 }
 
+// A request message for
+// [Execution.Execute][build.bazel.remote.execution.v2.Execution.Execute].
 type ExecuteRequest struct {
-	InstanceName         string              `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
-	SkipCacheLookup      bool                `protobuf:"varint,3,opt,name=skip_cache_lookup,json=skipCacheLookup,proto3" json:"skip_cache_lookup,omitempty"`
-	ActionDigest         *Digest             `protobuf:"bytes,6,opt,name=action_digest,json=actionDigest,proto3" json:"action_digest,omitempty"`
-	ExecutionPolicy      *ExecutionPolicy    `protobuf:"bytes,7,opt,name=execution_policy,json=executionPolicy,proto3" json:"execution_policy,omitempty"`
+	// The instance of the execution system to operate against. A server may
+	// support multiple instances of the execution system (with their own workers,
+	// storage, caches, etc.). The server MAY require use of this field to select
+	// between them in an implementation-defined fashion, otherwise it can be
+	// omitted.
+	InstanceName string `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// If true, the action will be executed even if its result is already
+	// present in the [ActionCache][build.bazel.remote.execution.v2.ActionCache].
+	// The execution is still allowed to be merged with other in-flight executions
+	// of the same action, however - semantically, the service MUST only guarantee
+	// that the results of an execution with this field set were not visible
+	// before the corresponding execution request was sent.
+	// Note that actions from execution requests setting this field set are still
+	// eligible to be entered into the action cache upon completion, and services
+	// SHOULD overwrite any existing entries that may exist. This allows
+	// skip_cache_lookup requests to be used as a mechanism for replacing action
+	// cache entries that reference outputs no longer available or that are
+	// poisoned in any way.
+	// If false, the result may be served from the action cache.
+	SkipCacheLookup bool `protobuf:"varint,3,opt,name=skip_cache_lookup,json=skipCacheLookup,proto3" json:"skip_cache_lookup,omitempty"`
+	// The digest of the [Action][build.bazel.remote.execution.v2.Action] to
+	// execute.
+	ActionDigest *Digest `protobuf:"bytes,6,opt,name=action_digest,json=actionDigest,proto3" json:"action_digest,omitempty"`
+	// An optional policy for execution of the action.
+	// The server will have a default policy if this is not provided.
+	ExecutionPolicy *ExecutionPolicy `protobuf:"bytes,7,opt,name=execution_policy,json=executionPolicy,proto3" json:"execution_policy,omitempty"`
+	// An optional policy for the results of this execution in the remote cache.
+	// The server will have a default policy if this is not provided.
+	// This may be applied to both the ActionResult and the associated blobs.
 	ResultsCachePolicy   *ResultsCachePolicy `protobuf:"bytes,8,opt,name=results_cache_policy,json=resultsCachePolicy,proto3" json:"results_cache_policy,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
 	XXX_unrecognized     []byte              `json:"-"`
@@ -1400,8 +2076,15 @@ func (m *ExecuteRequest) GetResultsCachePolicy() *ResultsCachePolicy {
 	return nil
 }
 
+// A `LogFile` is a log stored in the CAS.
 type LogFile struct {
-	Digest               *Digest  `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
+	// The digest of the log contents.
+	Digest *Digest `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
+	// This is a hint as to the purpose of the log, and is set to true if the log
+	// is human-readable text that can be usefully displayed to a user, and false
+	// otherwise. For instance, if a command-line client wishes to print the
+	// server logs to the terminal for a failed action, this allows it to avoid
+	// displaying a binary file.
 	HumanReadable        bool     `protobuf:"varint,2,opt,name=human_readable,json=humanReadable,proto3" json:"human_readable,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -1447,15 +2130,41 @@ func (m *LogFile) GetHumanReadable() bool {
 	return false
 }
 
+// The response message for
+// [Execution.Execute][build.bazel.remote.execution.v2.Execution.Execute],
+// which will be contained in the [response
+// field][google.longrunning.Operation.response] of the
+// [Operation][google.longrunning.Operation].
 type ExecuteResponse struct {
-	Result               *ActionResult       `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
-	CachedResult         bool                `protobuf:"varint,2,opt,name=cached_result,json=cachedResult,proto3" json:"cached_result,omitempty"`
-	Status               *status.Status      `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
-	ServerLogs           map[string]*LogFile `protobuf:"bytes,4,rep,name=server_logs,json=serverLogs,proto3" json:"server_logs,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Message              string              `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
+	// The result of the action.
+	Result *ActionResult `protobuf:"bytes,1,opt,name=result,proto3" json:"result,omitempty"`
+	// True if the result was served from cache, false if it was executed.
+	CachedResult bool `protobuf:"varint,2,opt,name=cached_result,json=cachedResult,proto3" json:"cached_result,omitempty"`
+	// If the status has a code other than `OK`, it indicates that the action did
+	// not finish execution. For example, if the operation times out during
+	// execution, the status will have a `DEADLINE_EXCEEDED` code. Servers MUST
+	// use this field for errors in execution, rather than the error field on the
+	// `Operation` object.
+	//
+	// If the status code is other than `OK`, then the result MUST NOT be cached.
+	// For an error status, the `result` field is optional; the server may
+	// populate the output-, stdout-, and stderr-related fields if it has any
+	// information available, such as the stdout and stderr of a timed-out action.
+	Status *status.Status `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	// An optional list of additional log outputs the server wishes to provide. A
+	// server can use this to return execution-specific logs however it wishes.
+	// This is intended primarily to make it easier for users to debug issues that
+	// may be outside of the actual job execution, such as by identifying the
+	// worker executing the action or by providing logs from the worker's setup
+	// phase. The keys SHOULD be human readable so that a client can display them
+	// to a user.
+	ServerLogs map[string]*LogFile `protobuf:"bytes,4,rep,name=server_logs,json=serverLogs,proto3" json:"server_logs,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// Freeform informational message with details on the execution of the action
+	// that may be displayed to the user upon failure or when requested explicitly.
+	Message              string   `protobuf:"bytes,5,opt,name=message,proto3" json:"message,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *ExecuteResponse) Reset()         { *m = ExecuteResponse{} }
@@ -1518,6 +2227,7 @@ func (m *ExecuteResponse) GetMessage() string {
 	return ""
 }
 
+// The current stage of action execution.
 type ExecutionStage struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -1549,14 +2259,28 @@ func (m *ExecutionStage) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ExecutionStage proto.InternalMessageInfo
 
+// Metadata about an ongoing
+// [execution][build.bazel.remote.execution.v2.Execution.Execute], which
+// will be contained in the [metadata
+// field][google.longrunning.Operation.response] of the
+// [Operation][google.longrunning.Operation].
 type ExecuteOperationMetadata struct {
-	Stage                ExecutionStage_Value `protobuf:"varint,1,opt,name=stage,proto3,enum=build.bazel.remote.execution.v2.ExecutionStage_Value" json:"stage,omitempty"`
-	ActionDigest         *Digest              `protobuf:"bytes,2,opt,name=action_digest,json=actionDigest,proto3" json:"action_digest,omitempty"`
-	StdoutStreamName     string               `protobuf:"bytes,3,opt,name=stdout_stream_name,json=stdoutStreamName,proto3" json:"stdout_stream_name,omitempty"`
-	StderrStreamName     string               `protobuf:"bytes,4,opt,name=stderr_stream_name,json=stderrStreamName,proto3" json:"stderr_stream_name,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
+	// The current stage of execution.
+	Stage ExecutionStage_Value `protobuf:"varint,1,opt,name=stage,proto3,enum=build.bazel.remote.execution.v2.ExecutionStage_Value" json:"stage,omitempty"`
+	// The digest of the [Action][build.bazel.remote.execution.v2.Action]
+	// being executed.
+	ActionDigest *Digest `protobuf:"bytes,2,opt,name=action_digest,json=actionDigest,proto3" json:"action_digest,omitempty"`
+	// If set, the client can use this resource name with
+	// [ByteStream.Read][google.bytestream.ByteStream.Read] to stream the
+	// standard output from the endpoint hosting streamed responses.
+	StdoutStreamName string `protobuf:"bytes,3,opt,name=stdout_stream_name,json=stdoutStreamName,proto3" json:"stdout_stream_name,omitempty"`
+	// If set, the client can use this resource name with
+	// [ByteStream.Read][google.bytestream.ByteStream.Read] to stream the
+	// standard error from the endpoint hosting streamed responses.
+	StderrStreamName     string   `protobuf:"bytes,4,opt,name=stderr_stream_name,json=stderrStreamName,proto3" json:"stderr_stream_name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *ExecuteOperationMetadata) Reset()         { *m = ExecuteOperationMetadata{} }
@@ -1612,7 +2336,11 @@ func (m *ExecuteOperationMetadata) GetStderrStreamName() string {
 	return ""
 }
 
+// A request message for
+// [WaitExecution][build.bazel.remote.execution.v2.Execution.WaitExecution].
 type WaitExecutionRequest struct {
+	// The name of the [Operation][google.longrunning.Operation]
+	// returned by [Execute][build.bazel.remote.execution.v2.Execution.Execute].
 	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -1651,11 +2379,28 @@ func (m *WaitExecutionRequest) GetName() string {
 	return ""
 }
 
+// A request message for
+// [ActionCache.GetActionResult][build.bazel.remote.execution.v2.ActionCache.GetActionResult].
 type GetActionResultRequest struct {
-	InstanceName         string   `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
-	ActionDigest         *Digest  `protobuf:"bytes,2,opt,name=action_digest,json=actionDigest,proto3" json:"action_digest,omitempty"`
-	InlineStdout         bool     `protobuf:"varint,3,opt,name=inline_stdout,json=inlineStdout,proto3" json:"inline_stdout,omitempty"`
-	InlineStderr         bool     `protobuf:"varint,4,opt,name=inline_stderr,json=inlineStderr,proto3" json:"inline_stderr,omitempty"`
+	// The instance of the execution system to operate against. A server may
+	// support multiple instances of the execution system (with their own workers,
+	// storage, caches, etc.). The server MAY require use of this field to select
+	// between them in an implementation-defined fashion, otherwise it can be
+	// omitted.
+	InstanceName string `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// The digest of the [Action][build.bazel.remote.execution.v2.Action]
+	// whose result is requested.
+	ActionDigest *Digest `protobuf:"bytes,2,opt,name=action_digest,json=actionDigest,proto3" json:"action_digest,omitempty"`
+	// A hint to the server to request inlining stdout in the
+	// [ActionResult][build.bazel.remote.execution.v2.ActionResult] message.
+	InlineStdout bool `protobuf:"varint,3,opt,name=inline_stdout,json=inlineStdout,proto3" json:"inline_stdout,omitempty"`
+	// A hint to the server to request inlining stderr in the
+	// [ActionResult][build.bazel.remote.execution.v2.ActionResult] message.
+	InlineStderr bool `protobuf:"varint,4,opt,name=inline_stderr,json=inlineStderr,proto3" json:"inline_stderr,omitempty"`
+	// A hint to the server to inline the contents of the listed output files.
+	// Each path needs to exactly match one file path in either `output_paths` or
+	// `output_files` (DEPRECATED since v2.1) in the
+	// [Command][build.bazel.remote.execution.v2.Command] message.
 	InlineOutputFiles    []string `protobuf:"bytes,5,rep,name=inline_output_files,json=inlineOutputFiles,proto3" json:"inline_output_files,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -1722,10 +2467,24 @@ func (m *GetActionResultRequest) GetInlineOutputFiles() []string {
 	return nil
 }
 
+// A request message for
+// [ActionCache.UpdateActionResult][build.bazel.remote.execution.v2.ActionCache.UpdateActionResult].
 type UpdateActionResultRequest struct {
-	InstanceName         string              `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
-	ActionDigest         *Digest             `protobuf:"bytes,2,opt,name=action_digest,json=actionDigest,proto3" json:"action_digest,omitempty"`
-	ActionResult         *ActionResult       `protobuf:"bytes,3,opt,name=action_result,json=actionResult,proto3" json:"action_result,omitempty"`
+	// The instance of the execution system to operate against. A server may
+	// support multiple instances of the execution system (with their own workers,
+	// storage, caches, etc.). The server MAY require use of this field to select
+	// between them in an implementation-defined fashion, otherwise it can be
+	// omitted.
+	InstanceName string `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// The digest of the [Action][build.bazel.remote.execution.v2.Action]
+	// whose result is being uploaded.
+	ActionDigest *Digest `protobuf:"bytes,2,opt,name=action_digest,json=actionDigest,proto3" json:"action_digest,omitempty"`
+	// The [ActionResult][build.bazel.remote.execution.v2.ActionResult]
+	// to store in the cache.
+	ActionResult *ActionResult `protobuf:"bytes,3,opt,name=action_result,json=actionResult,proto3" json:"action_result,omitempty"`
+	// An optional policy for the results of this execution in the remote cache.
+	// The server will have a default policy if this is not provided.
+	// This may be applied to both the ActionResult and the associated blobs.
 	ResultsCachePolicy   *ResultsCachePolicy `protobuf:"bytes,4,opt,name=results_cache_policy,json=resultsCachePolicy,proto3" json:"results_cache_policy,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
 	XXX_unrecognized     []byte              `json:"-"`
@@ -1785,8 +2544,16 @@ func (m *UpdateActionResultRequest) GetResultsCachePolicy() *ResultsCachePolicy 
 	return nil
 }
 
+// A request message for
+// [ContentAddressableStorage.FindMissingBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs].
 type FindMissingBlobsRequest struct {
-	InstanceName         string    `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// The instance of the execution system to operate against. A server may
+	// support multiple instances of the execution system (with their own workers,
+	// storage, caches, etc.). The server MAY require use of this field to select
+	// between them in an implementation-defined fashion, otherwise it can be
+	// omitted.
+	InstanceName string `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// A list of the blobs to check.
 	BlobDigests          []*Digest `protobuf:"bytes,2,rep,name=blob_digests,json=blobDigests,proto3" json:"blob_digests,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
 	XXX_unrecognized     []byte    `json:"-"`
@@ -1832,7 +2599,10 @@ func (m *FindMissingBlobsRequest) GetBlobDigests() []*Digest {
 	return nil
 }
 
+// A response message for
+// [ContentAddressableStorage.FindMissingBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs].
 type FindMissingBlobsResponse struct {
+	// A list of the blobs requested *not* present in the storage.
 	MissingBlobDigests   []*Digest `protobuf:"bytes,2,rep,name=missing_blob_digests,json=missingBlobDigests,proto3" json:"missing_blob_digests,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
 	XXX_unrecognized     []byte    `json:"-"`
@@ -1871,8 +2641,16 @@ func (m *FindMissingBlobsResponse) GetMissingBlobDigests() []*Digest {
 	return nil
 }
 
+// A request message for
+// [ContentAddressableStorage.BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs].
 type BatchUpdateBlobsRequest struct {
-	InstanceName         string                             `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// The instance of the execution system to operate against. A server may
+	// support multiple instances of the execution system (with their own workers,
+	// storage, caches, etc.). The server MAY require use of this field to select
+	// between them in an implementation-defined fashion, otherwise it can be
+	// omitted.
+	InstanceName string `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// The individual upload requests.
 	Requests             []*BatchUpdateBlobsRequest_Request `protobuf:"bytes,2,rep,name=requests,proto3" json:"requests,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                           `json:"-"`
 	XXX_unrecognized     []byte                             `json:"-"`
@@ -1918,8 +2696,11 @@ func (m *BatchUpdateBlobsRequest) GetRequests() []*BatchUpdateBlobsRequest_Reque
 	return nil
 }
 
+// A request corresponding to a single blob that the client wants to upload.
 type BatchUpdateBlobsRequest_Request struct {
-	Digest               *Digest  `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
+	// The digest of the blob. This MUST be the digest of `data`.
+	Digest *Digest `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
+	// The raw binary data.
 	Data                 []byte   `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -1965,7 +2746,10 @@ func (m *BatchUpdateBlobsRequest_Request) GetData() []byte {
 	return nil
 }
 
+// A response message for
+// [ContentAddressableStorage.BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs].
 type BatchUpdateBlobsResponse struct {
+	// The responses to the requests.
 	Responses            []*BatchUpdateBlobsResponse_Response `protobuf:"bytes,1,rep,name=responses,proto3" json:"responses,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                             `json:"-"`
 	XXX_unrecognized     []byte                               `json:"-"`
@@ -2004,8 +2788,11 @@ func (m *BatchUpdateBlobsResponse) GetResponses() []*BatchUpdateBlobsResponse_Re
 	return nil
 }
 
+// A response corresponding to a single blob that the client tried to upload.
 type BatchUpdateBlobsResponse_Response struct {
-	Digest               *Digest        `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
+	// The blob digest to which this response corresponds.
+	Digest *Digest `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
+	// The result of attempting to upload that blob.
 	Status               *status.Status `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
@@ -2051,8 +2838,16 @@ func (m *BatchUpdateBlobsResponse_Response) GetStatus() *status.Status {
 	return nil
 }
 
+// A request message for
+// [ContentAddressableStorage.BatchReadBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs].
 type BatchReadBlobsRequest struct {
-	InstanceName         string    `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// The instance of the execution system to operate against. A server may
+	// support multiple instances of the execution system (with their own workers,
+	// storage, caches, etc.). The server MAY require use of this field to select
+	// between them in an implementation-defined fashion, otherwise it can be
+	// omitted.
+	InstanceName string `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// The individual blob digests.
 	Digests              []*Digest `protobuf:"bytes,2,rep,name=digests,proto3" json:"digests,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
 	XXX_unrecognized     []byte    `json:"-"`
@@ -2098,7 +2893,10 @@ func (m *BatchReadBlobsRequest) GetDigests() []*Digest {
 	return nil
 }
 
+// A response message for
+// [ContentAddressableStorage.BatchReadBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs].
 type BatchReadBlobsResponse struct {
+	// The responses to the requests.
 	Responses            []*BatchReadBlobsResponse_Response `protobuf:"bytes,1,rep,name=responses,proto3" json:"responses,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                           `json:"-"`
 	XXX_unrecognized     []byte                             `json:"-"`
@@ -2137,9 +2935,13 @@ func (m *BatchReadBlobsResponse) GetResponses() []*BatchReadBlobsResponse_Respon
 	return nil
 }
 
+// A response corresponding to a single blob that the client tried to download.
 type BatchReadBlobsResponse_Response struct {
-	Digest               *Digest        `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
-	Data                 []byte         `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	// The digest to which this response corresponds.
+	Digest *Digest `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
+	// The raw binary data.
+	Data []byte `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	// The result of attempting to download that blob.
 	Status               *status.Status `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
@@ -2192,10 +2994,29 @@ func (m *BatchReadBlobsResponse_Response) GetStatus() *status.Status {
 	return nil
 }
 
+// A request message for
+// [ContentAddressableStorage.GetTree][build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree].
 type GetTreeRequest struct {
-	InstanceName         string   `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
-	RootDigest           *Digest  `protobuf:"bytes,2,opt,name=root_digest,json=rootDigest,proto3" json:"root_digest,omitempty"`
-	PageSize             int32    `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// The instance of the execution system to operate against. A server may
+	// support multiple instances of the execution system (with their own workers,
+	// storage, caches, etc.). The server MAY require use of this field to select
+	// between them in an implementation-defined fashion, otherwise it can be
+	// omitted.
+	InstanceName string `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// The digest of the root, which must be an encoded
+	// [Directory][build.bazel.remote.execution.v2.Directory] message
+	// stored in the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+	RootDigest *Digest `protobuf:"bytes,2,opt,name=root_digest,json=rootDigest,proto3" json:"root_digest,omitempty"`
+	// A maximum page size to request. If present, the server will request no more
+	// than this many items. Regardless of whether a page size is specified, the
+	// server may place its own limit on the number of items to be returned and
+	// require the client to retrieve more items using a subsequent request.
+	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// A page token, which must be a value received in a previous
+	// [GetTreeResponse][build.bazel.remote.execution.v2.GetTreeResponse].
+	// If present, the server will use that token as an offset, returning only
+	// that page and the ones that succeed it.
 	PageToken            string   `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -2255,12 +3076,19 @@ func (m *GetTreeRequest) GetPageToken() string {
 	return ""
 }
 
+// A response message for
+// [ContentAddressableStorage.GetTree][build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree].
 type GetTreeResponse struct {
-	Directories          []*Directory `protobuf:"bytes,1,rep,name=directories,proto3" json:"directories,omitempty"`
-	NextPageToken        string       `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	// The directories descended from the requested root.
+	Directories []*Directory `protobuf:"bytes,1,rep,name=directories,proto3" json:"directories,omitempty"`
+	// If present, signifies that there are more results which the client can
+	// retrieve by passing this as the page_token in a subsequent
+	// [request][build.bazel.remote.execution.v2.GetTreeRequest].
+	// If empty, signifies that this is the last page of results.
+	NextPageToken        string   `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *GetTreeResponse) Reset()         { *m = GetTreeResponse{} }
@@ -2302,7 +3130,14 @@ func (m *GetTreeResponse) GetNextPageToken() string {
 	return ""
 }
 
+// A request message for
+// [Capabilities.GetCapabilities][build.bazel.remote.execution.v2.Capabilities.GetCapabilities].
 type GetCapabilitiesRequest struct {
+	// The instance of the execution system to operate against. A server may
+	// support multiple instances of the execution system (with their own workers,
+	// storage, caches, etc.). The server MAY require use of this field to select
+	// between them in an implementation-defined fashion, otherwise it can be
+	// omitted.
 	InstanceName         string   `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -2341,15 +3176,22 @@ func (m *GetCapabilitiesRequest) GetInstanceName() string {
 	return ""
 }
 
+// A response message for
+// [Capabilities.GetCapabilities][build.bazel.remote.execution.v2.Capabilities.GetCapabilities].
 type ServerCapabilities struct {
-	CacheCapabilities     *CacheCapabilities     `protobuf:"bytes,1,opt,name=cache_capabilities,json=cacheCapabilities,proto3" json:"cache_capabilities,omitempty"`
+	// Capabilities of the remote cache system.
+	CacheCapabilities *CacheCapabilities `protobuf:"bytes,1,opt,name=cache_capabilities,json=cacheCapabilities,proto3" json:"cache_capabilities,omitempty"`
+	// Capabilities of the remote execution system.
 	ExecutionCapabilities *ExecutionCapabilities `protobuf:"bytes,2,opt,name=execution_capabilities,json=executionCapabilities,proto3" json:"execution_capabilities,omitempty"`
-	DeprecatedApiVersion  *semver.SemVer         `protobuf:"bytes,3,opt,name=deprecated_api_version,json=deprecatedApiVersion,proto3" json:"deprecated_api_version,omitempty"`
-	LowApiVersion         *semver.SemVer         `protobuf:"bytes,4,opt,name=low_api_version,json=lowApiVersion,proto3" json:"low_api_version,omitempty"`
-	HighApiVersion        *semver.SemVer         `protobuf:"bytes,5,opt,name=high_api_version,json=highApiVersion,proto3" json:"high_api_version,omitempty"`
-	XXX_NoUnkeyedLiteral  struct{}               `json:"-"`
-	XXX_unrecognized      []byte                 `json:"-"`
-	XXX_sizecache         int32                  `json:"-"`
+	// Earliest RE API version supported, including deprecated versions.
+	DeprecatedApiVersion *semver.SemVer `protobuf:"bytes,3,opt,name=deprecated_api_version,json=deprecatedApiVersion,proto3" json:"deprecated_api_version,omitempty"`
+	// Earliest non-deprecated RE API version supported.
+	LowApiVersion *semver.SemVer `protobuf:"bytes,4,opt,name=low_api_version,json=lowApiVersion,proto3" json:"low_api_version,omitempty"`
+	// Latest RE API version supported.
+	HighApiVersion       *semver.SemVer `protobuf:"bytes,5,opt,name=high_api_version,json=highApiVersion,proto3" json:"high_api_version,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
 }
 
 func (m *ServerCapabilities) Reset()         { *m = ServerCapabilities{} }
@@ -2412,6 +3254,8 @@ func (m *ServerCapabilities) GetHighApiVersion() *semver.SemVer {
 	return nil
 }
 
+// The digest function used for converting values into keys for CAS and Action
+// Cache.
 type DigestFunction struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -2443,6 +3287,7 @@ func (m *DigestFunction) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_DigestFunction proto.InternalMessageInfo
 
+// Describes the server/instance capabilities for updating the action cache.
 type ActionCacheUpdateCapabilities struct {
 	UpdateEnabled        bool     `protobuf:"varint,1,opt,name=update_enabled,json=updateEnabled,proto3" json:"update_enabled,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -2482,6 +3327,10 @@ func (m *ActionCacheUpdateCapabilities) GetUpdateEnabled() bool {
 	return false
 }
 
+// Allowed values for priority in
+// [ResultsCachePolicy][build.bazel.remoteexecution.v2.ResultsCachePolicy] and
+// [ExecutionPolicy][build.bazel.remoteexecution.v2.ResultsCachePolicy]
+// Used for querying both cache and execution valid priority ranges.
 type PriorityCapabilities struct {
 	Priorities           []*PriorityCapabilities_PriorityRange `protobuf:"bytes,1,rep,name=priorities,proto3" json:"priorities,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                              `json:"-"`
@@ -2521,8 +3370,13 @@ func (m *PriorityCapabilities) GetPriorities() []*PriorityCapabilities_PriorityR
 	return nil
 }
 
+// Supported range of priorities, including boundaries.
 type PriorityCapabilities_PriorityRange struct {
-	MinPriority          int32    `protobuf:"varint,1,opt,name=min_priority,json=minPriority,proto3" json:"min_priority,omitempty"`
+	// The minimum numeric value for this priority range, which represents the
+	// most urgent task or longest retained item.
+	MinPriority int32 `protobuf:"varint,1,opt,name=min_priority,json=minPriority,proto3" json:"min_priority,omitempty"`
+	// The maximum numeric value for this priority range, which represents the
+	// least urgent task or shortest retained item.
 	MaxPriority          int32    `protobuf:"varint,2,opt,name=max_priority,json=maxPriority,proto3" json:"max_priority,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -2568,6 +3422,7 @@ func (m *PriorityCapabilities_PriorityRange) GetMaxPriority() int32 {
 	return 0
 }
 
+// Describes how the server treats absolute symlink targets.
 type SymlinkAbsolutePathStrategy struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -2599,15 +3454,25 @@ func (m *SymlinkAbsolutePathStrategy) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_SymlinkAbsolutePathStrategy proto.InternalMessageInfo
 
+// Capabilities of the remote cache system.
 type CacheCapabilities struct {
-	DigestFunction                []DigestFunction_Value            `protobuf:"varint,1,rep,packed,name=digest_function,json=digestFunction,proto3,enum=build.bazel.remote.execution.v2.DigestFunction_Value" json:"digest_function,omitempty"`
-	ActionCacheUpdateCapabilities *ActionCacheUpdateCapabilities    `protobuf:"bytes,2,opt,name=action_cache_update_capabilities,json=actionCacheUpdateCapabilities,proto3" json:"action_cache_update_capabilities,omitempty"`
-	CachePriorityCapabilities     *PriorityCapabilities             `protobuf:"bytes,3,opt,name=cache_priority_capabilities,json=cachePriorityCapabilities,proto3" json:"cache_priority_capabilities,omitempty"`
-	MaxBatchTotalSizeBytes        int64                             `protobuf:"varint,4,opt,name=max_batch_total_size_bytes,json=maxBatchTotalSizeBytes,proto3" json:"max_batch_total_size_bytes,omitempty"`
-	SymlinkAbsolutePathStrategy   SymlinkAbsolutePathStrategy_Value `protobuf:"varint,5,opt,name=symlink_absolute_path_strategy,json=symlinkAbsolutePathStrategy,proto3,enum=build.bazel.remote.execution.v2.SymlinkAbsolutePathStrategy_Value" json:"symlink_absolute_path_strategy,omitempty"`
-	XXX_NoUnkeyedLiteral          struct{}                          `json:"-"`
-	XXX_unrecognized              []byte                            `json:"-"`
-	XXX_sizecache                 int32                             `json:"-"`
+	// All the digest functions supported by the remote cache.
+	// Remote cache may support multiple digest functions simultaneously.
+	DigestFunction []DigestFunction_Value `protobuf:"varint,1,rep,packed,name=digest_function,json=digestFunction,proto3,enum=build.bazel.remote.execution.v2.DigestFunction_Value" json:"digest_function,omitempty"`
+	// Capabilities for updating the action cache.
+	ActionCacheUpdateCapabilities *ActionCacheUpdateCapabilities `protobuf:"bytes,2,opt,name=action_cache_update_capabilities,json=actionCacheUpdateCapabilities,proto3" json:"action_cache_update_capabilities,omitempty"`
+	// Supported cache priority range for both CAS and ActionCache.
+	CachePriorityCapabilities *PriorityCapabilities `protobuf:"bytes,3,opt,name=cache_priority_capabilities,json=cachePriorityCapabilities,proto3" json:"cache_priority_capabilities,omitempty"`
+	// Maximum total size of blobs to be uploaded/downloaded using
+	// batch methods. A value of 0 means no limit is set, although
+	// in practice there will always be a message size limitation
+	// of the protocol in use, e.g. GRPC.
+	MaxBatchTotalSizeBytes int64 `protobuf:"varint,4,opt,name=max_batch_total_size_bytes,json=maxBatchTotalSizeBytes,proto3" json:"max_batch_total_size_bytes,omitempty"`
+	// Whether absolute symlink targets are supported.
+	SymlinkAbsolutePathStrategy SymlinkAbsolutePathStrategy_Value `protobuf:"varint,5,opt,name=symlink_absolute_path_strategy,json=symlinkAbsolutePathStrategy,proto3,enum=build.bazel.remote.execution.v2.SymlinkAbsolutePathStrategy_Value" json:"symlink_absolute_path_strategy,omitempty"`
+	XXX_NoUnkeyedLiteral        struct{}                          `json:"-"`
+	XXX_unrecognized            []byte                            `json:"-"`
+	XXX_sizecache               int32                             `json:"-"`
 }
 
 func (m *CacheCapabilities) Reset()         { *m = CacheCapabilities{} }
@@ -2670,14 +3535,19 @@ func (m *CacheCapabilities) GetSymlinkAbsolutePathStrategy() SymlinkAbsolutePath
 	return SymlinkAbsolutePathStrategy_UNKNOWN
 }
 
+// Capabilities of the remote execution system.
 type ExecutionCapabilities struct {
-	DigestFunction                DigestFunction_Value  `protobuf:"varint,1,opt,name=digest_function,json=digestFunction,proto3,enum=build.bazel.remote.execution.v2.DigestFunction_Value" json:"digest_function,omitempty"`
-	ExecEnabled                   bool                  `protobuf:"varint,2,opt,name=exec_enabled,json=execEnabled,proto3" json:"exec_enabled,omitempty"`
+	// Remote execution may only support a single digest function.
+	DigestFunction DigestFunction_Value `protobuf:"varint,1,opt,name=digest_function,json=digestFunction,proto3,enum=build.bazel.remote.execution.v2.DigestFunction_Value" json:"digest_function,omitempty"`
+	// Whether remote execution is enabled for the particular server/instance.
+	ExecEnabled bool `protobuf:"varint,2,opt,name=exec_enabled,json=execEnabled,proto3" json:"exec_enabled,omitempty"`
+	// Supported execution priority range.
 	ExecutionPriorityCapabilities *PriorityCapabilities `protobuf:"bytes,3,opt,name=execution_priority_capabilities,json=executionPriorityCapabilities,proto3" json:"execution_priority_capabilities,omitempty"`
-	SupportedNodeProperties       []string              `protobuf:"bytes,4,rep,name=supported_node_properties,json=supportedNodeProperties,proto3" json:"supported_node_properties,omitempty"`
-	XXX_NoUnkeyedLiteral          struct{}              `json:"-"`
-	XXX_unrecognized              []byte                `json:"-"`
-	XXX_sizecache                 int32                 `json:"-"`
+	// Supported node properties.
+	SupportedNodeProperties []string `protobuf:"bytes,4,rep,name=supported_node_properties,json=supportedNodeProperties,proto3" json:"supported_node_properties,omitempty"`
+	XXX_NoUnkeyedLiteral    struct{} `json:"-"`
+	XXX_unrecognized        []byte   `json:"-"`
+	XXX_sizecache           int32    `json:"-"`
 }
 
 func (m *ExecutionCapabilities) Reset()         { *m = ExecutionCapabilities{} }
@@ -2733,8 +3603,11 @@ func (m *ExecutionCapabilities) GetSupportedNodeProperties() []string {
 	return nil
 }
 
+// Details for the tool used to call the API.
 type ToolDetails struct {
-	ToolName             string   `protobuf:"bytes,1,opt,name=tool_name,json=toolName,proto3" json:"tool_name,omitempty"`
+	// Name of the tool, e.g. bazel.
+	ToolName string `protobuf:"bytes,1,opt,name=tool_name,json=toolName,proto3" json:"tool_name,omitempty"`
+	// Version of the tool used for the request, e.g. 5.0.3.
 	ToolVersion          string   `protobuf:"bytes,2,opt,name=tool_version,json=toolVersion,proto3" json:"tool_version,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -2780,14 +3653,34 @@ func (m *ToolDetails) GetToolVersion() string {
 	return ""
 }
 
+// An optional Metadata to attach to any RPC request to tell the server about an
+// external context of the request. The server may use this for logging or other
+// purposes. To use it, the client attaches the header to the call using the
+// canonical proto serialization:
+//
+// * name: `build.bazel.remote.execution.v2.requestmetadata-bin`
+// * contents: the base64 encoded binary `RequestMetadata` message.
+// Note: the gRPC library serializes binary headers encoded in base 64 by
+// default (https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#requests).
+// Therefore, if the gRPC library is used to pass/retrieve this
+// metadata, the user may ignore the base64 encoding and assume it is simply
+// serialized as a binary message.
 type RequestMetadata struct {
-	ToolDetails             *ToolDetails `protobuf:"bytes,1,opt,name=tool_details,json=toolDetails,proto3" json:"tool_details,omitempty"`
-	ActionId                string       `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
-	ToolInvocationId        string       `protobuf:"bytes,3,opt,name=tool_invocation_id,json=toolInvocationId,proto3" json:"tool_invocation_id,omitempty"`
-	CorrelatedInvocationsId string       `protobuf:"bytes,4,opt,name=correlated_invocations_id,json=correlatedInvocationsId,proto3" json:"correlated_invocations_id,omitempty"`
-	XXX_NoUnkeyedLiteral    struct{}     `json:"-"`
-	XXX_unrecognized        []byte       `json:"-"`
-	XXX_sizecache           int32        `json:"-"`
+	// The details for the tool invoking the requests.
+	ToolDetails *ToolDetails `protobuf:"bytes,1,opt,name=tool_details,json=toolDetails,proto3" json:"tool_details,omitempty"`
+	// An identifier that ties multiple requests to the same action.
+	// For example, multiple requests to the CAS, Action Cache, and Execution
+	// API are used in order to compile foo.cc.
+	ActionId string `protobuf:"bytes,2,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	// An identifier that ties multiple actions together to a final result.
+	// For example, multiple actions are required to build and run foo_test.
+	ToolInvocationId string `protobuf:"bytes,3,opt,name=tool_invocation_id,json=toolInvocationId,proto3" json:"tool_invocation_id,omitempty"`
+	// An identifier to tie multiple tool invocations together. For example,
+	// runs of foo_test, bar_test and baz_test on a post-submit of a given patch.
+	CorrelatedInvocationsId string   `protobuf:"bytes,4,opt,name=correlated_invocations_id,json=correlatedInvocationsId,proto3" json:"correlated_invocations_id,omitempty"`
+	XXX_NoUnkeyedLiteral    struct{} `json:"-"`
+	XXX_unrecognized        []byte   `json:"-"`
+	XXX_sizecache           int32    `json:"-"`
 }
 
 func (m *RequestMetadata) Reset()         { *m = RequestMetadata{} }
@@ -2905,218 +3798,222 @@ func init() {
 }
 
 var fileDescriptor_c43847ba40caac95 = []byte{
-	// 3364 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x3a, 0x4b, 0x70, 0x1b, 0xc7,
-	0x95, 0x3b, 0x00, 0x88, 0xcf, 0x03, 0x48, 0x40, 0x6d, 0x8a, 0x82, 0x20, 0xc9, 0x92, 0xc6, 0x65,
-	0xaf, 0x96, 0xb2, 0x00, 0x09, 0xb2, 0x64, 0x99, 0xbb, 0xb6, 0x97, 0x1f, 0xc8, 0x92, 0x4c, 0x91,
-	0xdc, 0x01, 0x49, 0xc9, 0xbb, 0x5e, 0x8d, 0x87, 0x98, 0x26, 0x38, 0x2b, 0x60, 0x06, 0xea, 0x19,
-	0x90, 0xa2, 0x5c, 0xaa, 0xad, 0x4a, 0x95, 0xe3, 0x54, 0x52, 0xe5, 0x24, 0x95, 0x5c, 0x12, 0xdf,
-	0x72, 0x4c, 0xe5, 0x98, 0x4b, 0x7e, 0x97, 0x9c, 0x9c, 0x4a, 0x4e, 0x49, 0x25, 0x39, 0xe6, 0x92,
-	0x4b, 0x52, 0xb9, 0xe6, 0x92, 0xca, 0x21, 0xd5, 0x9f, 0xf9, 0x01, 0x43, 0x0d, 0x40, 0xd1, 0x49,
-	0x4e, 0x98, 0x79, 0xfd, 0x7e, 0xfd, 0xfa, 0xf5, 0xfb, 0x0d, 0xe0, 0xfa, 0x56, 0xdf, 0xe8, 0xe8,
-	0xb5, 0x2d, 0xed, 0x09, 0xee, 0xd4, 0x08, 0xee, 0x5a, 0x0e, 0xae, 0xe1, 0xc7, 0xb8, 0xd5, 0x77,
-	0x0c, 0xcb, 0xac, 0xed, 0xd6, 0x05, 0x4c, 0xf5, 0x60, 0xd5, 0x1e, 0xb1, 0x1c, 0x0b, 0x9d, 0x65,
-	0x74, 0x55, 0x46, 0x57, 0xe5, 0x38, 0x55, 0x1f, 0x67, 0xb7, 0x5e, 0x39, 0x1b, 0x64, 0x6c, 0xe3,
-	0xee, 0x2e, 0x26, 0xe2, 0x87, 0x73, 0xa8, 0x9c, 0x6e, 0x5b, 0x56, 0xbb, 0x83, 0x6b, 0x5a, 0xcf,
-	0xa8, 0x69, 0xa6, 0x69, 0x39, 0x1a, 0x25, 0xb5, 0xc5, 0xea, 0x4b, 0x62, 0xb5, 0x63, 0x99, 0x6d,
-	0xd2, 0x37, 0x4d, 0xc3, 0x6c, 0xd7, 0xac, 0x1e, 0x26, 0x21, 0xa4, 0x17, 0x05, 0x12, 0x7b, 0xdb,
-	0xea, 0x6f, 0xd7, 0xf4, 0x3e, 0x47, 0x10, 0xeb, 0x67, 0x07, 0xd7, 0x1d, 0xa3, 0x8b, 0x6d, 0x47,
-	0xeb, 0xf6, 0x0e, 0x62, 0xb0, 0x47, 0xb4, 0x5e, 0x0f, 0x13, 0x57, 0xc0, 0x09, 0xb1, 0x4e, 0x7a,
-	0xad, 0x9a, 0xed, 0x68, 0x4e, 0x5f, 0x2c, 0xc8, 0x5f, 0x4b, 0x40, 0x7a, 0xbe, 0x45, 0x45, 0xa1,
-	0x15, 0x98, 0x6a, 0x59, 0xdd, 0xae, 0x66, 0xea, 0xaa, 0x6e, 0xb4, 0xb1, 0xed, 0x94, 0xa5, 0x73,
-	0xd2, 0x85, 0x7c, 0xfd, 0x5f, 0xab, 0x31, 0x26, 0xaa, 0x2e, 0x31, 0x74, 0x65, 0x52, 0x90, 0xf3,
-	0x57, 0xd4, 0x84, 0x63, 0x86, 0xd9, 0xeb, 0x3b, 0x2a, 0xb1, 0x2c, 0xc7, 0x65, 0x99, 0x18, 0x8f,
-	0x65, 0x91, 0x71, 0x50, 0x2c, 0xcb, 0x11, 0x4c, 0xaf, 0x42, 0x86, 0xee, 0xdd, 0xea, 0x3b, 0xe5,
-	0x34, 0x63, 0x75, 0xb2, 0xca, 0xb7, 0x56, 0x75, 0xb7, 0x5e, 0x5d, 0x12, 0xb6, 0x53, 0x5c, 0x4c,
-	0x74, 0x0e, 0x0a, 0xba, 0xa5, 0x9a, 0x96, 0xa3, 0xb6, 0xb4, 0xd6, 0x0e, 0x2e, 0x67, 0xce, 0x49,
-	0x17, 0xb2, 0x0a, 0xe8, 0xd6, 0x8a, 0xe5, 0x2c, 0x52, 0xc8, 0x9d, 0x54, 0x36, 0x59, 0x4a, 0xdf,
-	0x49, 0x65, 0xb3, 0xa5, 0x9c, 0xfc, 0x97, 0x24, 0x64, 0x16, 0xf9, 0x4e, 0xd0, 0x69, 0xc8, 0x69,
-	0xa4, 0xdd, 0xef, 0x62, 0xd3, 0xb1, 0xcb, 0xd2, 0xb9, 0xe4, 0x85, 0x9c, 0xe2, 0x03, 0xd0, 0x23,
-	0x38, 0x8e, 0xcd, 0x5d, 0x83, 0x58, 0x26, 0x7d, 0x57, 0x77, 0x35, 0x62, 0x68, 0x5b, 0x1d, 0x6c,
-	0x97, 0x13, 0xe7, 0x92, 0x17, 0xf2, 0xf5, 0xff, 0x88, 0xdd, 0xa5, 0x10, 0x53, 0x6d, 0xf8, 0x5c,
-	0x36, 0x05, 0x13, 0x65, 0x1a, 0x0f, 0x03, 0x6d, 0x74, 0x1e, 0x0a, 0x56, 0xdf, 0xa1, 0x56, 0xdd,
-	0x36, 0xa8, 0xa4, 0x24, 0xd3, 0x29, 0xcf, 0x61, 0x37, 0x29, 0x08, 0x5d, 0x02, 0x24, 0x50, 0x74,
-	0x83, 0xe0, 0x96, 0x63, 0x11, 0x03, 0xdb, 0xe5, 0x14, 0x43, 0x3c, 0xc6, 0x57, 0x96, 0xfc, 0x85,
-	0x00, 0xc7, 0x9e, 0xe6, 0xec, 0xd8, 0xe5, 0x4c, 0x90, 0xe3, 0x1a, 0x05, 0xa1, 0x06, 0x64, 0x7b,
-	0x1d, 0xcd, 0xd9, 0xb6, 0x48, 0xb7, 0x3c, 0xc1, 0xac, 0xfe, 0x6f, 0xb1, 0x5b, 0x5b, 0x13, 0x04,
-	0x8a, 0x47, 0x8a, 0x2e, 0xc2, 0xb1, 0x3d, 0x8b, 0x3c, 0x34, 0xcc, 0xb6, 0xa7, 0xd9, 0x3e, 0x3b,
-	0xc5, 0x9c, 0x52, 0x12, 0x0b, 0xae, 0x62, 0xfb, 0xe8, 0x35, 0x98, 0x11, 0x6a, 0x99, 0x96, 0x8e,
-	0xd5, 0x1e, 0xa1, 0x97, 0xc6, 0xa1, 0x3b, 0xc9, 0x32, 0x05, 0xa7, 0xf9, 0xea, 0x8a, 0xa5, 0xe3,
-	0x35, 0x6f, 0xad, 0xf2, 0x36, 0xbc, 0x10, 0x61, 0x4b, 0x84, 0x20, 0x65, 0x6a, 0x5d, 0xcc, 0x1c,
-	0x3a, 0xa7, 0xb0, 0x67, 0x34, 0x0d, 0x13, 0xbb, 0x5a, 0xa7, 0x8f, 0x99, 0x4b, 0xe6, 0x14, 0xfe,
-	0x22, 0x7f, 0x53, 0x82, 0xac, 0xab, 0x3a, 0x52, 0x00, 0x02, 0x72, 0x25, 0x76, 0xa8, 0xf5, 0x91,
-	0x77, 0x5e, 0x15, 0x7a, 0xed, 0x2b, 0x01, 0x2e, 0x95, 0xd7, 0x20, 0xeb, 0xc2, 0xc7, 0x50, 0xeb,
-	0xb3, 0x04, 0xe4, 0x7c, 0xdb, 0xbc, 0x0d, 0x13, 0xfc, 0xf4, 0xb9, 0x4a, 0xf1, 0x87, 0x41, 0x1d,
-	0x83, 0x5a, 0x4a, 0xe1, 0x74, 0x68, 0x0d, 0xf2, 0x41, 0xdf, 0xe0, 0xee, 0x5a, 0x1d, 0xe1, 0x52,
-	0x0a, 0x0d, 0x18, 0xaf, 0x20, 0x0b, 0x74, 0x0b, 0xb2, 0xf6, 0x7e, 0xb7, 0x63, 0x98, 0x0f, 0xb9,
-	0x4f, 0xe6, 0xeb, 0xaf, 0xc6, 0xb2, 0x6b, 0x72, 0x02, 0xc6, 0xcc, 0xa3, 0x46, 0xf7, 0xa1, 0x38,
-	0x78, 0xe2, 0xdc, 0xe7, 0x6a, 0xb1, 0x0c, 0xc3, 0xce, 0xa0, 0x4c, 0x99, 0xa1, 0xf7, 0x3b, 0xa9,
-	0x6c, 0xaa, 0x34, 0x21, 0xdf, 0x80, 0x42, 0x00, 0x6f, 0x9c, 0x43, 0xf8, 0x85, 0x04, 0x53, 0x61,
-	0x11, 0xe8, 0x6e, 0x84, 0x87, 0x5c, 0x1a, 0x47, 0xcf, 0x90, 0x73, 0xa0, 0xcb, 0x30, 0xd1, 0xa5,
-	0x41, 0x4b, 0x84, 0xc9, 0xca, 0x50, 0x6c, 0x5b, 0x77, 0xe3, 0xbe, 0xc2, 0x11, 0xd1, 0x1b, 0x90,
-	0xeb, 0x9b, 0xc6, 0x63, 0xb5, 0x6b, 0xe9, 0xb8, 0x9c, 0x64, 0x54, 0xa7, 0x87, 0xa8, 0x36, 0x6e,
-	0x9b, 0xce, 0xd5, 0xfa, 0x26, 0xdd, 0x84, 0x92, 0xa5, 0xe8, 0x77, 0x2d, 0x1d, 0xcb, 0x7f, 0x94,
-	0x20, 0xeb, 0x3a, 0x46, 0xa4, 0x15, 0xde, 0x86, 0xf4, 0xe1, 0xa2, 0xb6, 0x20, 0x43, 0x2f, 0xc1,
-	0xa4, 0x61, 0x8b, 0x8c, 0x4b, 0xef, 0x61, 0x39, 0xc5, 0x02, 0x6f, 0xc1, 0xb0, 0x1b, 0x1e, 0x2c,
-	0xea, 0xbc, 0xd3, 0x47, 0x75, 0xde, 0xc9, 0x52, 0xea, 0x4e, 0x2a, 0x3b, 0x51, 0x4a, 0xcb, 0x3a,
-	0x4c, 0x86, 0xbc, 0xf7, 0x73, 0xd9, 0xb0, 0xfc, 0x2d, 0x09, 0xf2, 0x01, 0xaf, 0x8e, 0x14, 0x32,
-	0x03, 0x69, 0x47, 0x23, 0x6d, 0xec, 0x08, 0xe7, 0x12, 0x6f, 0x51, 0x76, 0x48, 0x1d, 0xa1, 0x1d,
-	0xe4, 0x7f, 0x87, 0xb4, 0xc8, 0xa1, 0x08, 0x52, 0x3b, 0x9a, 0xbd, 0xe3, 0x6a, 0x45, 0x9f, 0xd1,
-	0x19, 0x00, 0xdb, 0x78, 0x82, 0xd5, 0xad, 0x7d, 0x87, 0x05, 0x04, 0xe9, 0x42, 0x52, 0xc9, 0x51,
-	0xc8, 0x02, 0x05, 0xc8, 0xbf, 0x4b, 0xc3, 0x0c, 0x3f, 0x33, 0xac, 0xf3, 0x72, 0xe1, 0x2e, 0x76,
-	0x34, 0x5d, 0x73, 0x34, 0xba, 0x1f, 0x1a, 0xbc, 0x31, 0x11, 0xfc, 0xc4, 0x1b, 0x6a, 0x40, 0xe9,
-	0x51, 0x1f, 0xf7, 0xb1, 0xae, 0x7a, 0xc5, 0xca, 0x08, 0x6e, 0x5d, 0xe4, 0x34, 0x1e, 0x00, 0xad,
-	0xc1, 0x0c, 0x67, 0xa8, 0xda, 0x8e, 0x46, 0x9c, 0x00, 0xb3, 0x64, 0x2c, 0xb3, 0x69, 0x4e, 0xd9,
-	0xa4, 0x84, 0x3e, 0xc7, 0xfb, 0x50, 0x11, 0x1c, 0x5b, 0x56, 0xb7, 0xd7, 0xc1, 0x4e, 0x48, 0xc5,
-	0x54, 0x2c, 0xd7, 0x32, 0xa7, 0x5e, 0x74, 0x89, 0x7d, 0xce, 0xef, 0xc1, 0x29, 0x5e, 0xf1, 0x6c,
-	0x63, 0xa7, 0xb5, 0x33, 0xa4, 0xf0, 0x44, 0x3c, 0x6b, 0x46, 0x7e, 0x93, 0x52, 0x0f, 0x28, 0xad,
-	0xc1, 0xd9, 0x20, 0xeb, 0x28, 0xcd, 0xd3, 0xb1, 0xec, 0x4f, 0xfb, 0xec, 0x23, 0xb4, 0xdf, 0x84,
-	0x93, 0x9e, 0x57, 0x0d, 0xe9, 0x9e, 0x89, 0x65, 0x7e, 0xc2, 0x23, 0x1e, 0x50, 0xfd, 0x01, 0x9c,
-	0xf1, 0xf9, 0x46, 0x29, 0x9e, 0x8d, 0xe5, 0x7d, 0xca, 0x63, 0x10, 0xa1, 0xf7, 0xff, 0xc2, 0x19,
-	0x51, 0x29, 0xf4, 0x7b, 0x1d, 0x4b, 0xd3, 0x87, 0x74, 0xcf, 0xc5, 0xf2, 0xaf, 0x70, 0x06, 0x1b,
-	0x8c, 0x7e, 0x40, 0x7d, 0x0c, 0xe7, 0xc3, 0xec, 0xa3, 0xb6, 0x00, 0xb1, 0x22, 0x5e, 0x0c, 0x8a,
-	0x18, 0xde, 0x85, 0xfc, 0xf3, 0x34, 0x14, 0xf8, 0xcd, 0x52, 0xb0, 0xdd, 0xef, 0x38, 0x68, 0x65,
-	0xa0, 0xd2, 0xe3, 0x49, 0xfa, 0x62, 0x6c, 0x30, 0x58, 0xf5, 0x4a, 0xc1, 0x70, 0x59, 0xf8, 0x01,
-	0x4c, 0x07, 0xf8, 0xa9, 0x5e, 0xb6, 0x86, 0x11, 0x93, 0x3f, 0xe7, 0x2b, 0xa2, 0x9b, 0x82, 0x7c,
-	0xd6, 0x4d, 0x37, 0x73, 0xdf, 0x83, 0xa2, 0x90, 0xe0, 0x31, 0x2f, 0x1c, 0x8a, 0xf9, 0x94, 0x15,
-	0x7c, 0xb5, 0x91, 0x1a, 0x59, 0xd1, 0xf2, 0x32, 0xe3, 0xf2, 0x88, 0xbc, 0xbd, 0xe8, 0x1f, 0x55,
-	0x03, 0xff, 0x1f, 0x9c, 0x1c, 0x10, 0xb0, 0xef, 0xef, 0x21, 0x7f, 0xa8, 0x3d, 0x9c, 0x08, 0x4b,
-	0xd9, 0xf7, 0x36, 0x73, 0x0a, 0x72, 0xf8, 0xb1, 0xe1, 0xa8, 0x2d, 0x9a, 0xb1, 0x69, 0xb4, 0x99,
-	0x50, 0xb2, 0x14, 0xb0, 0x48, 0x13, 0x06, 0x0d, 0xc3, 0x8e, 0x6e, 0xd1, 0xa6, 0x49, 0xdb, 0x63,
-	0x01, 0xa3, 0xa0, 0xe4, 0x38, 0x44, 0xd1, 0xf6, 0xd0, 0x32, 0x4c, 0x8a, 0x65, 0x91, 0xa7, 0xd2,
-	0xe3, 0xe5, 0xa9, 0x02, 0xa7, 0x16, 0x79, 0x80, 0x0b, 0xc3, 0x84, 0x30, 0x61, 0x19, 0x4f, 0x18,
-	0x26, 0xc4, 0x17, 0x46, 0x97, 0x85, 0xb0, 0xec, 0xf8, 0xc2, 0x30, 0x21, 0x42, 0xd8, 0x36, 0x20,
-	0x3f, 0x0a, 0x74, 0x45, 0xf2, 0x10, 0x57, 0xf3, 0xf5, 0x58, 0x96, 0xd1, 0xb9, 0x47, 0x39, 0xe6,
-	0x21, 0xb9, 0xa0, 0x3b, 0xa9, 0xac, 0x54, 0x4a, 0xc8, 0x5f, 0x4a, 0x00, 0xf8, 0x17, 0x81, 0x66,
-	0x3c, 0xda, 0xdc, 0xb8, 0x19, 0x8f, 0x3e, 0xff, 0x9d, 0xaa, 0x9b, 0x0a, 0x64, 0x5b, 0x96, 0xe9,
-	0xb0, 0xfe, 0x91, 0x1f, 0xa7, 0xf7, 0x1e, 0x95, 0xf1, 0x33, 0x47, 0x5b, 0xf9, 0xa4, 0x4b, 0x19,
-	0xf9, 0x13, 0x09, 0x52, 0xeb, 0x04, 0x63, 0xf4, 0x16, 0xa4, 0x68, 0x27, 0x2e, 0xba, 0xfa, 0xd9,
-	0xd1, 0xab, 0x7d, 0x85, 0xd1, 0xa1, 0x9b, 0x90, 0x6d, 0xed, 0x18, 0x1d, 0x9d, 0x60, 0x53, 0x04,
-	0xa3, 0x71, 0x78, 0x78, 0xb4, 0x72, 0x1f, 0x8a, 0x03, 0x57, 0x32, 0xf2, 0x7c, 0x6e, 0x41, 0xde,
-	0x21, 0x18, 0xbb, 0xce, 0x97, 0x1c, 0xef, 0x90, 0x80, 0xd2, 0xf2, 0xe7, 0x3b, 0xa9, 0x6c, 0xa2,
-	0x94, 0x94, 0x3f, 0x95, 0x60, 0x32, 0x74, 0x45, 0x23, 0xa5, 0xfe, 0xa3, 0xaa, 0xb3, 0x4b, 0x50,
-	0x6c, 0xb8, 0x44, 0x6b, 0x56, 0xc7, 0x68, 0xed, 0x53, 0xd7, 0xe9, 0x11, 0xc3, 0x22, 0x86, 0xb3,
-	0xcf, 0x54, 0x9c, 0x50, 0xbc, 0x77, 0xf9, 0x32, 0x20, 0x9e, 0x26, 0x6c, 0x36, 0xbf, 0x18, 0x81,
-	0xe2, 0xa3, 0x24, 0x4c, 0x89, 0x5b, 0xa4, 0xe0, 0x47, 0x7d, 0xd7, 0x81, 0x4d, 0xdb, 0xd1, 0xcc,
-	0x16, 0x56, 0x03, 0x65, 0x6a, 0xc1, 0x05, 0xae, 0xd0, 0x72, 0x75, 0x16, 0x8e, 0xd9, 0x0f, 0x8d,
-	0x1e, 0x9f, 0x9c, 0xa8, 0x1d, 0xcb, 0x7a, 0xd8, 0xe7, 0xa5, 0x57, 0x56, 0x29, 0xd2, 0x05, 0x26,
-	0x7f, 0x99, 0x81, 0x69, 0xc4, 0xd0, 0xd8, 0x05, 0x3d, 0x6c, 0x78, 0xe2, 0xd4, 0x22, 0x62, 0xfc,
-	0x0f, 0x94, 0xfc, 0x88, 0xd1, 0x63, 0x3b, 0x14, 0xf7, 0xe3, 0xf2, 0x88, 0xf1, 0xc2, 0xb3, 0xa5,
-	0x52, 0xc4, 0x03, 0xc6, 0xc5, 0x30, 0x4d, 0xb8, 0x01, 0xc5, 0xce, 0x84, 0x00, 0x1e, 0xe3, 0xae,
-	0xc6, 0x0a, 0x18, 0xb6, 0xbe, 0x82, 0xc8, 0x10, 0x8c, 0xbb, 0x1e, 0x6f, 0x3c, 0x45, 0x23, 0xf2,
-	0x08, 0x32, 0xcb, 0x56, 0x9b, 0x45, 0x25, 0x3f, 0x02, 0x49, 0x87, 0x8b, 0x40, 0x2f, 0xc3, 0xd4,
-	0x4e, 0xbf, 0xab, 0x99, 0x2a, 0xc1, 0x9a, 0xce, 0x42, 0x50, 0x82, 0x1d, 0xcc, 0x24, 0x83, 0x2a,
-	0x02, 0x28, 0x7f, 0x35, 0xe9, 0x3a, 0x17, 0x56, 0xb0, 0xdd, 0xb3, 0x4c, 0x1b, 0xa3, 0x06, 0xa4,
-	0xb9, 0xba, 0x42, 0x76, 0x7c, 0xd3, 0x1a, 0x2c, 0x4e, 0x14, 0x41, 0x4c, 0x5d, 0x88, 0x99, 0x4f,
-	0x57, 0x05, 0x37, 0xae, 0x40, 0x81, 0x03, 0x45, 0x25, 0x33, 0x0b, 0x69, 0x3e, 0x73, 0x14, 0x97,
-	0x18, 0xb9, 0x65, 0x12, 0xe9, 0xb5, 0xaa, 0x4d, 0xb6, 0xa2, 0x08, 0x0c, 0xa4, 0x41, 0xde, 0xc6,
-	0x64, 0x17, 0x13, 0xb5, 0x63, 0xb5, 0xf9, 0xd4, 0x2a, 0x5f, 0xff, 0xcf, 0x51, 0xf3, 0x83, 0xbb,
-	0xbd, 0x6a, 0x93, 0xf1, 0x58, 0xb6, 0xda, 0x76, 0xc3, 0x74, 0xc8, 0xbe, 0x02, 0xb6, 0x07, 0x40,
-	0x65, 0xc8, 0x74, 0xb1, 0x6d, 0x6b, 0x6d, 0xcc, 0x22, 0x72, 0x4e, 0x71, 0x5f, 0x2b, 0x6d, 0x28,
-	0x0e, 0x10, 0xa2, 0x12, 0x24, 0x1f, 0xe2, 0x7d, 0x71, 0x33, 0xe8, 0x23, 0x7a, 0x2b, 0x38, 0x1b,
-	0xc8, 0xd7, 0x2f, 0xc4, 0xea, 0x26, 0x8e, 0x5b, 0x4c, 0x11, 0xe6, 0x12, 0x37, 0x24, 0x59, 0x73,
-	0xef, 0x22, 0xaf, 0x96, 0xdb, 0x58, 0x5e, 0x85, 0x09, 0xd6, 0x9f, 0xa3, 0x3c, 0x64, 0x36, 0x56,
-	0xde, 0x5d, 0x59, 0xbd, 0xb7, 0x52, 0xfa, 0x17, 0x54, 0x84, 0xfc, 0xe2, 0xfc, 0xe2, 0xad, 0x86,
-	0xba, 0x78, 0xab, 0xb1, 0xf8, 0x6e, 0x49, 0x42, 0x00, 0xe9, 0xff, 0xda, 0x68, 0x6c, 0x34, 0x96,
-	0x4a, 0x09, 0x34, 0x09, 0xb9, 0xc6, 0xfd, 0xc6, 0xe2, 0xc6, 0xfa, 0xed, 0x95, 0x77, 0x4a, 0x49,
-	0xfa, 0xba, 0xb8, 0x7a, 0x77, 0x6d, 0xb9, 0xb1, 0xde, 0x58, 0x2a, 0xa5, 0xe4, 0xaf, 0x27, 0xa0,
-	0x2c, 0xac, 0xb2, 0xea, 0x8e, 0x9b, 0xbd, 0x9e, 0xed, 0x5d, 0x98, 0xb0, 0xa9, 0x58, 0xb6, 0xaf,
-	0xa9, 0xfa, 0xb5, 0xd1, 0xef, 0x13, 0xd3, 0xb6, 0xca, 0x47, 0x09, 0x9c, 0xc7, 0xf0, 0xad, 0x4f,
-	0x3c, 0xcf, 0xad, 0x7f, 0x15, 0x90, 0x28, 0x71, 0x6c, 0x87, 0x60, 0xad, 0xcb, 0x23, 0x53, 0x92,
-	0x4f, 0x09, 0xf9, 0x4a, 0x93, 0x2d, 0xb0, 0xe8, 0xc4, 0xb1, 0x69, 0x8d, 0x12, 0xc4, 0x4e, 0x79,
-	0xd8, 0x98, 0x10, 0x1f, 0x5b, 0x9e, 0x85, 0xe9, 0x7b, 0x9a, 0xe1, 0x78, 0x9b, 0x71, 0x03, 0x61,
-	0x44, 0x9b, 0x2e, 0x7f, 0x94, 0x80, 0x99, 0x77, 0xb0, 0x13, 0xf2, 0xfa, 0x71, 0xe2, 0xe6, 0xd1,
-	0x5a, 0x85, 0x89, 0xec, 0x18, 0x26, 0x56, 0xb9, 0x09, 0x44, 0x04, 0x2e, 0x70, 0x60, 0x93, 0xc1,
-	0xc2, 0x48, 0x98, 0x10, 0xaf, 0x20, 0x71, 0x91, 0x30, 0x21, 0xa8, 0x0a, 0x2f, 0x08, 0xa4, 0x50,
-	0x77, 0x31, 0xc1, 0xc7, 0xc3, 0x7c, 0xc9, 0xaf, 0x9c, 0x6c, 0xf9, 0x67, 0x09, 0x38, 0xb9, 0xd1,
-	0xd3, 0x35, 0x07, 0xff, 0x93, 0x98, 0x42, 0xf1, 0xb8, 0x89, 0x90, 0x93, 0x3c, 0x4c, 0x00, 0x13,
-	0x3c, 0x45, 0x84, 0x3a, 0x28, 0x1b, 0xa4, 0x8e, 0x34, 0x1b, 0xc8, 0x5f, 0x96, 0xe0, 0xc4, 0x4d,
-	0xc3, 0xd4, 0xef, 0x1a, 0xb6, 0x6d, 0x98, 0xed, 0x85, 0x8e, 0xb5, 0x65, 0x8f, 0x65, 0xc9, 0x3b,
-	0x50, 0xd8, 0xea, 0x58, 0x5b, 0xc2, 0x8e, 0x6e, 0x4f, 0x38, 0xb2, 0x21, 0xf3, 0x94, 0x98, 0x3f,
-	0xdb, 0x72, 0x1f, 0xca, 0xc3, 0xba, 0x88, 0xec, 0xf0, 0x1e, 0x4c, 0x77, 0x39, 0x5c, 0x7d, 0x1e,
-	0x79, 0xa8, 0xeb, 0x33, 0x77, 0xc5, 0xfe, 0x55, 0x82, 0x13, 0x0b, 0x9a, 0xd3, 0xda, 0xe1, 0x4e,
-	0x35, 0xbe, 0x0d, 0xde, 0x87, 0x2c, 0xe1, 0xf8, 0xae, 0x3e, 0xf1, 0xe9, 0xe1, 0x00, 0x81, 0x55,
-	0xf1, 0xab, 0x78, 0x1c, 0x2b, 0x0f, 0x20, 0xe3, 0x6a, 0xf3, 0xdc, 0xe9, 0x19, 0x41, 0x8a, 0x35,
-	0x39, 0x09, 0x56, 0xf7, 0xb3, 0x67, 0xf9, 0xcf, 0x12, 0x94, 0x87, 0xb5, 0x11, 0x66, 0xff, 0x00,
-	0x72, 0x44, 0x3c, 0xbb, 0xc3, 0xe4, 0x85, 0x43, 0xec, 0x4d, 0xe4, 0x40, 0xf7, 0x41, 0xf1, 0x99,
-	0x56, 0xf6, 0x20, 0xeb, 0x49, 0x7b, 0xee, 0xfd, 0xf9, 0x79, 0x3d, 0x11, 0x97, 0xd7, 0xe5, 0xff,
-	0x87, 0xe3, 0x4c, 0x51, 0x5a, 0x94, 0x8c, 0x7f, 0xe6, 0xf3, 0x90, 0x39, 0xa4, 0x0b, 0xba, 0x74,
-	0xf2, 0x17, 0x13, 0x30, 0x33, 0xa8, 0x81, 0x30, 0xc4, 0x83, 0x61, 0xb3, 0x8f, 0xe8, 0x52, 0x43,
-	0xbc, 0x22, 0x8d, 0xfe, 0x15, 0xe9, 0x28, 0xad, 0x1e, 0xe1, 0x55, 0xe3, 0x54, 0x58, 0xf2, 0x8f,
-	0x24, 0x98, 0x7a, 0x07, 0x3b, 0xb4, 0x25, 0x1c, 0xeb, 0x0c, 0x6e, 0x41, 0xfe, 0x39, 0x3e, 0xe4,
-	0x02, 0xf1, 0xbf, 0xe1, 0x9e, 0x82, 0x5c, 0x4f, 0x6b, 0x63, 0xd5, 0x36, 0x9e, 0xf0, 0xcc, 0x4e,
-	0xfb, 0x14, 0xad, 0x8d, 0x9b, 0xc6, 0x13, 0x36, 0x01, 0x61, 0x8b, 0x8e, 0xf5, 0x10, 0x9b, 0x22,
-	0x93, 0x33, 0xf4, 0x75, 0x0a, 0x90, 0x3f, 0x96, 0xa0, 0xe8, 0x69, 0x2f, 0x4c, 0xba, 0x1c, 0xfe,
-	0x9a, 0x25, 0x8d, 0xdd, 0x9b, 0x86, 0xbe, 0x64, 0xbd, 0x02, 0x45, 0x13, 0x3f, 0x76, 0xd4, 0x80,
-	0x16, 0xbc, 0x15, 0x9c, 0xa4, 0xe0, 0x35, 0x4f, 0x93, 0x37, 0x59, 0x7d, 0xb0, 0xa8, 0xf5, 0xb4,
-	0x2d, 0xa3, 0x63, 0xb0, 0xd6, 0x6e, 0x0c, 0x73, 0xca, 0x3f, 0x4d, 0x02, 0xe2, 0xc5, 0x66, 0x90,
-	0x05, 0xd2, 0x00, 0xf1, 0x0c, 0xd4, 0x0a, 0x40, 0x85, 0xab, 0xc4, 0x7f, 0x7a, 0x64, 0xc9, 0x26,
-	0xa4, 0xd2, 0xb1, 0xd6, 0x20, 0x08, 0x75, 0x61, 0x26, 0x30, 0x8f, 0x0d, 0x8a, 0xe1, 0x67, 0x7a,
-	0x7d, 0xf4, 0x6a, 0x30, 0x24, 0xea, 0x38, 0x8e, 0x02, 0xa3, 0x35, 0x98, 0xd1, 0x71, 0x8f, 0xe0,
-	0x96, 0xe6, 0x60, 0x5d, 0xd5, 0x7a, 0x86, 0xba, 0x8b, 0x89, 0x6d, 0x58, 0xa6, 0x37, 0xc0, 0x0f,
-	0x8a, 0x13, 0xff, 0xac, 0x68, 0xe2, 0xee, 0x26, 0x26, 0xca, 0xb4, 0x4f, 0x39, 0xdf, 0x33, 0x36,
-	0x39, 0x1d, 0x5a, 0x80, 0x62, 0xc7, 0xda, 0x0b, 0xb1, 0x4a, 0xc5, 0xb2, 0x9a, 0xec, 0x58, 0x7b,
-	0x01, 0x1e, 0x4b, 0x50, 0xda, 0x31, 0xda, 0x3b, 0x21, 0x26, 0x13, 0xb1, 0x4c, 0xa6, 0x28, 0x8d,
-	0xcf, 0x45, 0xde, 0x86, 0x29, 0xee, 0xd3, 0x37, 0xfb, 0x26, 0xab, 0x27, 0xe4, 0xf5, 0xc8, 0x3a,
-	0x1e, 0x20, 0xdd, 0xbc, 0x35, 0x5f, 0xbf, 0x76, 0xbd, 0x24, 0xa1, 0x2c, 0xa4, 0x9a, 0xb7, 0xe6,
-	0xaf, 0x94, 0x12, 0x28, 0x03, 0xc9, 0xbb, 0x4b, 0xd7, 0x4a, 0x49, 0xfa, 0xb0, 0xd9, 0x5c, 0x2d,
-	0xa5, 0x04, 0xde, 0xd5, 0x1b, 0xaf, 0x95, 0x26, 0xc4, 0xf3, 0xb5, 0x2b, 0xf5, 0x52, 0x5a, 0xbe,
-	0x09, 0x67, 0x78, 0xf5, 0xc2, 0x0e, 0x98, 0x07, 0xfb, 0x90, 0x91, 0x5f, 0x86, 0xa9, 0x3e, 0x83,
-	0xaa, 0xd8, 0xa4, 0x3d, 0x9f, 0xce, 0x5c, 0x26, 0xab, 0x4c, 0x72, 0x68, 0x83, 0x03, 0xe5, 0x5f,
-	0x4a, 0x30, 0xbd, 0x26, 0x26, 0x02, 0x21, 0xfa, 0x16, 0x80, 0x98, 0x14, 0xf8, 0x37, 0x68, 0x31,
-	0xfe, 0x4b, 0x77, 0x04, 0x2b, 0x0f, 0xa8, 0x68, 0x66, 0x1b, 0x2b, 0x01, 0xb6, 0x95, 0x0d, 0x98,
-	0x0c, 0x2d, 0xa2, 0xf3, 0x50, 0xe8, 0x1a, 0xa6, 0x3a, 0x30, 0xb3, 0xc8, 0x77, 0x0d, 0xd3, 0xc5,
-	0x63, 0x28, 0xda, 0x63, 0x1f, 0x25, 0x21, 0x50, 0xb4, 0xc7, 0x2e, 0x8a, 0xbc, 0x06, 0xa7, 0xc4,
-	0x44, 0x67, 0x7e, 0xcb, 0xb6, 0x3a, 0x7d, 0x07, 0xaf, 0x69, 0xce, 0x4e, 0xd3, 0x21, 0x9a, 0x83,
-	0xdb, 0xfb, 0xf2, 0x95, 0xc8, 0x13, 0x99, 0x02, 0x58, 0xba, 0xdd, 0x9c, 0x5f, 0x5e, 0x5e, 0xbd,
-	0xd7, 0x58, 0x2a, 0x49, 0x74, 0xd1, 0x7d, 0x49, 0xc8, 0x3f, 0x4c, 0xc1, 0xb1, 0xa1, 0xab, 0x84,
-	0x1e, 0x40, 0x91, 0xc7, 0x3e, 0x75, 0x5b, 0x9c, 0x36, 0x33, 0xd4, 0x28, 0xed, 0x53, 0xd8, 0x49,
-	0x44, 0xfb, 0x34, 0xa5, 0x87, 0xa0, 0xe8, 0x63, 0x09, 0xce, 0x89, 0xca, 0x96, 0x87, 0x00, 0x71,
-	0xa2, 0x11, 0x57, 0xf4, 0xad, 0x11, 0x8b, 0xdd, 0x03, 0xdc, 0x45, 0x39, 0xa3, 0x3d, 0xd3, 0x9b,
-	0xfa, 0x70, 0x4a, 0x94, 0xc1, 0xc2, 0xc6, 0x61, 0x1d, 0xf8, 0xbd, 0xbd, 0x76, 0x28, 0xf7, 0x50,
-	0x4e, 0x32, 0xce, 0x91, 0x4e, 0x38, 0x07, 0x15, 0x7a, 0xd6, 0x5b, 0x34, 0xb3, 0xaa, 0x8e, 0xe5,
-	0x68, 0x1d, 0x35, 0xf0, 0x4d, 0x32, 0xc5, 0xbe, 0x49, 0xce, 0x74, 0xb5, 0xc7, 0x2c, 0xf5, 0xae,
-	0xd3, 0xf5, 0xa6, 0xfb, 0x81, 0x92, 0x1a, 0xef, 0x45, 0x31, 0xb1, 0x57, 0x35, 0xe1, 0x06, 0xec,
-	0x0f, 0x2d, 0xb4, 0x31, 0x64, 0x8e, 0xc0, 0xae, 0xf7, 0xd4, 0x08, 0x05, 0xd5, 0x33, 0x9c, 0x49,
-	0x9c, 0xdc, 0x29, 0xfb, 0x19, 0xfe, 0xf6, 0xeb, 0x04, 0x1c, 0x8f, 0x0c, 0x90, 0xd1, 0x0e, 0x24,
-	0x1d, 0x9d, 0x03, 0x9d, 0x87, 0x02, 0x25, 0xf2, 0x42, 0x00, 0x9f, 0xc5, 0xe4, 0x29, 0x4c, 0x04,
-	0x00, 0xf4, 0x14, 0xce, 0x06, 0x66, 0x6a, 0x47, 0x7f, 0xba, 0xfe, 0x97, 0xbe, 0x03, 0x4e, 0xf8,
-	0xa4, 0xdd, 0xef, 0xf5, 0x2c, 0x42, 0x53, 0xc1, 0xf0, 0x3c, 0x95, 0xb6, 0xa0, 0x27, 0x3c, 0x84,
-	0xf0, 0xdc, 0x54, 0xbe, 0x0b, 0xf9, 0x75, 0xcb, 0xea, 0x2c, 0x61, 0x47, 0x33, 0x3a, 0xec, 0x33,
-	0x8a, 0x63, 0x59, 0x9d, 0x60, 0x82, 0xcd, 0x52, 0x00, 0xab, 0x55, 0xce, 0x43, 0x81, 0x2d, 0xba,
-	0x91, 0x9d, 0x27, 0xf0, 0x3c, 0x85, 0xb9, 0xa1, 0xfb, 0x0f, 0x12, 0x14, 0x45, 0xc2, 0xf6, 0xc6,
-	0x22, 0xab, 0x82, 0x4c, 0xe7, 0x32, 0x44, 0xda, 0x8d, 0xff, 0x23, 0x4b, 0x40, 0x2f, 0x2e, 0x24,
-	0xa0, 0xa4, 0xb8, 0xd1, 0x86, 0x2e, 0x94, 0xc8, 0x72, 0xc0, 0x6d, 0x1d, 0xbd, 0x0a, 0x88, 0x49,
-	0x33, 0xcc, 0x5d, 0xab, 0xa5, 0xb9, 0x58, 0x62, 0xd2, 0x41, 0x57, 0x6e, 0x7b, 0x0b, 0xb7, 0x75,
-	0x6a, 0xba, 0x96, 0x45, 0x08, 0xee, 0xb0, 0x34, 0xea, 0xd3, 0xd8, 0x94, 0x88, 0x97, 0x49, 0x27,
-	0x7c, 0x04, 0x9f, 0xd4, 0xbe, 0xad, 0xd7, 0x7f, 0x90, 0x80, 0x9c, 0xe7, 0x92, 0xe8, 0x13, 0x09,
-	0x32, 0x62, 0x32, 0x84, 0x6a, 0xa3, 0x4f, 0xd6, 0x98, 0xa9, 0x2a, 0x67, 0xdc, 0xca, 0x32, 0xf0,
-	0x7f, 0xc6, 0xaa, 0x37, 0x60, 0x92, 0xaf, 0x7c, 0xe1, 0x57, 0xbf, 0xff, 0x46, 0xe2, 0xa2, 0xfc,
-	0x4a, 0x6d, 0xb7, 0x5e, 0xfb, 0x30, 0x54, 0x05, 0xbd, 0x39, 0x3b, 0xfb, 0xb4, 0xc6, 0x37, 0x6f,
-	0xcf, 0x71, 0x11, 0x78, 0x4e, 0x9a, 0xbd, 0x2c, 0xa1, 0x6f, 0x4b, 0x30, 0x19, 0x9a, 0xcb, 0xa0,
-	0x78, 0xef, 0x8b, 0x9a, 0xe3, 0x8c, 0xa7, 0x1c, 0xd3, 0xc9, 0xff, 0x27, 0x66, 0x6d, 0x76, 0xf6,
-	0xe9, 0xdc, 0x5e, 0x90, 0x2b, 0x53, 0xae, 0xfe, 0x9b, 0x24, 0xe4, 0x03, 0xc1, 0x14, 0xfd, 0x96,
-	0x17, 0xa0, 0xa1, 0x4f, 0xb5, 0xf1, 0xdf, 0xaf, 0xa2, 0x27, 0x49, 0x95, 0xf1, 0x86, 0x16, 0xf2,
-	0xfb, 0x6c, 0x03, 0x9b, 0x68, 0xfd, 0x99, 0xd6, 0x15, 0xc3, 0x88, 0xda, 0x87, 0xa1, 0xa1, 0x4b,
-	0x75, 0x47, 0xb3, 0x77, 0x9e, 0x0e, 0x02, 0xfd, 0xf8, 0xfa, 0x14, 0xfd, 0x49, 0x02, 0x34, 0x3c,
-	0xe9, 0x41, 0x73, 0xb1, 0x3a, 0x1e, 0x38, 0x1e, 0x1a, 0x77, 0x7f, 0x0f, 0xd9, 0xfe, 0x70, 0xe5,
-	0x73, 0xd9, 0xdf, 0x5c, 0x78, 0x6c, 0x54, 0xff, 0x34, 0x0d, 0x27, 0x17, 0xf9, 0xa7, 0xb8, 0x79,
-	0x5d, 0x27, 0xd8, 0xb6, 0x69, 0x88, 0x6c, 0x3a, 0x16, 0xd1, 0xda, 0x18, 0xfd, 0x58, 0x82, 0xd2,
-	0xe0, 0x78, 0x04, 0xdd, 0x18, 0xe1, 0x8f, 0x76, 0x91, 0xd3, 0x9d, 0xca, 0x1b, 0x87, 0xa0, 0xe4,
-	0xdd, 0x8d, 0x7c, 0x95, 0x19, 0xe5, 0x92, 0x7c, 0xe1, 0x00, 0xa3, 0x6c, 0x51, 0xec, 0xb9, 0x6d,
-	0x9f, 0x7c, 0x4e, 0x9a, 0x65, 0xea, 0x0f, 0x0e, 0x06, 0x46, 0x50, 0xff, 0x80, 0x39, 0xc9, 0x08,
-	0xea, 0x1f, 0x34, 0x85, 0x18, 0x51, 0xfd, 0x2d, 0x9f, 0x9c, 0xaa, 0xff, 0x7d, 0x09, 0xa6, 0xc2,
-	0x0d, 0x36, 0xba, 0x3e, 0x76, 0x47, 0xce, 0x55, 0x7f, 0xfd, 0x90, 0x9d, 0x7c, 0x6c, 0x28, 0x0b,
-	0x28, 0x4e, 0x89, 0xa9, 0xda, 0x9f, 0x49, 0x90, 0x11, 0xcd, 0xe9, 0x08, 0x91, 0x35, 0xdc, 0x84,
-	0x57, 0x2e, 0x8f, 0x4e, 0x20, 0x34, 0xbc, 0xcf, 0x34, 0x54, 0xd0, 0xda, 0xb3, 0x34, 0xac, 0x7d,
-	0x18, 0xe8, 0xda, 0xdd, 0x4b, 0x12, 0x04, 0x05, 0xaf, 0x48, 0x9b, 0x4b, 0xb8, 0x2c, 0xd5, 0x7f,
-	0x22, 0x41, 0x21, 0x94, 0xba, 0xbf, 0xc7, 0xe3, 0x5e, 0x08, 0x36, 0x52, 0xdc, 0x8b, 0xe8, 0x90,
-	0x2b, 0xf1, 0x13, 0xd5, 0xe1, 0xd6, 0x58, 0xbe, 0xc8, 0xb6, 0xfb, 0x32, 0x7a, 0xe9, 0x80, 0xed,
-	0x06, 0xab, 0x98, 0x05, 0x02, 0x71, 0x7f, 0xec, 0x5f, 0x98, 0x56, 0x18, 0xd0, 0xff, 0x54, 0x48,
-	0x2c, 0xc7, 0x5a, 0x93, 0xfe, 0xbb, 0xc8, 0x91, 0x3d, 0xdc, 0xef, 0x24, 0x92, 0x4a, 0xe3, 0xfe,
-	0x77, 0x13, 0x67, 0x17, 0x18, 0xc3, 0x05, 0xc6, 0x90, 0xd3, 0xfa, 0x9d, 0x70, 0x75, 0xb3, 0xbe,
-	0x95, 0x66, 0x7f, 0xfb, 0xb9, 0xfa, 0xb7, 0x00, 0x00, 0x00, 0xff, 0xff, 0x23, 0x23, 0xc9, 0x9d,
-	0x8b, 0x30, 0x00, 0x00,
+	// 3433 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x5b, 0xcd, 0x73, 0x1b, 0x57,
+	0x72, 0xcf, 0x00, 0x20, 0x3e, 0x1a, 0x20, 0x01, 0x3e, 0x53, 0x14, 0x08, 0x49, 0x96, 0x34, 0x2e,
+	0x3b, 0x0c, 0x65, 0x01, 0x12, 0x64, 0xc9, 0x32, 0x13, 0xdb, 0xe1, 0x07, 0x64, 0x49, 0xe6, 0x57,
+	0x06, 0x24, 0x25, 0x27, 0x8e, 0xc6, 0x8f, 0x98, 0x27, 0x70, 0x22, 0x60, 0x06, 0x9a, 0x19, 0xf0,
+	0x43, 0x2e, 0x55, 0xaa, 0x52, 0xe5, 0x38, 0x95, 0x54, 0x39, 0x95, 0x4a, 0x2e, 0x89, 0x6f, 0xa9,
+	0x9c, 0x52, 0x39, 0xe6, 0x92, 0xaf, 0x4b, 0x4e, 0x4e, 0x25, 0xa7, 0xa4, 0x92, 0xfc, 0x03, 0xb9,
+	0x64, 0x77, 0xaf, 0x7b, 0xd9, 0xda, 0xc3, 0xd6, 0xfb, 0x98, 0x2f, 0x60, 0xa8, 0x01, 0x28, 0x7a,
+	0x77, 0x4f, 0x9c, 0xe9, 0xf7, 0xfa, 0xd7, 0xfd, 0xfa, 0xf5, 0xeb, 0xee, 0xd7, 0x03, 0xc2, 0x9d,
+	0xbd, 0xbe, 0xde, 0xd1, 0x6a, 0x7b, 0xf8, 0x05, 0xe9, 0xd4, 0x2c, 0xd2, 0x35, 0x1d, 0x52, 0x23,
+	0x47, 0xa4, 0xd5, 0x77, 0x74, 0xd3, 0xa8, 0x1d, 0xd4, 0x05, 0x4d, 0xf5, 0x68, 0xd5, 0x9e, 0x65,
+	0x3a, 0x26, 0xba, 0xcc, 0xf8, 0xaa, 0x8c, 0xaf, 0xca, 0xe7, 0x54, 0xfd, 0x39, 0x07, 0xf5, 0xca,
+	0xe5, 0x20, 0xb0, 0x4d, 0xba, 0x07, 0xc4, 0x12, 0x7f, 0x38, 0x42, 0xe5, 0x62, 0xdb, 0x34, 0xdb,
+	0x1d, 0x52, 0xc3, 0x3d, 0xbd, 0x86, 0x0d, 0xc3, 0x74, 0x30, 0x65, 0xb5, 0xc5, 0xe8, 0x5b, 0x62,
+	0xb4, 0x63, 0x1a, 0x6d, 0xab, 0x6f, 0x18, 0xba, 0xd1, 0xae, 0x99, 0x3d, 0x62, 0x85, 0x26, 0xcd,
+	0x89, 0x49, 0xec, 0x6d, 0xaf, 0xff, 0xb4, 0x86, 0x8d, 0x63, 0x31, 0xf4, 0xe6, 0xe0, 0x90, 0xd6,
+	0xe7, 0xbc, 0x62, 0xfc, 0xf2, 0xe0, 0xb8, 0xa3, 0x77, 0x89, 0xed, 0xe0, 0x6e, 0xef, 0x24, 0x80,
+	0x43, 0x0b, 0xf7, 0x7a, 0xc4, 0x72, 0x65, 0x9f, 0x17, 0xe3, 0x56, 0xaf, 0x55, 0xb3, 0x1d, 0xec,
+	0xf4, 0xc5, 0x80, 0xfc, 0xc3, 0x04, 0xa4, 0x97, 0x5a, 0x54, 0x14, 0xda, 0x80, 0xa9, 0x96, 0xd9,
+	0xed, 0x62, 0x43, 0x53, 0x35, 0xbd, 0x4d, 0x6c, 0xa7, 0x2c, 0x5d, 0x91, 0xe6, 0xf3, 0xf5, 0x5f,
+	0xad, 0xc6, 0x58, 0xaf, 0xba, 0xca, 0xa6, 0x2b, 0x93, 0x82, 0x9d, 0xbf, 0xa2, 0x26, 0x4c, 0xeb,
+	0x46, 0xaf, 0xef, 0xa8, 0x96, 0x69, 0x3a, 0x2e, 0x64, 0x62, 0x3c, 0xc8, 0x22, 0x43, 0x50, 0x4c,
+	0xd3, 0x11, 0xa0, 0xb7, 0x20, 0x43, 0xd7, 0x6e, 0xf6, 0x9d, 0x72, 0x9a, 0x41, 0xcd, 0x55, 0xf9,
+	0xd2, 0xaa, 0xee, 0xd2, 0xab, 0xab, 0xc2, 0x76, 0x8a, 0x3b, 0x13, 0x5d, 0x81, 0x82, 0x66, 0xaa,
+	0x86, 0xe9, 0xa8, 0x2d, 0xdc, 0xda, 0x27, 0xe5, 0xcc, 0x15, 0x69, 0x3e, 0xab, 0x80, 0x66, 0x6e,
+	0x98, 0xce, 0x0a, 0xa5, 0x20, 0x04, 0x29, 0x1b, 0x77, 0x9c, 0x72, 0xee, 0x8a, 0x34, 0x5f, 0x50,
+	0xd8, 0x33, 0x6a, 0x40, 0xb6, 0xd7, 0xc1, 0xce, 0x53, 0xd3, 0xea, 0x96, 0x81, 0xc9, 0xfa, 0xb5,
+	0x58, 0xb5, 0xb7, 0x04, 0x83, 0xe2, 0xb1, 0x3e, 0x4c, 0x65, 0x93, 0xa5, 0xf4, 0xc3, 0x54, 0x36,
+	0x5b, 0xca, 0xc9, 0x3f, 0x49, 0x42, 0x66, 0x85, 0x1b, 0x09, 0x5d, 0x84, 0x1c, 0xb6, 0xda, 0xfd,
+	0x2e, 0x31, 0x1c, 0xbb, 0x2c, 0x5d, 0x49, 0xce, 0xe7, 0x14, 0x9f, 0x80, 0x9e, 0xc3, 0x39, 0x62,
+	0x1c, 0xe8, 0x96, 0x69, 0xd0, 0x77, 0xf5, 0x00, 0x5b, 0x3a, 0xde, 0xeb, 0x10, 0xbb, 0x9c, 0xb8,
+	0x92, 0x9c, 0xcf, 0xd7, 0x7f, 0x23, 0x56, 0x13, 0x21, 0xa6, 0xda, 0xf0, 0x51, 0x76, 0x05, 0x88,
+	0x32, 0x43, 0x86, 0x89, 0x36, 0xba, 0x0a, 0x05, 0xb3, 0xef, 0xd0, 0x0d, 0x7b, 0xaa, 0x53, 0x49,
+	0x49, 0xa6, 0x53, 0x9e, 0xd3, 0xee, 0x51, 0x12, 0xba, 0x0e, 0x48, 0x4c, 0xd1, 0x74, 0x8b, 0xb4,
+	0x1c, 0xd3, 0xd2, 0x89, 0x5d, 0x4e, 0xb1, 0x89, 0xd3, 0x7c, 0x64, 0xd5, 0x1f, 0x08, 0x20, 0xf6,
+	0xb0, 0xb3, 0x6f, 0x97, 0x33, 0x41, 0xc4, 0x2d, 0x4a, 0x0a, 0x19, 0x79, 0xe2, 0xd4, 0x46, 0x46,
+	0xd7, 0x60, 0xfa, 0xd0, 0xb4, 0x9e, 0xe9, 0x46, 0xdb, 0xd3, 0xec, 0x98, 0x39, 0x48, 0x4e, 0x29,
+	0x89, 0x01, 0x57, 0xb1, 0x63, 0xf4, 0x1e, 0xcc, 0x0a, 0xb5, 0x0c, 0x53, 0x23, 0x6a, 0xcf, 0xa2,
+	0x47, 0xd5, 0xa1, 0x2b, 0xc9, 0x32, 0x05, 0x67, 0xf8, 0xe8, 0x86, 0xa9, 0x91, 0x2d, 0x6f, 0xac,
+	0xf2, 0x31, 0xbc, 0x11, 0x61, 0x4b, 0xea, 0x39, 0x06, 0xee, 0x12, 0x76, 0x56, 0x72, 0x0a, 0x7b,
+	0x46, 0x33, 0x30, 0x71, 0x80, 0x3b, 0x7d, 0xc2, 0xbc, 0x3d, 0xa7, 0xf0, 0x17, 0xf9, 0x2f, 0x24,
+	0xc8, 0xba, 0xaa, 0x23, 0x05, 0x20, 0x20, 0x57, 0x62, 0x9b, 0x5a, 0x1f, 0x79, 0xe5, 0x55, 0xa1,
+	0xd7, 0xb1, 0x12, 0x40, 0xa9, 0xbc, 0x07, 0x59, 0x97, 0x3e, 0x86, 0x5a, 0xdf, 0x25, 0x20, 0xe7,
+	0xdb, 0xe6, 0x63, 0x98, 0xe0, 0xbb, 0xcf, 0x55, 0x8a, 0xdf, 0x0c, 0xea, 0x18, 0xd4, 0x52, 0x0a,
+	0xe7, 0x43, 0x5b, 0x90, 0x0f, 0xfa, 0x06, 0x77, 0xd7, 0xea, 0x08, 0xe7, 0x5d, 0x68, 0xc0, 0xb0,
+	0x82, 0x10, 0xe8, 0x3e, 0x64, 0xed, 0xe3, 0x6e, 0x47, 0x37, 0x9e, 0x71, 0x9f, 0xcc, 0xd7, 0xdf,
+	0x8d, 0x85, 0x6b, 0x72, 0x06, 0x06, 0xe6, 0x71, 0xa3, 0xc7, 0x50, 0x1c, 0xdc, 0x71, 0xee, 0x73,
+	0xb5, 0x58, 0xc0, 0xb0, 0x33, 0x28, 0x53, 0x46, 0xe8, 0xfd, 0x61, 0x2a, 0x9b, 0x2a, 0x4d, 0xc8,
+	0x77, 0xa1, 0x10, 0x98, 0x37, 0xce, 0x26, 0xfc, 0x87, 0x04, 0x53, 0x61, 0x11, 0x68, 0x3d, 0xc2,
+	0x43, 0xae, 0x8f, 0xa3, 0x67, 0xc8, 0x39, 0xd0, 0x0d, 0x98, 0xe8, 0xd2, 0x78, 0x28, 0x22, 0x70,
+	0x65, 0x28, 0x6c, 0x6e, 0xbb, 0x29, 0x45, 0xe1, 0x13, 0xd1, 0x07, 0x90, 0xeb, 0x1b, 0xfa, 0x91,
+	0xda, 0x35, 0x35, 0x52, 0x4e, 0x32, 0xae, 0x8b, 0x43, 0x5c, 0x3b, 0x0f, 0x0c, 0xe7, 0x56, 0x7d,
+	0x97, 0x2e, 0x42, 0xc9, 0xd2, 0xe9, 0xeb, 0xa6, 0x46, 0xe4, 0x1f, 0x48, 0x90, 0x75, 0x1d, 0x23,
+	0xd2, 0x0a, 0x1f, 0x43, 0xfa, 0x74, 0x09, 0x41, 0xb0, 0xa1, 0xb7, 0x60, 0x52, 0xb7, 0x45, 0x9e,
+	0xa7, 0xe7, 0xb0, 0x9c, 0x62, 0x31, 0xbd, 0xa0, 0xdb, 0x0d, 0x8f, 0x16, 0xb5, 0xdf, 0xe9, 0xb3,
+	0xda, 0xef, 0x64, 0x29, 0xf5, 0x30, 0x95, 0x9d, 0x28, 0xa5, 0x65, 0x0d, 0x26, 0x43, 0xde, 0xfb,
+	0xbd, 0x2c, 0x58, 0xfe, 0x4b, 0x09, 0xf2, 0x01, 0xaf, 0x8e, 0x14, 0x32, 0x0b, 0x69, 0x07, 0x5b,
+	0x6d, 0xe2, 0x08, 0xe7, 0x12, 0x6f, 0x51, 0x76, 0x48, 0x9d, 0xa1, 0x1d, 0xe4, 0x5f, 0x87, 0xb4,
+	0x48, 0xcf, 0x08, 0x52, 0xfb, 0xd8, 0xde, 0x77, 0xb5, 0xa2, 0xcf, 0xe8, 0x12, 0x80, 0xad, 0xbf,
+	0x20, 0xea, 0xde, 0xb1, 0xc3, 0x02, 0x82, 0x34, 0x9f, 0x54, 0x72, 0x94, 0xb2, 0x4c, 0x09, 0xf2,
+	0xdf, 0x64, 0x60, 0x96, 0xef, 0x19, 0xd1, 0x78, 0x25, 0xb2, 0x4e, 0x1c, 0xac, 0x61, 0x07, 0xd3,
+	0xf5, 0xd0, 0xe0, 0x4d, 0x2c, 0x81, 0x27, 0xde, 0x50, 0x03, 0x4a, 0xcf, 0xfb, 0xa4, 0x4f, 0x34,
+	0xd5, 0xab, 0x83, 0x46, 0x70, 0xeb, 0x22, 0xe7, 0xf1, 0x08, 0x68, 0x0b, 0x66, 0x39, 0xa0, 0x6a,
+	0x3b, 0xd8, 0x72, 0x02, 0x60, 0xc9, 0x58, 0xb0, 0x19, 0xce, 0xd9, 0xa4, 0x8c, 0x3e, 0xe2, 0x63,
+	0xa8, 0x08, 0xc4, 0x96, 0xd9, 0xed, 0x75, 0x88, 0x13, 0x52, 0x31, 0x15, 0x8b, 0x5a, 0xe6, 0xdc,
+	0x2b, 0x2e, 0xb3, 0x8f, 0xfc, 0x19, 0x5c, 0xe0, 0xc5, 0xd4, 0x53, 0xe2, 0xb4, 0xf6, 0x87, 0x14,
+	0x9e, 0x88, 0x87, 0x66, 0xec, 0xf7, 0x28, 0xf7, 0x80, 0xd2, 0x18, 0x2e, 0x07, 0xa1, 0xa3, 0x34,
+	0x4f, 0xc7, 0xc2, 0x5f, 0xf4, 0xe1, 0x23, 0xb4, 0xdf, 0x85, 0x39, 0xcf, 0xab, 0x86, 0x74, 0xcf,
+	0xc4, 0x82, 0x9f, 0xf7, 0x98, 0x07, 0x54, 0x7f, 0x02, 0x97, 0x7c, 0xdc, 0x28, 0xc5, 0xb3, 0xb1,
+	0xd8, 0x17, 0x3c, 0x80, 0x08, 0xbd, 0x7f, 0x17, 0x2e, 0x89, 0x4a, 0xa1, 0xdf, 0xeb, 0x98, 0x58,
+	0x1b, 0xd2, 0x3d, 0x17, 0x8b, 0x5f, 0xe1, 0x00, 0x3b, 0x8c, 0x7f, 0x40, 0x7d, 0x02, 0x57, 0xc3,
+	0xf0, 0x51, 0x4b, 0x80, 0x58, 0x11, 0x6f, 0x06, 0x45, 0x44, 0xac, 0x62, 0x05, 0x10, 0xee, 0x1f,
+	0xe9, 0x1d, 0x1d, 0x5b, 0xc7, 0x6a, 0x57, 0x1c, 0xae, 0x72, 0x9e, 0x65, 0x94, 0x99, 0x21, 0xdc,
+	0x25, 0xe3, 0x58, 0x99, 0xf6, 0xe6, 0xbb, 0x67, 0x51, 0xfe, 0xf7, 0x34, 0x14, 0xf8, 0xf1, 0x54,
+	0x88, 0xdd, 0xef, 0x38, 0x68, 0x63, 0xa0, 0x5c, 0xe4, 0x99, 0xfe, 0x5a, 0x6c, 0x44, 0xd9, 0xf4,
+	0xea, 0xc9, 0x70, 0x6d, 0xf9, 0x05, 0xcc, 0x04, 0xf0, 0x54, 0x2f, 0xe5, 0xc3, 0x88, 0x15, 0x04,
+	0xc7, 0x15, 0x21, 0x52, 0x41, 0x3e, 0x74, 0xd3, 0x4d, 0xff, 0x8f, 0xa0, 0x28, 0x24, 0x78, 0xe0,
+	0x85, 0x53, 0x81, 0x4f, 0x99, 0xc1, 0x57, 0x1b, 0xa9, 0x91, 0x65, 0x31, 0xaf, 0x55, 0x6e, 0x8c,
+	0x88, 0xed, 0xa5, 0x90, 0xa8, 0x42, 0xfa, 0xf7, 0x60, 0x6e, 0x40, 0xc0, 0xb1, 0xbf, 0x86, 0xfc,
+	0xa9, 0xd6, 0x70, 0x3e, 0x2c, 0xe5, 0xd8, 0x5b, 0xcc, 0x05, 0xc8, 0x91, 0x23, 0xdd, 0x51, 0x5b,
+	0x34, 0xed, 0xd3, 0x90, 0x35, 0xa1, 0x64, 0x29, 0x61, 0x85, 0x66, 0x1d, 0x1a, 0xcb, 0x1d, 0xcd,
+	0xa4, 0x97, 0x3a, 0x7c, 0xc8, 0xa2, 0x4e, 0x41, 0xc9, 0x71, 0x8a, 0x82, 0x0f, 0xd1, 0x1a, 0x4c,
+	0x8a, 0x61, 0x91, 0xec, 0xd2, 0xe3, 0x25, 0xbb, 0x02, 0xe7, 0x16, 0xc9, 0x84, 0x0b, 0x23, 0x96,
+	0xc5, 0x84, 0x65, 0x3c, 0x61, 0xc4, 0xb2, 0x7c, 0x61, 0x74, 0x58, 0x08, 0xcb, 0x8e, 0x2f, 0x8c,
+	0x58, 0x96, 0x10, 0xf6, 0x14, 0x90, 0x1f, 0x4a, 0xbc, 0x43, 0xc2, 0xcf, 0xf7, 0xfb, 0xb1, 0x90,
+	0xd1, 0x09, 0x4c, 0x99, 0xf6, 0x26, 0xb9, 0xa4, 0x87, 0xa9, 0xac, 0x54, 0x4a, 0xc8, 0x7f, 0x94,
+	0x00, 0xf0, 0x0f, 0x02, 0x4d, 0x9b, 0xf4, 0x86, 0xe4, 0xa6, 0x4d, 0xfa, 0xfc, 0x73, 0x2a, 0x91,
+	0x2a, 0x90, 0x6d, 0x99, 0x86, 0xc3, 0x2e, 0xa1, 0x7c, 0x3b, 0xbd, 0xf7, 0xa8, 0xb2, 0x21, 0x73,
+	0xb6, 0xe5, 0x53, 0xba, 0x94, 0x91, 0xbf, 0x91, 0x20, 0xb5, 0x6d, 0x11, 0x82, 0x3e, 0x82, 0x94,
+	0x65, 0x9a, 0x6e, 0xd7, 0x61, 0x61, 0xf4, 0x2b, 0x83, 0xc2, 0xf8, 0xd0, 0x3d, 0xc8, 0xb6, 0xf6,
+	0xf5, 0x8e, 0x66, 0x11, 0x43, 0x04, 0xa3, 0x71, 0x30, 0x3c, 0x5e, 0xb9, 0x0f, 0xc5, 0x81, 0x23,
+	0x19, 0xb9, 0x3f, 0xf7, 0x21, 0xef, 0x58, 0x84, 0xb8, 0xce, 0x97, 0x1c, 0x6f, 0x93, 0x80, 0xf2,
+	0xf2, 0xe7, 0x87, 0xa9, 0x6c, 0xa2, 0x94, 0x94, 0xbf, 0x95, 0x60, 0x32, 0x74, 0x44, 0x23, 0xa5,
+	0xfe, 0xa2, 0x4a, 0xbc, 0xeb, 0x50, 0x6c, 0xb8, 0x4c, 0x5b, 0x66, 0x47, 0x6f, 0x1d, 0x53, 0xd7,
+	0xe9, 0x59, 0xba, 0x69, 0xe9, 0xce, 0x31, 0x53, 0x71, 0x42, 0xf1, 0xde, 0xe5, 0x1b, 0x80, 0x78,
+	0x9a, 0xb0, 0x59, 0x7f, 0x65, 0x04, 0x8e, 0xaf, 0x92, 0x30, 0x25, 0x4e, 0x91, 0x42, 0x9e, 0xf7,
+	0x5d, 0x07, 0x36, 0x6c, 0x07, 0x1b, 0x2d, 0xa2, 0x06, 0x6a, 0xdd, 0x82, 0x4b, 0xdc, 0xa0, 0x35,
+	0xef, 0x02, 0x4c, 0xdb, 0xcf, 0xf4, 0x1e, 0xef, 0xec, 0xa8, 0x1d, 0xd3, 0x7c, 0xd6, 0xe7, 0xf5,
+	0x5b, 0x56, 0x29, 0xd2, 0x01, 0x26, 0x7f, 0x8d, 0x91, 0x69, 0xc4, 0xc0, 0xec, 0x80, 0x9e, 0x36,
+	0x3c, 0x71, 0x6e, 0x11, 0x31, 0x7e, 0x07, 0x4a, 0x7e, 0xc4, 0xe8, 0xb1, 0x15, 0x8a, 0xf3, 0x71,
+	0x63, 0xc4, 0x78, 0xe1, 0xd9, 0x52, 0x29, 0x92, 0x01, 0xe3, 0x12, 0x98, 0xb1, 0xb8, 0x01, 0xc5,
+	0xca, 0x84, 0x00, 0x1e, 0xe3, 0x6e, 0xc5, 0x0a, 0x18, 0xb6, 0xbe, 0x82, 0xac, 0x21, 0x1a, 0x77,
+	0x3d, 0x7e, 0x7b, 0x15, 0xb7, 0x99, 0xe7, 0x90, 0x59, 0x33, 0xdb, 0x2c, 0x2a, 0xf9, 0x11, 0x48,
+	0x3a, 0x5d, 0x04, 0x7a, 0x1b, 0xa6, 0xf6, 0xfb, 0x5d, 0x6c, 0xa8, 0x16, 0xc1, 0x1a, 0x0b, 0x41,
+	0x09, 0xb6, 0x31, 0x93, 0x8c, 0xaa, 0x08, 0xa2, 0xfc, 0xa7, 0x49, 0xd7, 0xb9, 0x88, 0x42, 0xec,
+	0x9e, 0x69, 0xd8, 0x04, 0x35, 0x20, 0xcd, 0xd5, 0x15, 0xb2, 0xe3, 0x6f, 0xbe, 0xc1, 0xe2, 0x44,
+	0x11, 0xcc, 0xd4, 0x85, 0x98, 0xf9, 0x34, 0x55, 0xa0, 0x71, 0x05, 0x0a, 0x9c, 0x28, 0x2a, 0x99,
+	0x05, 0x48, 0xf3, 0x9e, 0xa8, 0x38, 0xc4, 0xc8, 0xad, 0x89, 0xac, 0x5e, 0xab, 0xda, 0x64, 0x23,
+	0x8a, 0x98, 0x81, 0x30, 0xe4, 0x6d, 0x62, 0x1d, 0x10, 0x4b, 0xed, 0x98, 0x6d, 0xde, 0xfa, 0xca,
+	0xd7, 0x7f, 0x73, 0xd4, 0xfc, 0xe0, 0x2e, 0xaf, 0xda, 0x64, 0x18, 0x6b, 0x66, 0xdb, 0x6e, 0x18,
+	0x8e, 0x75, 0xac, 0x80, 0xed, 0x11, 0x50, 0x19, 0x32, 0x5d, 0x62, 0xdb, 0xb8, 0x4d, 0x58, 0x44,
+	0xce, 0x29, 0xee, 0x6b, 0xa5, 0x0d, 0xc5, 0x01, 0x46, 0x54, 0x82, 0xe4, 0x33, 0x72, 0x2c, 0x4e,
+	0x06, 0x7d, 0x44, 0x1f, 0x05, 0x1b, 0x0c, 0xf9, 0xfa, 0x7c, 0xac, 0x6e, 0x62, 0xbb, 0x45, 0x2b,
+	0x62, 0x31, 0x71, 0x57, 0x92, 0xb1, 0x7b, 0x16, 0x79, 0xc9, 0xdd, 0x26, 0xf2, 0x26, 0x4c, 0xb0,
+	0x4b, 0x3e, 0xca, 0x43, 0x66, 0x67, 0xe3, 0xd3, 0x8d, 0xcd, 0x47, 0x1b, 0xa5, 0x5f, 0x41, 0x45,
+	0xc8, 0xaf, 0x2c, 0xad, 0xdc, 0x6f, 0xa8, 0x2b, 0xf7, 0x1b, 0x2b, 0x9f, 0x96, 0x24, 0x04, 0x90,
+	0xfe, 0xad, 0x9d, 0xc6, 0x4e, 0x63, 0xb5, 0x94, 0x40, 0x93, 0x90, 0x6b, 0x3c, 0x6e, 0xac, 0xec,
+	0x6c, 0x3f, 0xd8, 0xf8, 0xa4, 0x94, 0xa4, 0xaf, 0x2b, 0x9b, 0xeb, 0x5b, 0x6b, 0x8d, 0xed, 0xc6,
+	0x6a, 0x29, 0x25, 0xff, 0x59, 0x02, 0xca, 0xc2, 0x2a, 0x9b, 0x6e, 0xa7, 0xdc, 0xbb, 0xf8, 0x7d,
+	0x0a, 0x13, 0x36, 0x15, 0xcb, 0xd6, 0x35, 0x55, 0xbf, 0x3d, 0xfa, 0x79, 0x62, 0xda, 0x56, 0x79,
+	0x3f, 0x82, 0x63, 0x0c, 0x9f, 0xfa, 0xc4, 0xeb, 0x9c, 0xfa, 0x77, 0x01, 0x89, 0x12, 0xc7, 0x76,
+	0x2c, 0x82, 0xbb, 0x3c, 0x32, 0x25, 0x79, 0xab, 0x91, 0x8f, 0x34, 0xd9, 0x00, 0x8b, 0x4e, 0x7c,
+	0x36, 0xad, 0x51, 0x82, 0xb3, 0x53, 0xde, 0x6c, 0x62, 0x59, 0xfe, 0x6c, 0x79, 0x01, 0x66, 0x1e,
+	0x61, 0xdd, 0xf1, 0x16, 0xe3, 0x06, 0xc2, 0x88, 0xbb, 0xbe, 0xfc, 0x55, 0x02, 0x66, 0x3f, 0x21,
+	0x4e, 0xc8, 0xeb, 0xc7, 0x89, 0x9b, 0x67, 0x6b, 0x15, 0x26, 0xb2, 0xa3, 0x1b, 0x44, 0xe5, 0x26,
+	0x10, 0x11, 0xb8, 0xc0, 0x89, 0x4d, 0x46, 0x0b, 0x4f, 0x22, 0x96, 0xe5, 0x15, 0x24, 0xee, 0x24,
+	0x62, 0x59, 0xa8, 0x0a, 0x6f, 0x88, 0x49, 0xa1, 0xdb, 0xc5, 0x04, 0xef, 0x31, 0xf3, 0x21, 0xbf,
+	0x72, 0xb2, 0xe5, 0x7f, 0x4b, 0xc0, 0xdc, 0x4e, 0x4f, 0xc3, 0x0e, 0xf9, 0x25, 0x31, 0x85, 0xe2,
+	0xa1, 0x89, 0x90, 0x93, 0x3c, 0x4d, 0x00, 0x13, 0x98, 0x22, 0x42, 0x9d, 0x94, 0x0d, 0x52, 0x67,
+	0x9a, 0x0d, 0xe4, 0x3f, 0x96, 0xe0, 0xfc, 0x3d, 0xdd, 0xd0, 0xd6, 0x75, 0xdb, 0xd6, 0x8d, 0xf6,
+	0x72, 0xc7, 0xdc, 0xb3, 0xc7, 0xb2, 0xe4, 0x43, 0x28, 0xec, 0x75, 0xcc, 0x3d, 0x61, 0x47, 0xf7,
+	0x4e, 0x38, 0xb2, 0x21, 0xf3, 0x94, 0x99, 0x3f, 0xdb, 0x72, 0x1f, 0xca, 0xc3, 0xba, 0x88, 0xec,
+	0xf0, 0x19, 0xcc, 0x74, 0x39, 0x5d, 0x7d, 0x1d, 0x79, 0xa8, 0xeb, 0x83, 0xbb, 0x62, 0x7f, 0x2a,
+	0xc1, 0xf9, 0x65, 0xec, 0xb4, 0xf6, 0xb9, 0x53, 0x8d, 0x6f, 0x83, 0xcf, 0x21, 0x6b, 0xf1, 0xf9,
+	0xae, 0x3e, 0xf1, 0xe9, 0xe1, 0x04, 0x81, 0x55, 0xf1, 0x57, 0xf1, 0x10, 0x2b, 0x4f, 0x20, 0xe3,
+	0x6a, 0xf3, 0xda, 0xe9, 0x19, 0x41, 0x8a, 0x5d, 0x72, 0x12, 0xfc, 0xa3, 0x17, 0xbb, 0xe6, 0xff,
+	0x58, 0x82, 0xf2, 0xb0, 0x36, 0xc2, 0xec, 0x5f, 0x40, 0xce, 0x12, 0xcf, 0x6e, 0x47, 0x7a, 0xf9,
+	0x14, 0x6b, 0x13, 0x39, 0xd0, 0x7d, 0x50, 0x7c, 0xd0, 0xca, 0x21, 0x64, 0x3d, 0x69, 0xaf, 0xbd,
+	0x3e, 0x3f, 0xaf, 0x27, 0xe2, 0xf2, 0xba, 0xfc, 0xfb, 0x70, 0x8e, 0x29, 0x4a, 0x8b, 0x92, 0xf1,
+	0xf7, 0x7c, 0x09, 0x32, 0xa7, 0x74, 0x41, 0x97, 0x4f, 0xfe, 0xc3, 0x04, 0xcc, 0x0e, 0x6a, 0x20,
+	0x0c, 0xf1, 0x64, 0xd8, 0xec, 0x23, 0xba, 0xd4, 0x10, 0x56, 0xa4, 0xd1, 0xff, 0x44, 0x3a, 0x4b,
+	0xab, 0x47, 0x78, 0xd5, 0x38, 0x15, 0x96, 0xfc, 0x4f, 0x12, 0x4c, 0x7d, 0x42, 0x1c, 0x7a, 0x25,
+	0x1c, 0x6b, 0x0f, 0xee, 0x43, 0xfe, 0x35, 0x3e, 0x34, 0x83, 0xe5, 0x7f, 0x63, 0xbe, 0x00, 0xb9,
+	0x1e, 0x6e, 0x13, 0xd5, 0xd6, 0x5f, 0xf0, 0xcc, 0x4e, 0xef, 0x29, 0xb8, 0x4d, 0x9a, 0xfa, 0x0b,
+	0xd6, 0x01, 0x61, 0x83, 0x8e, 0xf9, 0x8c, 0x18, 0x22, 0x93, 0xb3, 0xe9, 0xdb, 0x94, 0x20, 0x7f,
+	0x2d, 0x41, 0xd1, 0xd3, 0x5e, 0x98, 0x74, 0x2d, 0xfc, 0x49, 0x4c, 0x1a, 0xfb, 0x6e, 0x1a, 0xfa,
+	0x1c, 0xf6, 0x0e, 0x14, 0x0d, 0x72, 0xe4, 0xa8, 0x01, 0x2d, 0xf8, 0x55, 0x70, 0x92, 0x92, 0xb7,
+	0x3c, 0x4d, 0x3e, 0x64, 0xf5, 0xc1, 0x0a, 0xee, 0xe1, 0x3d, 0xbd, 0xa3, 0xb3, 0xab, 0xdd, 0x18,
+	0xe6, 0x94, 0xff, 0x35, 0x09, 0x88, 0x17, 0x9b, 0x41, 0x08, 0x84, 0x01, 0xf1, 0x0c, 0xd4, 0x0a,
+	0x50, 0x85, 0xab, 0xc4, 0x7f, 0xbf, 0x64, 0xc9, 0x26, 0xa4, 0xd2, 0x74, 0x6b, 0x90, 0x84, 0xba,
+	0x30, 0x1b, 0x68, 0xea, 0x06, 0xc5, 0xf0, 0x3d, 0xbd, 0x33, 0x7a, 0x35, 0x18, 0x12, 0x75, 0x8e,
+	0x44, 0x91, 0xd1, 0x16, 0xcc, 0x6a, 0xa4, 0x67, 0x91, 0x16, 0x76, 0x88, 0xa6, 0xe2, 0x9e, 0xae,
+	0x1e, 0x10, 0xcb, 0xd6, 0x4d, 0xc3, 0xfb, 0x0a, 0x10, 0x14, 0x27, 0x7e, 0x14, 0xd2, 0x24, 0xdd,
+	0x5d, 0x62, 0x29, 0x33, 0x3e, 0xe7, 0x52, 0x4f, 0xdf, 0xe5, 0x7c, 0x68, 0x19, 0x8a, 0x1d, 0xf3,
+	0x30, 0x04, 0x95, 0x8a, 0x85, 0x9a, 0xec, 0x98, 0x87, 0x01, 0x8c, 0x55, 0x28, 0xed, 0xeb, 0xed,
+	0xfd, 0x10, 0xc8, 0x44, 0x2c, 0xc8, 0x14, 0xe5, 0xf1, 0x51, 0x64, 0x1b, 0xa6, 0xb8, 0x4f, 0xdf,
+	0xeb, 0x1b, 0xac, 0x9e, 0x90, 0x71, 0x64, 0x1d, 0x0f, 0x90, 0x6e, 0xde, 0x5f, 0xaa, 0xdf, 0xbe,
+	0x53, 0x92, 0x50, 0x16, 0x52, 0xcd, 0xfb, 0x4b, 0x37, 0x4b, 0x09, 0x94, 0x81, 0xe4, 0xfa, 0xea,
+	0xed, 0x52, 0x92, 0x3e, 0xec, 0x36, 0x37, 0x4b, 0x29, 0x31, 0xef, 0xd6, 0xdd, 0xf7, 0x4a, 0x13,
+	0xe2, 0xf9, 0xf6, 0xcd, 0x7a, 0x29, 0x4d, 0xc1, 0xd6, 0x77, 0x94, 0xf5, 0x1d, 0xe5, 0x56, 0x29,
+	0x23, 0xdf, 0x83, 0x4b, 0xbc, 0x94, 0x61, 0xbb, 0xcd, 0x23, 0x7f, 0xc8, 0xe2, 0x6f, 0xc3, 0x54,
+	0x9f, 0x51, 0x55, 0x62, 0xd0, 0x0b, 0xa0, 0xc6, 0xfc, 0x27, 0xab, 0x4c, 0x72, 0x6a, 0x83, 0x13,
+	0xe5, 0xff, 0x94, 0x60, 0x66, 0x4b, 0xb4, 0x07, 0x42, 0xfc, 0x2d, 0x00, 0xd1, 0x36, 0xf0, 0x8f,
+	0xd3, 0x4a, 0xfc, 0xb7, 0xf3, 0x08, 0x28, 0x8f, 0xa8, 0x60, 0xa3, 0x4d, 0x94, 0x00, 0x6c, 0x65,
+	0x07, 0x26, 0x43, 0x83, 0xe8, 0x2a, 0x14, 0xba, 0xba, 0xa1, 0x0e, 0x34, 0x30, 0xf2, 0x5d, 0xdd,
+	0x70, 0xe7, 0xb1, 0x29, 0xf8, 0xc8, 0x9f, 0x92, 0x10, 0x53, 0xf0, 0x91, 0x3b, 0x45, 0xde, 0x82,
+	0x0b, 0xa2, 0xbd, 0xb3, 0xb4, 0x67, 0x9b, 0x9d, 0xbe, 0x43, 0xb6, 0xb0, 0xb3, 0xdf, 0x74, 0x2c,
+	0xec, 0x90, 0xf6, 0xb1, 0x7c, 0x33, 0x72, 0x7b, 0xa6, 0x00, 0x56, 0x1f, 0x34, 0x97, 0xd6, 0xd6,
+	0x36, 0x1f, 0x35, 0x56, 0x4b, 0x12, 0x1d, 0x74, 0x5f, 0x12, 0xf2, 0x3f, 0xa6, 0x60, 0x7a, 0xe8,
+	0x5c, 0xa1, 0x27, 0x50, 0xe4, 0x81, 0x50, 0x7d, 0x2a, 0xb6, 0x9e, 0x19, 0x6a, 0x94, 0xbb, 0x54,
+	0xd8, 0x63, 0xc4, 0x5d, 0x6a, 0x4a, 0x0b, 0x51, 0xd1, 0xd7, 0x12, 0x5c, 0x11, 0x65, 0x2e, 0x8f,
+	0x07, 0x62, 0x47, 0x23, 0xce, 0xeb, 0x47, 0x23, 0x56, 0xbe, 0x27, 0xb8, 0x8b, 0x72, 0x09, 0xbf,
+	0xd2, 0x9b, 0xfa, 0x70, 0x41, 0xd4, 0xc4, 0xc2, 0xc6, 0x61, 0x1d, 0xf8, 0x21, 0xbe, 0x7d, 0x2a,
+	0xf7, 0x50, 0xe6, 0x18, 0x72, 0xa4, 0x13, 0x2e, 0x42, 0x85, 0xee, 0xf5, 0x1e, 0x4d, 0xb3, 0xaa,
+	0x63, 0x3a, 0xb8, 0xa3, 0x06, 0xbe, 0x72, 0xa6, 0xd8, 0x57, 0xce, 0xd9, 0x2e, 0x3e, 0x62, 0x79,
+	0x78, 0x9b, 0x8e, 0x37, 0xdd, 0x4f, 0x9e, 0xd4, 0x78, 0x6f, 0x8a, 0xf6, 0xbd, 0x8a, 0x85, 0x1b,
+	0xb0, 0x9f, 0xc8, 0xd0, 0x5b, 0x22, 0x73, 0x04, 0x76, 0xd6, 0xa7, 0x46, 0xa8, 0xae, 0x5e, 0xe1,
+	0x4c, 0x62, 0xe7, 0x2e, 0xd8, 0xaf, 0xf0, 0xb7, 0xff, 0x4e, 0xc0, 0xb9, 0xc8, 0x68, 0x19, 0xed,
+	0x40, 0xd2, 0xd9, 0x39, 0xd0, 0x55, 0x28, 0x50, 0x26, 0x2f, 0x04, 0xf0, 0xc6, 0x4c, 0x9e, 0xd2,
+	0x44, 0x00, 0x40, 0x2f, 0xe1, 0x72, 0xa0, 0xc1, 0x76, 0xf6, 0xbb, 0xeb, 0x7f, 0x3b, 0x3c, 0x61,
+	0x87, 0xe7, 0xec, 0x7e, 0xaf, 0x67, 0x5a, 0x34, 0x2f, 0x0c, 0x37, 0x57, 0xe9, 0x7d, 0xf4, 0xbc,
+	0x37, 0x21, 0xdc, 0x44, 0x95, 0xd7, 0x21, 0xbf, 0x6d, 0x9a, 0x9d, 0x55, 0xe2, 0x60, 0xbd, 0xc3,
+	0xbe, 0xa9, 0x38, 0xa6, 0xd9, 0x09, 0x66, 0xdb, 0x2c, 0x25, 0xb0, 0xc2, 0xe5, 0x2a, 0x14, 0xd8,
+	0xa0, 0x1b, 0xe6, 0x79, 0x36, 0xcf, 0x53, 0x9a, 0x1b, 0xc7, 0xff, 0x5f, 0x82, 0xa2, 0xc8, 0xde,
+	0x5e, 0x8f, 0x64, 0x53, 0xb0, 0x69, 0x5c, 0x86, 0xc8, 0xc1, 0xf1, 0x3f, 0x8d, 0x09, 0xe8, 0xc5,
+	0x85, 0x04, 0x94, 0x14, 0x27, 0x5a, 0xd7, 0x84, 0x12, 0x59, 0x4e, 0x78, 0xa0, 0xa1, 0x77, 0x01,
+	0x31, 0x69, 0xba, 0x71, 0x60, 0xb6, 0xb0, 0x3b, 0x4b, 0xb4, 0x3d, 0xe8, 0xc8, 0x03, 0x6f, 0xe0,
+	0x81, 0x46, 0x4d, 0xd7, 0x32, 0x2d, 0x8b, 0x74, 0x58, 0x4e, 0xf5, 0x79, 0x6c, 0xca, 0xc4, 0x6b,
+	0xa6, 0xf3, 0xfe, 0x04, 0x9f, 0xd5, 0x7e, 0xa0, 0xd5, 0xff, 0x21, 0x01, 0x39, 0xcf, 0x25, 0xd1,
+	0x37, 0x12, 0x64, 0x44, 0x9b, 0x08, 0xd5, 0x46, 0x6f, 0xb3, 0x31, 0x53, 0x55, 0x2e, 0xb9, 0x65,
+	0x66, 0xe0, 0x77, 0x99, 0x55, 0xaf, 0xdb, 0x24, 0xdf, 0xfc, 0x83, 0xff, 0xfa, 0xbf, 0x3f, 0x4f,
+	0x5c, 0x93, 0xdf, 0xa9, 0x1d, 0xd4, 0x6b, 0x5f, 0x86, 0x4a, 0xa2, 0x0f, 0x17, 0x16, 0x5e, 0xd6,
+	0xf8, 0xe2, 0xed, 0x45, 0x2e, 0x82, 0x2c, 0x4a, 0x0b, 0x37, 0x24, 0xf4, 0x57, 0x12, 0x4c, 0x86,
+	0x9a, 0x34, 0x28, 0xde, 0xfb, 0xa2, 0x9a, 0x3a, 0xe3, 0x29, 0xc7, 0x74, 0xf2, 0x7f, 0x51, 0x5a,
+	0x5b, 0x58, 0x78, 0xb9, 0x78, 0x18, 0x44, 0x65, 0xca, 0xd5, 0xff, 0x27, 0x09, 0xf9, 0x40, 0x30,
+	0x45, 0xff, 0xcb, 0xab, 0xd1, 0xd0, 0x77, 0xdb, 0xf8, 0x8f, 0x59, 0xd1, 0x6d, 0xa5, 0xca, 0x78,
+	0x1d, 0x0c, 0xf9, 0x73, 0xb6, 0x80, 0x5d, 0xb4, 0xfd, 0x4a, 0xeb, 0x8a, 0xce, 0x44, 0xed, 0xcb,
+	0x50, 0x07, 0xa6, 0xba, 0x8f, 0xed, 0xfd, 0x97, 0x83, 0x44, 0x3f, 0xbe, 0xbe, 0x44, 0x3f, 0x92,
+	0x00, 0x0d, 0xb7, 0x7d, 0xd0, 0x62, 0xac, 0x8e, 0x27, 0xf6, 0x8a, 0xc6, 0x5d, 0xdf, 0x33, 0xb6,
+	0x3e, 0x52, 0xf9, 0x5e, 0xd6, 0xb7, 0x18, 0xee, 0x21, 0xd5, 0xbf, 0x4d, 0xc3, 0xdc, 0x0a, 0xff,
+	0x2e, 0xb7, 0xa4, 0x69, 0x16, 0xb1, 0x6d, 0x1a, 0x22, 0x9b, 0x8e, 0x69, 0xe1, 0x36, 0x41, 0xff,
+	0x2c, 0x41, 0x69, 0xb0, 0x57, 0x82, 0xee, 0x8e, 0xf0, 0xd3, 0xbd, 0xc8, 0x56, 0x4f, 0xe5, 0x83,
+	0x53, 0x70, 0xf2, 0xab, 0x8e, 0x7c, 0x8b, 0x19, 0xe5, 0xba, 0x3c, 0x7f, 0x82, 0x51, 0xf6, 0xe8,
+	0xec, 0xc5, 0xa7, 0x3e, 0xfb, 0xa2, 0xb4, 0xc0, 0xd4, 0x1f, 0xec, 0x12, 0x8c, 0xa0, 0xfe, 0x09,
+	0x4d, 0x93, 0x11, 0xd4, 0x3f, 0xa9, 0x25, 0x31, 0xa2, 0xfa, 0x7b, 0x3e, 0x3b, 0x55, 0xff, 0xef,
+	0x25, 0x98, 0x0a, 0xdf, 0xb6, 0xd1, 0x9d, 0xb1, 0xaf, 0xe7, 0x5c, 0xf5, 0xf7, 0x4f, 0x79, 0xad,
+	0x8f, 0x0d, 0x65, 0x01, 0xc5, 0x29, 0x33, 0x55, 0xfb, 0x3b, 0x09, 0x32, 0xe2, 0xa6, 0x3a, 0x42,
+	0x64, 0x0d, 0xdf, 0xc8, 0x2b, 0x37, 0x46, 0x67, 0x10, 0x1a, 0x3e, 0x66, 0x1a, 0x2a, 0x68, 0xeb,
+	0x55, 0x1a, 0xd6, 0xbe, 0x0c, 0x5c, 0xe1, 0xdd, 0x43, 0x12, 0x24, 0x05, 0x8f, 0x48, 0x9b, 0x4b,
+	0xb8, 0x21, 0xd5, 0xff, 0x45, 0x82, 0x42, 0x28, 0x75, 0xff, 0x1d, 0x8f, 0x7b, 0x21, 0xda, 0x48,
+	0x71, 0x2f, 0xe2, 0xba, 0x5c, 0x89, 0x6f, 0xaf, 0x0e, 0xdf, 0x93, 0xe5, 0x6b, 0x6c, 0xb9, 0x6f,
+	0xa3, 0xb7, 0x4e, 0x58, 0x6e, 0xb0, 0x8a, 0x59, 0xb6, 0x20, 0xee, 0x1f, 0x14, 0x96, 0x67, 0x14,
+	0x46, 0xf4, 0xbf, 0x1b, 0x5a, 0xa6, 0x63, 0x6e, 0x49, 0xbf, 0x5d, 0xe4, 0x93, 0xbd, 0xb9, 0x7f,
+	0x9d, 0x48, 0x2a, 0x8d, 0xc7, 0x7f, 0x9b, 0xb8, 0xbc, 0xcc, 0x00, 0x97, 0x19, 0x20, 0xe7, 0xf5,
+	0xaf, 0xc5, 0xd5, 0xdd, 0xfa, 0x5e, 0x9a, 0xfd, 0xe0, 0xe7, 0xd6, 0xcf, 0x02, 0x00, 0x00, 0xff,
+	0xff, 0x4c, 0x23, 0x92, 0x72, 0x53, 0x31, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -3131,7 +4028,81 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ExecutionClient interface {
+	// Execute an action remotely.
+	//
+	// In order to execute an action, the client must first upload all of the
+	// inputs, the
+	// [Command][build.bazel.remote.execution.v2.Command] to run, and the
+	// [Action][build.bazel.remote.execution.v2.Action] into the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+	// It then calls `Execute` with an `action_digest` referring to them. The
+	// server will run the action and eventually return the result.
+	//
+	// The input `Action`'s fields MUST meet the various canonicalization
+	// requirements specified in the documentation for their types so that it has
+	// the same digest as other logically equivalent `Action`s. The server MAY
+	// enforce the requirements and return errors if a non-canonical input is
+	// received. It MAY also proceed without verifying some or all of the
+	// requirements, such as for performance reasons. If the server does not
+	// verify the requirement, then it will treat the `Action` as distinct from
+	// another logically equivalent action if they hash differently.
+	//
+	// Returns a stream of
+	// [google.longrunning.Operation][google.longrunning.Operation] messages
+	// describing the resulting execution, with eventual `response`
+	// [ExecuteResponse][build.bazel.remote.execution.v2.ExecuteResponse]. The
+	// `metadata` on the operation is of type
+	// [ExecuteOperationMetadata][build.bazel.remote.execution.v2.ExecuteOperationMetadata].
+	//
+	// If the client remains connected after the first response is returned after
+	// the server, then updates are streamed as if the client had called
+	// [WaitExecution][build.bazel.remote.execution.v2.Execution.WaitExecution]
+	// until the execution completes or the request reaches an error. The
+	// operation can also be queried using [Operations
+	// API][google.longrunning.Operations.GetOperation].
+	//
+	// The server NEED NOT implement other methods or functionality of the
+	// Operations API.
+	//
+	// Errors discovered during creation of the `Operation` will be reported
+	// as gRPC Status errors, while errors that occurred while running the
+	// action will be reported in the `status` field of the `ExecuteResponse`. The
+	// server MUST NOT set the `error` field of the `Operation` proto.
+	// The possible errors include:
+	//
+	// * `INVALID_ARGUMENT`: One or more arguments are invalid.
+	// * `FAILED_PRECONDITION`: One or more errors occurred in setting up the
+	//   action requested, such as a missing input or command or no worker being
+	//   available. The client may be able to fix the errors and retry.
+	// * `RESOURCE_EXHAUSTED`: There is insufficient quota of some resource to run
+	//   the action.
+	// * `UNAVAILABLE`: Due to a transient condition, such as all workers being
+	//   occupied (and the server does not support a queue), the action could not
+	//   be started. The client should retry.
+	// * `INTERNAL`: An internal error occurred in the execution engine or the
+	//   worker.
+	// * `DEADLINE_EXCEEDED`: The execution timed out.
+	// * `CANCELLED`: The operation was cancelled by the client. This status is
+	//   only possible if the server implements the Operations API CancelOperation
+	//   method, and it was called for the current execution.
+	//
+	// In the case of a missing input or command, the server SHOULD additionally
+	// send a [PreconditionFailure][google.rpc.PreconditionFailure] error detail
+	// where, for each requested blob not present in the CAS, there is a
+	// `Violation` with a `type` of `MISSING` and a `subject` of
+	// `"blobs/{hash}/{size}"` indicating the digest of the missing blob.
+	//
+	// The server does not need to guarantee that a call to this method leads to
+	// at most one execution of the action. The server MAY execute the action
+	// multiple times, potentially in parallel. These redundant executions MAY
+	// continue to run, even if the operation is completed.
 	Execute(ctx context.Context, in *ExecuteRequest, opts ...grpc.CallOption) (Execution_ExecuteClient, error)
+	// Wait for an execution operation to complete. When the client initially
+	// makes the request, the server immediately responds with the current status
+	// of the execution. The server will leave the request stream open until the
+	// operation completes, and then respond with the completed operation. The
+	// server MAY choose to stream additional updates as execution progresses,
+	// such as to provide an update as to the state of the execution.
 	WaitExecution(ctx context.Context, in *WaitExecutionRequest, opts ...grpc.CallOption) (Execution_WaitExecutionClient, error)
 }
 
@@ -3209,7 +4180,81 @@ func (x *executionWaitExecutionClient) Recv() (*longrunning.Operation, error) {
 
 // ExecutionServer is the server API for Execution service.
 type ExecutionServer interface {
+	// Execute an action remotely.
+	//
+	// In order to execute an action, the client must first upload all of the
+	// inputs, the
+	// [Command][build.bazel.remote.execution.v2.Command] to run, and the
+	// [Action][build.bazel.remote.execution.v2.Action] into the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+	// It then calls `Execute` with an `action_digest` referring to them. The
+	// server will run the action and eventually return the result.
+	//
+	// The input `Action`'s fields MUST meet the various canonicalization
+	// requirements specified in the documentation for their types so that it has
+	// the same digest as other logically equivalent `Action`s. The server MAY
+	// enforce the requirements and return errors if a non-canonical input is
+	// received. It MAY also proceed without verifying some or all of the
+	// requirements, such as for performance reasons. If the server does not
+	// verify the requirement, then it will treat the `Action` as distinct from
+	// another logically equivalent action if they hash differently.
+	//
+	// Returns a stream of
+	// [google.longrunning.Operation][google.longrunning.Operation] messages
+	// describing the resulting execution, with eventual `response`
+	// [ExecuteResponse][build.bazel.remote.execution.v2.ExecuteResponse]. The
+	// `metadata` on the operation is of type
+	// [ExecuteOperationMetadata][build.bazel.remote.execution.v2.ExecuteOperationMetadata].
+	//
+	// If the client remains connected after the first response is returned after
+	// the server, then updates are streamed as if the client had called
+	// [WaitExecution][build.bazel.remote.execution.v2.Execution.WaitExecution]
+	// until the execution completes or the request reaches an error. The
+	// operation can also be queried using [Operations
+	// API][google.longrunning.Operations.GetOperation].
+	//
+	// The server NEED NOT implement other methods or functionality of the
+	// Operations API.
+	//
+	// Errors discovered during creation of the `Operation` will be reported
+	// as gRPC Status errors, while errors that occurred while running the
+	// action will be reported in the `status` field of the `ExecuteResponse`. The
+	// server MUST NOT set the `error` field of the `Operation` proto.
+	// The possible errors include:
+	//
+	// * `INVALID_ARGUMENT`: One or more arguments are invalid.
+	// * `FAILED_PRECONDITION`: One or more errors occurred in setting up the
+	//   action requested, such as a missing input or command or no worker being
+	//   available. The client may be able to fix the errors and retry.
+	// * `RESOURCE_EXHAUSTED`: There is insufficient quota of some resource to run
+	//   the action.
+	// * `UNAVAILABLE`: Due to a transient condition, such as all workers being
+	//   occupied (and the server does not support a queue), the action could not
+	//   be started. The client should retry.
+	// * `INTERNAL`: An internal error occurred in the execution engine or the
+	//   worker.
+	// * `DEADLINE_EXCEEDED`: The execution timed out.
+	// * `CANCELLED`: The operation was cancelled by the client. This status is
+	//   only possible if the server implements the Operations API CancelOperation
+	//   method, and it was called for the current execution.
+	//
+	// In the case of a missing input or command, the server SHOULD additionally
+	// send a [PreconditionFailure][google.rpc.PreconditionFailure] error detail
+	// where, for each requested blob not present in the CAS, there is a
+	// `Violation` with a `type` of `MISSING` and a `subject` of
+	// `"blobs/{hash}/{size}"` indicating the digest of the missing blob.
+	//
+	// The server does not need to guarantee that a call to this method leads to
+	// at most one execution of the action. The server MAY execute the action
+	// multiple times, potentially in parallel. These redundant executions MAY
+	// continue to run, even if the operation is completed.
 	Execute(*ExecuteRequest, Execution_ExecuteServer) error
+	// Wait for an execution operation to complete. When the client initially
+	// makes the request, the server immediately responds with the current status
+	// of the execution. The server will leave the request stream open until the
+	// operation completes, and then respond with the completed operation. The
+	// server MAY choose to stream additional updates as execution progresses,
+	// such as to provide an update as to the state of the execution.
 	WaitExecution(*WaitExecutionRequest, Execution_WaitExecutionServer) error
 }
 
@@ -3293,7 +4338,38 @@ var _Execution_serviceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ActionCacheClient interface {
+	// Retrieve a cached execution result.
+	//
+	// Implementations SHOULD ensure that any blobs referenced from the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
+	// are available at the time of returning the
+	// [ActionResult][build.bazel.remote.execution.v2.ActionResult] and will be
+	// for some period of time afterwards. The lifetimes of the referenced blobs SHOULD be increased
+	// if necessary and applicable.
+	//
+	// Errors:
+	//
+	// * `NOT_FOUND`: The requested `ActionResult` is not in the cache.
 	GetActionResult(ctx context.Context, in *GetActionResultRequest, opts ...grpc.CallOption) (*ActionResult, error)
+	// Upload a new execution result.
+	//
+	// In order to allow the server to perform access control based on the type of
+	// action, and to assist with client debugging, the client MUST first upload
+	// the [Action][build.bazel.remote.execution.v2.Execution] that produced the
+	// result, along with its
+	// [Command][build.bazel.remote.execution.v2.Command], into the
+	// `ContentAddressableStorage`.
+	//
+	// Server implementations MAY modify the
+	// `UpdateActionResultRequest.action_result` and return an equivalent value.
+	//
+	// Errors:
+	//
+	// * `INVALID_ARGUMENT`: One or more arguments are invalid.
+	// * `FAILED_PRECONDITION`: One or more errors occurred in updating the
+	//   action result, such as a missing command or action.
+	// * `RESOURCE_EXHAUSTED`: There is insufficient storage space to add the
+	//   entry to the cache.
 	UpdateActionResult(ctx context.Context, in *UpdateActionResultRequest, opts ...grpc.CallOption) (*ActionResult, error)
 }
 
@@ -3325,7 +4401,38 @@ func (c *actionCacheClient) UpdateActionResult(ctx context.Context, in *UpdateAc
 
 // ActionCacheServer is the server API for ActionCache service.
 type ActionCacheServer interface {
+	// Retrieve a cached execution result.
+	//
+	// Implementations SHOULD ensure that any blobs referenced from the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
+	// are available at the time of returning the
+	// [ActionResult][build.bazel.remote.execution.v2.ActionResult] and will be
+	// for some period of time afterwards. The lifetimes of the referenced blobs SHOULD be increased
+	// if necessary and applicable.
+	//
+	// Errors:
+	//
+	// * `NOT_FOUND`: The requested `ActionResult` is not in the cache.
 	GetActionResult(context.Context, *GetActionResultRequest) (*ActionResult, error)
+	// Upload a new execution result.
+	//
+	// In order to allow the server to perform access control based on the type of
+	// action, and to assist with client debugging, the client MUST first upload
+	// the [Action][build.bazel.remote.execution.v2.Execution] that produced the
+	// result, along with its
+	// [Command][build.bazel.remote.execution.v2.Command], into the
+	// `ContentAddressableStorage`.
+	//
+	// Server implementations MAY modify the
+	// `UpdateActionResultRequest.action_result` and return an equivalent value.
+	//
+	// Errors:
+	//
+	// * `INVALID_ARGUMENT`: One or more arguments are invalid.
+	// * `FAILED_PRECONDITION`: One or more errors occurred in updating the
+	//   action result, such as a missing command or action.
+	// * `RESOURCE_EXHAUSTED`: There is insufficient storage space to add the
+	//   entry to the cache.
 	UpdateActionResult(context.Context, *UpdateActionResultRequest) (*ActionResult, error)
 }
 
@@ -3401,9 +4508,85 @@ var _ActionCache_serviceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ContentAddressableStorageClient interface {
+	// Determine if blobs are present in the CAS.
+	//
+	// Clients can use this API before uploading blobs to determine which ones are
+	// already present in the CAS and do not need to be uploaded again.
+	//
+	// Servers SHOULD increase the lifetimes of the referenced blobs if necessary and
+	// applicable.
+	//
+	// There are no method-specific errors.
 	FindMissingBlobs(ctx context.Context, in *FindMissingBlobsRequest, opts ...grpc.CallOption) (*FindMissingBlobsResponse, error)
+	// Upload many blobs at once.
+	//
+	// The server may enforce a limit of the combined total size of blobs
+	// to be uploaded using this API. This limit may be obtained using the
+	// [Capabilities][build.bazel.remote.execution.v2.Capabilities] API.
+	// Requests exceeding the limit should either be split into smaller
+	// chunks or uploaded using the
+	// [ByteStream API][google.bytestream.ByteStream], as appropriate.
+	//
+	// This request is equivalent to calling a Bytestream `Write` request
+	// on each individual blob, in parallel. The requests may succeed or fail
+	// independently.
+	//
+	// Errors:
+	//
+	// * `INVALID_ARGUMENT`: The client attempted to upload more than the
+	//   server supported limit.
+	//
+	// Individual requests may return the following errors, additionally:
+	//
+	// * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob.
+	// * `INVALID_ARGUMENT`: The
+	// [Digest][build.bazel.remote.execution.v2.Digest] does not match the
+	// provided data.
 	BatchUpdateBlobs(ctx context.Context, in *BatchUpdateBlobsRequest, opts ...grpc.CallOption) (*BatchUpdateBlobsResponse, error)
+	// Download many blobs at once.
+	//
+	// The server may enforce a limit of the combined total size of blobs
+	// to be downloaded using this API. This limit may be obtained using the
+	// [Capabilities][build.bazel.remote.execution.v2.Capabilities] API.
+	// Requests exceeding the limit should either be split into smaller
+	// chunks or downloaded using the
+	// [ByteStream API][google.bytestream.ByteStream], as appropriate.
+	//
+	// This request is equivalent to calling a Bytestream `Read` request
+	// on each individual blob, in parallel. The requests may succeed or fail
+	// independently.
+	//
+	// Errors:
+	//
+	// * `INVALID_ARGUMENT`: The client attempted to read more than the
+	//   server supported limit.
+	//
+	// Every error on individual read will be returned in the corresponding digest
+	// status.
 	BatchReadBlobs(ctx context.Context, in *BatchReadBlobsRequest, opts ...grpc.CallOption) (*BatchReadBlobsResponse, error)
+	// Fetch the entire directory tree rooted at a node.
+	//
+	// This request must be targeted at a
+	// [Directory][build.bazel.remote.execution.v2.Directory] stored in the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
+	// (CAS). The server will enumerate the `Directory` tree recursively and
+	// return every node descended from the root.
+	//
+	// The GetTreeRequest.page_token parameter can be used to skip ahead in
+	// the stream (e.g. when retrying a partially completed and aborted request),
+	// by setting it to a value taken from GetTreeResponse.next_page_token of the
+	// last successfully processed GetTreeResponse).
+	//
+	// The exact traversal order is unspecified and, unless retrieving subsequent
+	// pages from an earlier request, is not guaranteed to be stable across
+	// multiple invocations of `GetTree`.
+	//
+	// If part of the tree is missing from the CAS, the server will return the
+	// portion present and omit the rest.
+	//
+	// Errors:
+	//
+	// * `NOT_FOUND`: The requested tree root is not present in the CAS.
 	GetTree(ctx context.Context, in *GetTreeRequest, opts ...grpc.CallOption) (ContentAddressableStorage_GetTreeClient, error)
 }
 
@@ -3476,9 +4659,85 @@ func (x *contentAddressableStorageGetTreeClient) Recv() (*GetTreeResponse, error
 
 // ContentAddressableStorageServer is the server API for ContentAddressableStorage service.
 type ContentAddressableStorageServer interface {
+	// Determine if blobs are present in the CAS.
+	//
+	// Clients can use this API before uploading blobs to determine which ones are
+	// already present in the CAS and do not need to be uploaded again.
+	//
+	// Servers SHOULD increase the lifetimes of the referenced blobs if necessary and
+	// applicable.
+	//
+	// There are no method-specific errors.
 	FindMissingBlobs(context.Context, *FindMissingBlobsRequest) (*FindMissingBlobsResponse, error)
+	// Upload many blobs at once.
+	//
+	// The server may enforce a limit of the combined total size of blobs
+	// to be uploaded using this API. This limit may be obtained using the
+	// [Capabilities][build.bazel.remote.execution.v2.Capabilities] API.
+	// Requests exceeding the limit should either be split into smaller
+	// chunks or uploaded using the
+	// [ByteStream API][google.bytestream.ByteStream], as appropriate.
+	//
+	// This request is equivalent to calling a Bytestream `Write` request
+	// on each individual blob, in parallel. The requests may succeed or fail
+	// independently.
+	//
+	// Errors:
+	//
+	// * `INVALID_ARGUMENT`: The client attempted to upload more than the
+	//   server supported limit.
+	//
+	// Individual requests may return the following errors, additionally:
+	//
+	// * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob.
+	// * `INVALID_ARGUMENT`: The
+	// [Digest][build.bazel.remote.execution.v2.Digest] does not match the
+	// provided data.
 	BatchUpdateBlobs(context.Context, *BatchUpdateBlobsRequest) (*BatchUpdateBlobsResponse, error)
+	// Download many blobs at once.
+	//
+	// The server may enforce a limit of the combined total size of blobs
+	// to be downloaded using this API. This limit may be obtained using the
+	// [Capabilities][build.bazel.remote.execution.v2.Capabilities] API.
+	// Requests exceeding the limit should either be split into smaller
+	// chunks or downloaded using the
+	// [ByteStream API][google.bytestream.ByteStream], as appropriate.
+	//
+	// This request is equivalent to calling a Bytestream `Read` request
+	// on each individual blob, in parallel. The requests may succeed or fail
+	// independently.
+	//
+	// Errors:
+	//
+	// * `INVALID_ARGUMENT`: The client attempted to read more than the
+	//   server supported limit.
+	//
+	// Every error on individual read will be returned in the corresponding digest
+	// status.
 	BatchReadBlobs(context.Context, *BatchReadBlobsRequest) (*BatchReadBlobsResponse, error)
+	// Fetch the entire directory tree rooted at a node.
+	//
+	// This request must be targeted at a
+	// [Directory][build.bazel.remote.execution.v2.Directory] stored in the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
+	// (CAS). The server will enumerate the `Directory` tree recursively and
+	// return every node descended from the root.
+	//
+	// The GetTreeRequest.page_token parameter can be used to skip ahead in
+	// the stream (e.g. when retrying a partially completed and aborted request),
+	// by setting it to a value taken from GetTreeResponse.next_page_token of the
+	// last successfully processed GetTreeResponse).
+	//
+	// The exact traversal order is unspecified and, unless retrieving subsequent
+	// pages from an earlier request, is not guaranteed to be stable across
+	// multiple invocations of `GetTree`.
+	//
+	// If part of the tree is missing from the CAS, the server will return the
+	// portion present and omit the rest.
+	//
+	// Errors:
+	//
+	// * `NOT_FOUND`: The requested tree root is not present in the CAS.
 	GetTree(*GetTreeRequest, ContentAddressableStorage_GetTreeServer) error
 }
 
@@ -3609,6 +4868,14 @@ var _ContentAddressableStorage_serviceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type CapabilitiesClient interface {
+	// GetCapabilities returns the server capabilities configuration of the
+	// remote endpoint.
+	// Only the capabilities of the services supported by the endpoint will
+	// be returned:
+	// * Execution + CAS + Action Cache endpoints should return both
+	//   CacheCapabilities and ExecutionCapabilities.
+	// * Execution only endpoints should return ExecutionCapabilities.
+	// * CAS + Action Cache only endpoints should return CacheCapabilities.
 	GetCapabilities(ctx context.Context, in *GetCapabilitiesRequest, opts ...grpc.CallOption) (*ServerCapabilities, error)
 }
 
@@ -3631,6 +4898,14 @@ func (c *capabilitiesClient) GetCapabilities(ctx context.Context, in *GetCapabil
 
 // CapabilitiesServer is the server API for Capabilities service.
 type CapabilitiesServer interface {
+	// GetCapabilities returns the server capabilities configuration of the
+	// remote endpoint.
+	// Only the capabilities of the services supported by the endpoint will
+	// be returned:
+	// * Execution + CAS + Action Cache endpoints should return both
+	//   CacheCapabilities and ExecutionCapabilities.
+	// * Execution only endpoints should return ExecutionCapabilities.
+	// * CAS + Action Cache only endpoints should return CacheCapabilities.
 	GetCapabilities(context.Context, *GetCapabilitiesRequest) (*ServerCapabilities, error)
 }
 

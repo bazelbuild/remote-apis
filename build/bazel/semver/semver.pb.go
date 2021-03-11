@@ -20,10 +20,17 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+// The full version of a given tool.
 type SemVer struct {
-	Major                int32    `protobuf:"varint,1,opt,name=major,proto3" json:"major,omitempty"`
-	Minor                int32    `protobuf:"varint,2,opt,name=minor,proto3" json:"minor,omitempty"`
-	Patch                int32    `protobuf:"varint,3,opt,name=patch,proto3" json:"patch,omitempty"`
+	// The major version, e.g 10 for 10.2.3.
+	Major int32 `protobuf:"varint,1,opt,name=major,proto3" json:"major,omitempty"`
+	// The minor version, e.g. 2 for 10.2.3.
+	Minor int32 `protobuf:"varint,2,opt,name=minor,proto3" json:"minor,omitempty"`
+	// The patch version, e.g 3 for 10.2.3.
+	Patch int32 `protobuf:"varint,3,opt,name=patch,proto3" json:"patch,omitempty"`
+	// The pre-release version. Either this field or major/minor/patch fields
+	// must be filled. They are mutually exclusive. Pre-release versions are
+	// assumed to be earlier than any released versions.
 	Prerelease           string   `protobuf:"bytes,4,opt,name=prerelease,proto3" json:"prerelease,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`

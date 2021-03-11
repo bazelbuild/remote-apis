@@ -29,8 +29,27 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+// Qualifiers are used to disambiguate or sub-select content that shares a URI.
+// This may include specifying a particular commit or branch, in the case of
+// URIs referencing a repository; they could also be used to specify a
+// particular subdirectory of a repository or tarball. Qualifiers may also be
+// used to ensure content matches what the client expects, even when there is
+// no ambiguity to be had - for example, a qualifier specifying a checksum
+// value.
+//
+// In cases where the semantics of the request are not immediately clear from
+// the URL and/or qualifiers - e.g. dictated by URL scheme - it is recommended
+// to use an additional qualifier to remove the ambiguity. The `resource_type`
+// qualifier is recommended for this purpose.
+//
+// Qualifiers may be supplied in any order.
 type Qualifier struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The "name" of the qualifier, for example "resource_type".
+	// No separation is made between 'standard' and 'nonstandard'
+	// qualifiers, in accordance with https://tools.ietf.org/html/rfc6648,
+	// however implementers *SHOULD* take care to avoid ambiguity.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The "value" of the qualifier. Semantics will be dictated by the name.
 	Value                string   `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -76,15 +95,57 @@ func (m *Qualifier) GetValue() string {
 	return ""
 }
 
+// A request message for
+// [Fetch.FetchBlob][build.bazel.remote.asset.v1.Fetch.FetchBlob].
 type FetchBlobRequest struct {
-	InstanceName          string               `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
-	Timeout               *duration.Duration   `protobuf:"bytes,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	// The instance of the execution system to operate against. A server may
+	// support multiple instances of the execution system (with their own workers,
+	// storage, caches, etc.). The server MAY require use of this field to select
+	// between them in an implementation-defined fashion, otherwise it can be
+	// omitted.
+	InstanceName string `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// The timeout for the underlying fetch, if content needs to be retrieved from
+	// origin.
+	//
+	// If unset, the server *MAY* apply an implementation-defined timeout.
+	//
+	// If set, and the user-provided timeout exceeds the RPC deadline, the server
+	// *SHOULD* keep the fetch going after the RPC completes, to be made
+	// available for future Fetch calls. The server may also enforce (via clamping
+	// and/or an INVALID_ARGUMENT error) implementation-defined minimum and
+	// maximum timeout values.
+	//
+	// If this timeout is exceeded on an attempt to retrieve content from origin
+	// the client will receive DEADLINE_EXCEEDED in [FetchBlobResponse.status].
+	Timeout *duration.Duration `protobuf:"bytes,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	// The oldest content the client is willing to accept, as measured from the
+	// time it was Push'd or when the underlying retrieval from origin was
+	// started.
+	// Upon retries of Fetch requests that cannot be completed within a single
+	// RPC, clients *SHOULD* provide the same value for subsequent requests as the
+	// original, to simplify combining the request with the previous attempt.
+	//
+	// If unset, the client *SHOULD* accept content of any age.
 	OldestContentAccepted *timestamp.Timestamp `protobuf:"bytes,3,opt,name=oldest_content_accepted,json=oldestContentAccepted,proto3" json:"oldest_content_accepted,omitempty"`
-	Uris                  []string             `protobuf:"bytes,4,rep,name=uris,proto3" json:"uris,omitempty"`
-	Qualifiers            []*Qualifier         `protobuf:"bytes,5,rep,name=qualifiers,proto3" json:"qualifiers,omitempty"`
-	XXX_NoUnkeyedLiteral  struct{}             `json:"-"`
-	XXX_unrecognized      []byte               `json:"-"`
-	XXX_sizecache         int32                `json:"-"`
+	// The URI(s) of the content to fetch. These may be resources that the server
+	// can directly fetch from origin, in which case multiple URIs *SHOULD*
+	// represent the same content available at different locations (such as an
+	// origin and secondary mirrors). These may also be URIs for content known to
+	// the server through other mechanisms, e.g. pushed via the [Push][build.bazel.remote.asset.v1.Push]
+	// service.
+	//
+	// Clients *MUST* supply at least one URI. Servers *MAY* match any one of the
+	// supplied URIs.
+	Uris []string `protobuf:"bytes,4,rep,name=uris,proto3" json:"uris,omitempty"`
+	// Qualifiers sub-specifying the content to fetch - see comments on
+	// [Qualifier][build.bazel.remote.asset.v1.Qualifier].
+	// The same qualifiers apply to all URIs.
+	//
+	// Specified qualifier names *MUST* be unique.
+	Qualifiers           []*Qualifier `protobuf:"bytes,5,rep,name=qualifiers,proto3" json:"qualifiers,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
 func (m *FetchBlobRequest) Reset()         { *m = FetchBlobRequest{} }
@@ -147,15 +208,34 @@ func (m *FetchBlobRequest) GetQualifiers() []*Qualifier {
 	return nil
 }
 
+// A response message for
+// [Fetch.FetchBlob][build.bazel.remote.asset.v1.Fetch.FetchBlob].
 type FetchBlobResponse struct {
-	Status               *status.Status       `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
-	Uri                  string               `protobuf:"bytes,2,opt,name=uri,proto3" json:"uri,omitempty"`
-	Qualifiers           []*Qualifier         `protobuf:"bytes,3,rep,name=qualifiers,proto3" json:"qualifiers,omitempty"`
-	ExpiresAt            *timestamp.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	BlobDigest           *v2.Digest           `protobuf:"bytes,5,opt,name=blob_digest,json=blobDigest,proto3" json:"blob_digest,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
+	// If the status has a code other than `OK`, it indicates that the operation
+	// was unable to be completed for reasons outside the servers' control.
+	// The possible fetch errors include:
+	// * `DEADLINE_EXCEEDED`: The operation could not be completed within the
+	//   specified timeout.
+	// * `NOT_FOUND`: The requested asset was not found at the specified location.
+	// * `PERMISSION_DENIED`: The request was rejected by a remote server, or
+	//   requested an asset from a disallowed origin.
+	// * `ABORTED`: The operation could not be completed, typically due to a
+	//   failed consistency check.
+	Status *status.Status `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	// The uri from the request that resulted in a successful retrieval, or from
+	// which the error indicated in `status` was obtained.
+	Uri string `protobuf:"bytes,2,opt,name=uri,proto3" json:"uri,omitempty"`
+	// Any qualifiers known to the server and of interest to clients.
+	Qualifiers []*Qualifier `protobuf:"bytes,3,rep,name=qualifiers,proto3" json:"qualifiers,omitempty"`
+	// A minimum timestamp the content is expected to be available through.
+	// Servers *MAY* omit this field, if not known with confidence.
+	ExpiresAt *timestamp.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// The result of the fetch, if the status had code `OK`.
+	// The digest of the file's contents, available for download through the CAS.
+	BlobDigest           *v2.Digest `protobuf:"bytes,5,opt,name=blob_digest,json=blobDigest,proto3" json:"blob_digest,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
 func (m *FetchBlobResponse) Reset()         { *m = FetchBlobResponse{} }
@@ -218,15 +298,51 @@ func (m *FetchBlobResponse) GetBlobDigest() *v2.Digest {
 	return nil
 }
 
+// A request message for
+// [Fetch.FetchDirectory][build.bazel.remote.asset.v1.Fetch.FetchDirectory].
 type FetchDirectoryRequest struct {
-	InstanceName          string               `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
-	Timeout               *duration.Duration   `protobuf:"bytes,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	// The instance of the execution system to operate against. A server may
+	// support multiple instances of the execution system (with their own workers,
+	// storage, caches, etc.). The server MAY require use of this field to select
+	// between them in an implementation-defined fashion, otherwise it can be
+	// omitted.
+	InstanceName string `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// The timeout for the underlying fetch, if content needs to be retrieved from
+	// origin. This value is allowed to exceed the RPC deadline, in which case the
+	// server *SHOULD* keep the fetch going after the RPC completes, to be made
+	// available for future Fetch calls.
+	//
+	// If this timeout is exceeded on an attempt to retrieve content from origin
+	// the client will receive DEADLINE_EXCEEDED in [FetchDirectoryResponse.status].
+	Timeout *duration.Duration `protobuf:"bytes,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	// The oldest content the client is willing to accept, as measured from the
+	// time it was Push'd or when the underlying retrieval from origin was
+	// started.
+	// Upon retries of Fetch requests that cannot be completed within a single
+	// RPC, clients *SHOULD* provide the same value for subsequent requests as the
+	// original, to simplify combining the request with the previous attempt.
+	//
+	// If unset, the client *SHOULD* accept content of any age.
 	OldestContentAccepted *timestamp.Timestamp `protobuf:"bytes,3,opt,name=oldest_content_accepted,json=oldestContentAccepted,proto3" json:"oldest_content_accepted,omitempty"`
-	Uris                  []string             `protobuf:"bytes,4,rep,name=uris,proto3" json:"uris,omitempty"`
-	Qualifiers            []*Qualifier         `protobuf:"bytes,5,rep,name=qualifiers,proto3" json:"qualifiers,omitempty"`
-	XXX_NoUnkeyedLiteral  struct{}             `json:"-"`
-	XXX_unrecognized      []byte               `json:"-"`
-	XXX_sizecache         int32                `json:"-"`
+	// The URI(s) of the content to fetch. These may be resources that the server
+	// can directly fetch from origin, in which case multiple URIs *SHOULD*
+	// represent the same content available at different locations (such as an
+	// origin and secondary mirrors). These may also be URIs for content known to
+	// the server through other mechanisms, e.g. pushed via the [Push][build.bazel.remote.asset.v1.Push]
+	// service.
+	//
+	// Clients *MUST* supply at least one URI. Servers *MAY* match any one of the
+	// supplied URIs.
+	Uris []string `protobuf:"bytes,4,rep,name=uris,proto3" json:"uris,omitempty"`
+	// Qualifiers sub-specifying the content to fetch - see comments on
+	// [Qualifier][build.bazel.remote.asset.v1.Qualifier].
+	// The same qualifiers apply to all URIs.
+	//
+	// Specified qualifier names *MUST* be unique.
+	Qualifiers           []*Qualifier `protobuf:"bytes,5,rep,name=qualifiers,proto3" json:"qualifiers,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
 func (m *FetchDirectoryRequest) Reset()         { *m = FetchDirectoryRequest{} }
@@ -289,15 +405,35 @@ func (m *FetchDirectoryRequest) GetQualifiers() []*Qualifier {
 	return nil
 }
 
+// A response message for
+// [Fetch.FetchDirectory][build.bazel.remote.asset.v1.Fetch.FetchDirectory].
 type FetchDirectoryResponse struct {
-	Status               *status.Status       `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
-	Uri                  string               `protobuf:"bytes,2,opt,name=uri,proto3" json:"uri,omitempty"`
-	Qualifiers           []*Qualifier         `protobuf:"bytes,3,rep,name=qualifiers,proto3" json:"qualifiers,omitempty"`
-	ExpiresAt            *timestamp.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	RootDirectoryDigest  *v2.Digest           `protobuf:"bytes,5,opt,name=root_directory_digest,json=rootDirectoryDigest,proto3" json:"root_directory_digest,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
+	// If the status has a code other than `OK`, it indicates that the operation
+	// was unable to be completed for reasons outside the servers' control.
+	// The possible fetch errors include:
+	// * `DEADLINE_EXCEEDED`: The operation could not be completed within the
+	//   specified timeout.
+	// * `NOT_FOUND`: The requested asset was not found at the specified location.
+	// * `PERMISSION_DENIED`: The request was rejected by a remote server, or
+	//   requested an asset from a disallowed origin.
+	// * `ABORTED`: The operation could not be completed, typically due to a
+	//   failed consistency check.
+	Status *status.Status `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	// The uri from the request that resulted in a successful retrieval, or from
+	// which the error indicated in `status` was obtained.
+	Uri string `protobuf:"bytes,2,opt,name=uri,proto3" json:"uri,omitempty"`
+	// Any qualifiers known to the server and of interest to clients.
+	Qualifiers []*Qualifier `protobuf:"bytes,3,rep,name=qualifiers,proto3" json:"qualifiers,omitempty"`
+	// A minimum timestamp the content is expected to be available through.
+	// Servers *MAY* omit this field, if not known with confidence.
+	ExpiresAt *timestamp.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// The result of the fetch, if the status had code `OK`.
+	// the root digest of a directory tree, suitable for fetching via
+	// [ContentAddressableStorage.GetTree].
+	RootDirectoryDigest  *v2.Digest `protobuf:"bytes,5,opt,name=root_directory_digest,json=rootDirectoryDigest,proto3" json:"root_directory_digest,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
 func (m *FetchDirectoryResponse) Reset()         { *m = FetchDirectoryResponse{} }
@@ -360,17 +496,37 @@ func (m *FetchDirectoryResponse) GetRootDirectoryDigest() *v2.Digest {
 	return nil
 }
 
+// A request message for
+// [Push.PushBlob][build.bazel.remote.asset.v1.Push.PushBlob].
 type PushBlobRequest struct {
-	InstanceName          string               `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
-	Uris                  []string             `protobuf:"bytes,2,rep,name=uris,proto3" json:"uris,omitempty"`
-	Qualifiers            []*Qualifier         `protobuf:"bytes,3,rep,name=qualifiers,proto3" json:"qualifiers,omitempty"`
-	ExpireAt              *timestamp.Timestamp `protobuf:"bytes,4,opt,name=expire_at,json=expireAt,proto3" json:"expire_at,omitempty"`
-	BlobDigest            *v2.Digest           `protobuf:"bytes,5,opt,name=blob_digest,json=blobDigest,proto3" json:"blob_digest,omitempty"`
-	ReferencesBlobs       []*v2.Digest         `protobuf:"bytes,6,rep,name=references_blobs,json=referencesBlobs,proto3" json:"references_blobs,omitempty"`
-	ReferencesDirectories []*v2.Digest         `protobuf:"bytes,7,rep,name=references_directories,json=referencesDirectories,proto3" json:"references_directories,omitempty"`
-	XXX_NoUnkeyedLiteral  struct{}             `json:"-"`
-	XXX_unrecognized      []byte               `json:"-"`
-	XXX_sizecache         int32                `json:"-"`
+	// The instance of the execution system to operate against. A server may
+	// support multiple instances of the execution system (with their own workers,
+	// storage, caches, etc.). The server MAY require use of this field to select
+	// between them in an implementation-defined fashion, otherwise it can be
+	// omitted.
+	InstanceName string `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// The URI(s) of the content to associate. If multiple URIs are specified, the
+	// pushed content will be available to fetch by specifying any of them.
+	Uris []string `protobuf:"bytes,2,rep,name=uris,proto3" json:"uris,omitempty"`
+	// Qualifiers sub-specifying the content that is being pushed - see comments
+	// on [Qualifier][build.bazel.remote.asset.v1.Qualifier].
+	// The same qualifiers apply to all URIs.
+	Qualifiers []*Qualifier `protobuf:"bytes,3,rep,name=qualifiers,proto3" json:"qualifiers,omitempty"`
+	// A time after which this content should stop being returned via [FetchBlob][build.bazel.remote.asset.v1.Fetch.FetchBlob].
+	// Servers *MAY* expire content early, e.g. due to storage pressure.
+	ExpireAt *timestamp.Timestamp `protobuf:"bytes,4,opt,name=expire_at,json=expireAt,proto3" json:"expire_at,omitempty"`
+	// The blob to associate.
+	BlobDigest *v2.Digest `protobuf:"bytes,5,opt,name=blob_digest,json=blobDigest,proto3" json:"blob_digest,omitempty"`
+	// Referenced blobs or directories that need to not expire before expiration
+	// of this association, in addition to `blob_digest` itself.
+	// These fields are hints - clients *MAY* omit them, and servers *SHOULD*
+	// respect them, at the risk of increased incidents of Fetch responses
+	// indirectly referencing unavailable blobs.
+	ReferencesBlobs       []*v2.Digest `protobuf:"bytes,6,rep,name=references_blobs,json=referencesBlobs,proto3" json:"references_blobs,omitempty"`
+	ReferencesDirectories []*v2.Digest `protobuf:"bytes,7,rep,name=references_directories,json=referencesDirectories,proto3" json:"references_directories,omitempty"`
+	XXX_NoUnkeyedLiteral  struct{}     `json:"-"`
+	XXX_unrecognized      []byte       `json:"-"`
+	XXX_sizecache         int32        `json:"-"`
 }
 
 func (m *PushBlobRequest) Reset()         { *m = PushBlobRequest{} }
@@ -447,6 +603,8 @@ func (m *PushBlobRequest) GetReferencesDirectories() []*v2.Digest {
 	return nil
 }
 
+// A response message for
+// [Push.PushBlob][build.bazel.remote.asset.v1.Push.PushBlob].
 type PushBlobResponse struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -478,17 +636,38 @@ func (m *PushBlobResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_PushBlobResponse proto.InternalMessageInfo
 
+// A request message for
+// [Push.PushDirectory][build.bazel.remote.asset.v1.Push.PushDirectory].
 type PushDirectoryRequest struct {
-	InstanceName          string               `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
-	Uris                  []string             `protobuf:"bytes,2,rep,name=uris,proto3" json:"uris,omitempty"`
-	Qualifiers            []*Qualifier         `protobuf:"bytes,3,rep,name=qualifiers,proto3" json:"qualifiers,omitempty"`
-	ExpireAt              *timestamp.Timestamp `protobuf:"bytes,4,opt,name=expire_at,json=expireAt,proto3" json:"expire_at,omitempty"`
-	RootDirectoryDigest   *v2.Digest           `protobuf:"bytes,5,opt,name=root_directory_digest,json=rootDirectoryDigest,proto3" json:"root_directory_digest,omitempty"`
-	ReferencesBlobs       []*v2.Digest         `protobuf:"bytes,6,rep,name=references_blobs,json=referencesBlobs,proto3" json:"references_blobs,omitempty"`
-	ReferencesDirectories []*v2.Digest         `protobuf:"bytes,7,rep,name=references_directories,json=referencesDirectories,proto3" json:"references_directories,omitempty"`
-	XXX_NoUnkeyedLiteral  struct{}             `json:"-"`
-	XXX_unrecognized      []byte               `json:"-"`
-	XXX_sizecache         int32                `json:"-"`
+	// The instance of the execution system to operate against. A server may
+	// support multiple instances of the execution system (with their own workers,
+	// storage, caches, etc.). The server MAY require use of this field to select
+	// between them in an implementation-defined fashion, otherwise it can be
+	// omitted.
+	InstanceName string `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
+	// The URI(s) of the content to associate. If multiple URIs are specified, the
+	// pushed content will be available to fetch by specifying any of them.
+	Uris []string `protobuf:"bytes,2,rep,name=uris,proto3" json:"uris,omitempty"`
+	// Qualifiers sub-specifying the content that is being pushed - see comments
+	// on [Qualifier][build.bazel.remote.asset.v1.Qualifier].
+	// The same qualifiers apply to all URIs.
+	Qualifiers []*Qualifier `protobuf:"bytes,3,rep,name=qualifiers,proto3" json:"qualifiers,omitempty"`
+	// A time after which this content should stop being returned via
+	// [FetchDirectory][build.bazel.remote.asset.v1.Fetch.FetchDirectory].
+	// Servers *MAY* expire content early, e.g. due to storage pressure.
+	ExpireAt *timestamp.Timestamp `protobuf:"bytes,4,opt,name=expire_at,json=expireAt,proto3" json:"expire_at,omitempty"`
+	// Directory to associate
+	RootDirectoryDigest *v2.Digest `protobuf:"bytes,5,opt,name=root_directory_digest,json=rootDirectoryDigest,proto3" json:"root_directory_digest,omitempty"`
+	// Referenced blobs or directories that need to not expire before expiration
+	// of this association, in addition to `root_directory_digest` itself.
+	// These fields are hints - clients *MAY* omit them, and servers *SHOULD*
+	// respect them, at the risk of increased incidents of Fetch responses
+	// indirectly referencing unavailable blobs.
+	ReferencesBlobs       []*v2.Digest `protobuf:"bytes,6,rep,name=references_blobs,json=referencesBlobs,proto3" json:"references_blobs,omitempty"`
+	ReferencesDirectories []*v2.Digest `protobuf:"bytes,7,rep,name=references_directories,json=referencesDirectories,proto3" json:"references_directories,omitempty"`
+	XXX_NoUnkeyedLiteral  struct{}     `json:"-"`
+	XXX_unrecognized      []byte       `json:"-"`
+	XXX_sizecache         int32        `json:"-"`
 }
 
 func (m *PushDirectoryRequest) Reset()         { *m = PushDirectoryRequest{} }
@@ -565,6 +744,8 @@ func (m *PushDirectoryRequest) GetReferencesDirectories() []*v2.Digest {
 	return nil
 }
 
+// A response message for
+// [Push.PushDirectory][build.bazel.remote.asset.v1.Push.PushDirectory].
 type PushDirectoryResponse struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -680,6 +861,63 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type FetchClient interface {
+	// Resolve or fetch referenced assets, making them available to the caller and
+	// other consumers in the [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+	//
+	// Servers *MAY* fetch content that they do not already have cached, for any
+	// URLs they support.
+	//
+	// Servers *SHOULD* ensure that referenced files are present in the CAS at the
+	// time of the response, and (if supported) that they will remain available
+	// for a reasonable period of time. The lifetimes of the referenced blobs *SHOULD*
+	// be increased if necessary and applicable.
+	// In the event that a client receives a reference to content that is no
+	// longer present, it *MAY* re-issue the request with
+	// `oldest_content_accepted` set to a more recent timestamp than the original
+	// attempt, to induce a re-fetch from origin.
+	//
+	// Servers *MAY* cache fetched content and reuse it for subsequent requests,
+	// subject to `oldest_content_accepted`.
+	//
+	// Servers *MAY* support the complementary [Push][build.bazel.remote.asset.v1.Push]
+	// API and allow content to be directly inserted for use in future fetch
+	// responses.
+	//
+	// Servers *MUST* ensure Fetch'd content matches all the specified
+	// qualifiers except in the case of previously Push'd resources, for which
+	// the server *MAY* trust the pushing client to have set the qualifiers
+	// correctly, without validation.
+	//
+	// Servers not implementing the complementary [Push][build.bazel.remote.asset.v1.Push]
+	// API *MUST* reject requests containing qualifiers it does not support.
+	//
+	// Servers *MAY* transform assets as part of the fetch. For example a
+	// tarball fetched by [FetchDirectory][build.bazel.remote.asset.v1.Fetch.FetchDirectory]
+	// might be unpacked, or a Git repository
+	// fetched by [FetchBlob][build.bazel.remote.asset.v1.Fetch.FetchBlob]
+	// might be passed through `git-archive`.
+	//
+	// Errors handling the requested assets will be returned as gRPC Status errors
+	// here; errors outside the server's control will be returned inline in the
+	// `status` field of the response (see comment there for details).
+	// The possible RPC errors include:
+	// * `INVALID_ARGUMENT`: One or more arguments were invalid, such as a
+	//   qualifier that is not supported by the server.
+	// * `RESOURCE_EXHAUSTED`: There is insufficient quota of some resource to
+	//   perform the requested operation. The client may retry after a delay.
+	// * `UNAVAILABLE`: Due to a transient condition the operation could not be
+	//   completed. The client should retry.
+	// * `INTERNAL`: An internal error occurred while performing the operation.
+	//   The client should retry.
+	// * `DEADLINE_EXCEEDED`: The fetch could not be completed within the given
+	//   RPC deadline. The client should retry for at least as long as the value
+	//   provided in `timeout` field of the request.
+	//
+	// In the case of unsupported qualifiers, the server *SHOULD* additionally
+	// send a [BadRequest][google.rpc.BadRequest] error detail where, for each
+	// unsupported qualifier, there is a `FieldViolation` with a `field` of
+	// `qualifiers.name` and a `description` of `"{qualifier}" not supported`
+	// indicating the name of the unsupported qualifier.
 	FetchBlob(ctx context.Context, in *FetchBlobRequest, opts ...grpc.CallOption) (*FetchBlobResponse, error)
 	FetchDirectory(ctx context.Context, in *FetchDirectoryRequest, opts ...grpc.CallOption) (*FetchDirectoryResponse, error)
 }
@@ -712,6 +950,63 @@ func (c *fetchClient) FetchDirectory(ctx context.Context, in *FetchDirectoryRequ
 
 // FetchServer is the server API for Fetch service.
 type FetchServer interface {
+	// Resolve or fetch referenced assets, making them available to the caller and
+	// other consumers in the [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+	//
+	// Servers *MAY* fetch content that they do not already have cached, for any
+	// URLs they support.
+	//
+	// Servers *SHOULD* ensure that referenced files are present in the CAS at the
+	// time of the response, and (if supported) that they will remain available
+	// for a reasonable period of time. The lifetimes of the referenced blobs *SHOULD*
+	// be increased if necessary and applicable.
+	// In the event that a client receives a reference to content that is no
+	// longer present, it *MAY* re-issue the request with
+	// `oldest_content_accepted` set to a more recent timestamp than the original
+	// attempt, to induce a re-fetch from origin.
+	//
+	// Servers *MAY* cache fetched content and reuse it for subsequent requests,
+	// subject to `oldest_content_accepted`.
+	//
+	// Servers *MAY* support the complementary [Push][build.bazel.remote.asset.v1.Push]
+	// API and allow content to be directly inserted for use in future fetch
+	// responses.
+	//
+	// Servers *MUST* ensure Fetch'd content matches all the specified
+	// qualifiers except in the case of previously Push'd resources, for which
+	// the server *MAY* trust the pushing client to have set the qualifiers
+	// correctly, without validation.
+	//
+	// Servers not implementing the complementary [Push][build.bazel.remote.asset.v1.Push]
+	// API *MUST* reject requests containing qualifiers it does not support.
+	//
+	// Servers *MAY* transform assets as part of the fetch. For example a
+	// tarball fetched by [FetchDirectory][build.bazel.remote.asset.v1.Fetch.FetchDirectory]
+	// might be unpacked, or a Git repository
+	// fetched by [FetchBlob][build.bazel.remote.asset.v1.Fetch.FetchBlob]
+	// might be passed through `git-archive`.
+	//
+	// Errors handling the requested assets will be returned as gRPC Status errors
+	// here; errors outside the server's control will be returned inline in the
+	// `status` field of the response (see comment there for details).
+	// The possible RPC errors include:
+	// * `INVALID_ARGUMENT`: One or more arguments were invalid, such as a
+	//   qualifier that is not supported by the server.
+	// * `RESOURCE_EXHAUSTED`: There is insufficient quota of some resource to
+	//   perform the requested operation. The client may retry after a delay.
+	// * `UNAVAILABLE`: Due to a transient condition the operation could not be
+	//   completed. The client should retry.
+	// * `INTERNAL`: An internal error occurred while performing the operation.
+	//   The client should retry.
+	// * `DEADLINE_EXCEEDED`: The fetch could not be completed within the given
+	//   RPC deadline. The client should retry for at least as long as the value
+	//   provided in `timeout` field of the request.
+	//
+	// In the case of unsupported qualifiers, the server *SHOULD* additionally
+	// send a [BadRequest][google.rpc.BadRequest] error detail where, for each
+	// unsupported qualifier, there is a `FieldViolation` with a `field` of
+	// `qualifiers.name` and a `description` of `"{qualifier}" not supported`
+	// indicating the name of the unsupported qualifier.
 	FetchBlob(context.Context, *FetchBlobRequest) (*FetchBlobResponse, error)
 	FetchDirectory(context.Context, *FetchDirectoryRequest) (*FetchDirectoryResponse, error)
 }
@@ -788,6 +1083,40 @@ var _Fetch_serviceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type PushClient interface {
+	// These APIs associate the identifying information of a resource, as
+	// indicated by URI and optionally Qualifiers, with content available in the
+	// CAS. For example, associating a repository url and a commit id with a
+	// Directory Digest.
+	//
+	// Servers *SHOULD* only allow trusted clients to associate content, and *MAY*
+	// only allow certain URIs to be pushed.
+	//
+	// Clients *MUST* ensure associated content is available in CAS prior to
+	// pushing.
+	//
+	// Clients *MUST* ensure the Qualifiers listed correctly match the contents,
+	// and Servers *MAY* trust these values without validation.
+	// Fetch servers *MAY* require exact match of all qualifiers when returning
+	// content previously pushed, or allow fetching content with only a subset of
+	// the qualifiers specified on Push.
+	//
+	// Clients can specify expiration information that the server *SHOULD*
+	// respect. Subsequent requests can be used to alter the expiration time.
+	//
+	// A minimal compliant Fetch implementation may support only Push'd content
+	// and return `NOT_FOUND` for any resource that was not pushed first.
+	// Alternatively, a compliant implementation may choose to not support Push
+	// and only return resources that can be Fetch'd from origin.
+	//
+	// Errors will be returned as gRPC Status errors.
+	// The possible RPC errors include:
+	// * `INVALID_ARGUMENT`: One or more arguments to the RPC were invalid.
+	// * `RESOURCE_EXHAUSTED`: There is insufficient quota of some resource to
+	//   perform the requested operation. The client may retry after a delay.
+	// * `UNAVAILABLE`: Due to a transient condition the operation could not be
+	//   completed. The client should retry.
+	// * `INTERNAL`: An internal error occurred while performing the operation.
+	//   The client should retry.
 	PushBlob(ctx context.Context, in *PushBlobRequest, opts ...grpc.CallOption) (*PushBlobResponse, error)
 	PushDirectory(ctx context.Context, in *PushDirectoryRequest, opts ...grpc.CallOption) (*PushDirectoryResponse, error)
 }
@@ -820,6 +1149,40 @@ func (c *pushClient) PushDirectory(ctx context.Context, in *PushDirectoryRequest
 
 // PushServer is the server API for Push service.
 type PushServer interface {
+	// These APIs associate the identifying information of a resource, as
+	// indicated by URI and optionally Qualifiers, with content available in the
+	// CAS. For example, associating a repository url and a commit id with a
+	// Directory Digest.
+	//
+	// Servers *SHOULD* only allow trusted clients to associate content, and *MAY*
+	// only allow certain URIs to be pushed.
+	//
+	// Clients *MUST* ensure associated content is available in CAS prior to
+	// pushing.
+	//
+	// Clients *MUST* ensure the Qualifiers listed correctly match the contents,
+	// and Servers *MAY* trust these values without validation.
+	// Fetch servers *MAY* require exact match of all qualifiers when returning
+	// content previously pushed, or allow fetching content with only a subset of
+	// the qualifiers specified on Push.
+	//
+	// Clients can specify expiration information that the server *SHOULD*
+	// respect. Subsequent requests can be used to alter the expiration time.
+	//
+	// A minimal compliant Fetch implementation may support only Push'd content
+	// and return `NOT_FOUND` for any resource that was not pushed first.
+	// Alternatively, a compliant implementation may choose to not support Push
+	// and only return resources that can be Fetch'd from origin.
+	//
+	// Errors will be returned as gRPC Status errors.
+	// The possible RPC errors include:
+	// * `INVALID_ARGUMENT`: One or more arguments to the RPC were invalid.
+	// * `RESOURCE_EXHAUSTED`: There is insufficient quota of some resource to
+	//   perform the requested operation. The client may retry after a delay.
+	// * `UNAVAILABLE`: Due to a transient condition the operation could not be
+	//   completed. The client should retry.
+	// * `INTERNAL`: An internal error occurred while performing the operation.
+	//   The client should retry.
 	PushBlob(context.Context, *PushBlobRequest) (*PushBlobResponse, error)
 	PushDirectory(context.Context, *PushDirectoryRequest) (*PushDirectoryResponse, error)
 }
