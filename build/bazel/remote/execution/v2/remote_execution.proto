@@ -606,7 +606,7 @@ message Command {
   // Other files or directories that may be created during command execution
   // are discarded.
   //
-  // The paths are relative to the working directory of the action execution.
+  // The paths are relative to the input root of the action execution.
   // The paths are specified using a single forward slash (`/`) as a path
   // separator, even if the execution platform natively uses a different
   // separator. The path MUST NOT include a trailing slash, nor a leading slash,
@@ -651,6 +651,17 @@ message Command {
   // property is not recognized by the server, the server will return an
   // `INVALID_ARGUMENT`.
   repeated string output_node_properties = 8;
+
+  // True if the server should interpret output_paths as being relative to the
+  // input root. False if the server should interpret output_paths as being
+  // relative to the working directory. This is intended to provide a migration
+  // path from the old (working_directory) to the new (input root) semantics for
+  // output paths; eventually this field will be deprecated and ignored by the
+  // server.
+  //
+  // Note that this field does NOT affect the semantics of the output_files and
+  // output_directories fields.
+  bool input_root_relative_output_paths = 9;
 }
 
 // A `Platform` is a set of requirements, such as hardware, operating system, or
