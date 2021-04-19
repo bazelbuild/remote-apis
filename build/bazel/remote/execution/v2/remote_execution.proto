@@ -238,9 +238,6 @@ service ActionCache {
 //   the uploaded data once uncompressed, and MUST return an
 //   `INVALID_ARGUMENT` error in the case of mismatch.
 //
-// Note that when writing compressed blobs, the `WriteRequest.write_offset`
-// refers to the offset in the uncompressed form of the blob.
-//
 // Uploads of the same data MAY occur concurrently in any form, compressed or
 // uncompressed.
 //
