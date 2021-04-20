@@ -241,8 +241,8 @@ service ActionCache {
 // Note that when writing compressed blobs, the `WriteRequest.write_offset` in
 // the initial request refers to the offset in the uncompressed form of the
 // blob. In subsequent requests, `WriteRequest.write_offset` MUST be the sum of
-// previous `WriteRequest.write_offset` and the size of the chunk in the
-// previous request.
+// previous `WriteRequest.write_offset` and the size of the compressed chunk in
+// the previous request.
 //
 // Uploads of the same data MAY occur concurrently in any form, compressed or
 // uncompressed.
