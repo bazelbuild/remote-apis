@@ -243,6 +243,9 @@ service ActionCache {
 // blob. In subsequent requests, `WriteRequest.write_offset` MUST be the sum of
 // the previous `WriteRequest.write_offset` and the size of the compressed chunk
 // in the previous request.
+// Note that this mixes an uncompressed offset with a compressed byte length,
+// which is nonsensical, but it is done to fit the semantics of the existing
+// ByteStream protocol. This might be improved in the next version.
 //
 // Uploads of the same data MAY occur concurrently in any form, compressed or
 // uncompressed.
