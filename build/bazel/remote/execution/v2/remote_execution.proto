@@ -245,7 +245,7 @@ service ActionCache {
 // all the compressed data bundles in the previous requests.
 // Note that this mixes an uncompressed offset with a compressed byte length,
 // which is nonsensical, but it is done to fit the semantics of the existing
-// ByteStream protocol. This might be improved in the next version.
+// ByteStream protocol.
 //
 // Uploads of the same data MAY occur concurrently in any form, compressed or
 // uncompressed.
