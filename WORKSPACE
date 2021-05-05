@@ -2,6 +2,26 @@ workspace(name = "bazel_remote_apis")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# go
+http_archive(
+    name = "io_bazel_rules_go",
+    sha256 = "7904dbecbaffd068651916dce77ff3437679f9d20e1a7956bff43826e7645fcc",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.25.1/rules_go-v0.25.1.tar.gz",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.25.1/rules_go-v0.25.1.tar.gz",
+    ],
+)
+
+load(
+    "@io_bazel_rules_go//go:deps.bzl",
+    "go_register_toolchains",
+    "go_rules_dependencies",
+)
+
+go_rules_dependencies()
+
+go_register_toolchains(version = "1.15.6")
+
 http_archive(
     name = "bazel_skylib",
     sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
@@ -15,22 +35,24 @@ load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 
 bazel_skylib_workspace()
 
-# Pull in go rules, which we need in order to selectively pull in Go dependencies.
-http_archive(
-    name = "io_bazel_rules_go",
-    sha256 = "842ec0e6b4fbfdd3de6150b61af92901eeb73681fd4d185746644c338f51d4c0",
-    urls = [
-        "https://storage.googleapis.com/bazel-mirror/github.com/bazelbuild/rules_go/releases/download/v0.20.1/rules_go-v0.20.1.tar.gz",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.20.1/rules_go-v0.20.1.tar.gz",
-    ],
-)
-
 # Gazelle, which we need in order to selectively pull in Gazelle dependencies for Go.
 http_archive(
     name = "bazel_gazelle",
-    sha256 = "41bff2a0b32b02f20c227d234aa25ef3783998e5453f7eade929704dcff7cd4b",
-    urls = ["https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.19.0/bazel-gazelle-v0.19.0.tar.gz"],
+    sha256 = "222e49f034ca7a1d1231422cdb67066b885819885c356673cb1f72f748a3c9d4",
+    urls = ["https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.22.3/bazel-gazelle-v0.22.3.tar.gz"],
 )
+
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
+
+gazelle_dependencies()
+
+load("@io_bazel_rules_go//tests/integration/popular_repos:popular_repos.bzl", "popular_repos")
+
+popular_repos()
+
+load("@io_bazel_rules_go//tests:grpc_repos.bzl", "grpc_dependencies")
+
+grpc_dependencies()
 
 # Needed for protobuf.
 http_archive(
@@ -84,20 +106,19 @@ bind(
     actual = "@com_github_grpc_grpc//:grpc++",
 )
 
-load("//:repository_rules.bzl", "switched_rules_by_language")
-
-switched_rules_by_language(
-    name = "bazel_remote_apis_imports",
-    cc = True,
-    go = True,
-    java = True,
-)
-
 # Needed for the googleapis protos.
 http_archive(
     name = "googleapis",
-    build_file = "BUILD.googleapis",
-    sha256 = "7b6ea252f0b8fb5cd722f45feb83e115b689909bbb6a393a873b6cbad4ceae1d",
-    strip_prefix = "googleapis-143084a2624b6591ee1f9d23e7f5241856642f4d",
-    urls = ["https://github.com/googleapis/googleapis/archive/143084a2624b6591ee1f9d23e7f5241856642f4d.zip"],
+    sha256 = "825be3bf70632d273a10e41db1f458211446d129063c4f29cee854f9bcbf834b",
+    strip_prefix = "googleapis-61ab0348bd228c942898aee291d677f0afdb888c",
+    urls = ["https://github.com/googleapis/googleapis/archive/61ab0348bd228c942898aee291d677f0afdb888c.zip"],
+)
+
+load("@googleapis//:repository_rules.bzl", "switched_rules_by_language")
+
+switched_rules_by_language(
+    name = "com_google_googleapis_imports",
+    cc = True,
+    go = True,
+    java = True,
 )
