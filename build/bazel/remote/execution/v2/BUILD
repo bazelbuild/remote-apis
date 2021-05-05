@@ -47,7 +47,7 @@ go_proto_library(
     importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2",
     proto = ":remote_execution_proto",
     deps = [
-        "//build/bazel/semver:go_default_library",
+        "//build/bazel/semver:semver_go_proto",
         "@go_googleapis//google/api:annotations_go_proto",
         "@go_googleapis//google/longrunning:longrunning_go_proto",
         "@go_googleapis//google/rpc:status_go_proto",
