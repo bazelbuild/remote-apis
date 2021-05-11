@@ -10,7 +10,7 @@ def _maybe(repo_rule, name, **kwargs):
 def remote_apis_go_deps():
     """Load dependencies needed to depend on RE API for Go"""
     go_rules_dependencies()
-    go_register_toolchains()
+    go_register_toolchains(version = "1.16.4")
     gazelle_dependencies()
     _maybe(
         go_repository,
@@ -23,8 +23,8 @@ def remote_apis_go_deps():
         name = "org_golang_google_grpc",
         build_file_proto_mode = "disable",
         importpath = "google.golang.org/grpc",
-        sum = "h1:J0UbZOIrCAl+fpTOf8YLs4dJo8L/owV4LYVtAXQoPkw=",
-        version = "v1.22.0",
+        sum = "h1:uSZWeQJX5j11bIQ4AJoj+McDBo29cY1MCoC1wO3ts+c=",
+        version = "v1.37.0",
     )
     _maybe(
         go_repository,
