@@ -1,7 +1,7 @@
 """Load dependencies needed to depend on the RE API repo."""
 
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
-load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
+load("@io_bazel_rules_go//go:deps.bzl", "go_download_sdk", "go_register_toolchains", "go_rules_dependencies")
 
 def _maybe(repo_rule, name, **kwargs):
     if name not in native.existing_rules():
@@ -10,7 +10,8 @@ def _maybe(repo_rule, name, **kwargs):
 def remote_apis_go_deps():
     """Load dependencies needed to depend on RE API for Go"""
     go_rules_dependencies()
-    go_register_toolchains(version = "1.16.4")
+    go_download_sdk(name = "go_sdk", version = "1.16.4")
+    go_register_toolchains()
     gazelle_dependencies()
     _maybe(
         go_repository,
