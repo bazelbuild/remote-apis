@@ -1844,13 +1844,14 @@ message GetPotentialActionResultsResponse {
 // retrieved and used.
 //
 // Generating a directory hash: Create a list of the names of directory members
-// (files and directories) that pass the directory enumeration or
-// `ObservedAccessFileNames` filters. Lexicographically sort the names by code
+// files and directories) that pass the directory enumeration or
+// `ObservedAccessFileNames` filters. If the filesystem is case-insensitive,
+// convert the names to uppercase. Lexicographically sort the names by code
 // point or, equivalently, by the UTF-8 bytes. Join the sorted strings together
-// with the ',' character to form a comma-delimited list; note for a
-// multi-member list this means that there is no tail ',', e.g. for
-// a.h and b.h the list string is "a.h,b.h". Convert this string to uppercase.
-// Hash the UTF-8 string bytes.
+// with the ',' character to form a comma-delimited list. Note for a
+// multi-member list this means that there is no tail ',', e.g. for a.h and
+// b.h the list string is "a.h,b.h" (case-sensitive filesystem) or "A.H,B.H"
+// (case-insensitive filesystem). Hash the UTF-8 string bytes.
 //
 // Discussion of how to generate pathsets from action execution filesystem
 // observations can be found at
