@@ -2,6 +2,7 @@ package(default_visibility = ["//visibility:public"])
 
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@bazel_remote_apis_imports//:imports.bzl", "java_proto_library", "go_library", "go_proto_library", "cc_grpc_library")
+load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library", "py_grpc_library")
 
 licenses(["notice"])
 
@@ -34,4 +35,15 @@ go_library(
     name = "go_default_library",
     embed = [":semver_go_proto"],
     importpath = "github.com/bazelbuild/remote-apis/build/bazel/semver",
+)
+
+py_proto_library(
+    name = "semver_py_pb2",
+    deps = [":semver_proto"],
+)
+
+py_grpc_library(
+    name = "semver_py_pb2_grpc",
+    srcs = [":semver_proto"],
+    deps = [":semver_py_pb2"],
 )

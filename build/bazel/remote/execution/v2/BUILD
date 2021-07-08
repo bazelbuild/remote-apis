@@ -2,6 +2,8 @@ package(default_visibility = ["//visibility:public"])
 
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@bazel_remote_apis_imports//:imports.bzl", "java_proto_library", "go_library", "go_proto_library", "cc_grpc_library")
+load("@com_github_grpc_grpc//bazel:python_rules.bzl", "py_proto_library", "py_grpc_library")
+
 
 licenses(["notice"])
 
@@ -58,4 +60,15 @@ go_library(
     name = "go_default_library",
     embed = [":remote_execution_go_proto"],
     importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2",
+)
+
+py_proto_library(
+    name = "remote_execution_py_pb2",
+    deps = [":remote_execution_proto"],
+)
+
+py_grpc_library(
+    name = "remote_execution_py_pb2_grpc",
+    srcs = [":remote_execution_proto"],
+    deps = [":remote_execution_py_pb2"],
 )
