@@ -475,6 +475,14 @@ message Action {
   // timeout that is longer than the server's maximum timeout, the server MUST
   // reject the request.
   //
+  // The timeout is only intended to cover the "execution" of the specified
+  // action and not time in queue nor any overheads before or after execution
+  // such as marshalling inputs/outputs. The server SHOULD avoid including time
+  // spent the client doesn't have control over, and MAY extend or reduce the
+  // timeout to account for delays or speedups that occur during execution
+  // itself (e.g., lazily loading data from the Content Addressable Storage,
+  // live migration of virtual machines, emulation overhead).
+  //
   // The timeout is a part of the
   // [Action][build.bazel.remote.execution.v2.Action] message, and
   // therefore two `Actions` with different timeouts are different, even if they
@@ -941,6 +949,25 @@ message ExecutedActionMetadata {
 
   // When the worker completed executing the action command.
   google.protobuf.Timestamp execution_completed_timestamp = 8;
+
+  // New in v2.3: the amount of time the worker spent executing the action
+  // command, potentially computed using a worker-specific virtual clock.
+  //
+  // The virtual execution duration is only intended to cover the "execution" of
+  // the specified action and not time in queue nor any overheads before or
+  // after execution such as marshalling inputs/outputs. The server SHOULD avoid
+  // including time spent the client doesn't have control over, and MAY extend
+  // or reduce the execution duration to account for delays or speedups that
+  // occur during execution itself (e.g., lazily loading data from the Content
+  // Addressable Storage, live migration of virtual machines, emulation
+  // overhead).
+  //
+  // The method of timekeeping used to compute the virtual execution duration
+  // MUST be consistent with what is used to enforce the
+  // [Action][[build.bazel.remote.execution.v2.Action]'s `timeout`. There is no
+  // relationship between the virtual execution duration and the values of
+  // `execution_start_timestamp` and `execution_completed_timestamp`.
+  google.protobuf.Duration virtual_execution_duration = 12;
 
   // When the worker started uploading action outputs.
   google.protobuf.Timestamp output_upload_start_timestamp = 9;
