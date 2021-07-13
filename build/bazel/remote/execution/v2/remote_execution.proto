@@ -452,10 +452,10 @@ service Capabilities {
 // reproducible so that serving a result from cache is always desirable and
 // correct.
 message Action {
-  // The digest of the [Command][build.bazel.remote.execution.v2.Command]
+  // The digest and optionally content of the [Command][build.bazel.remote.execution.v2.Command]
   // to run, which MUST be present in the
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
-  Digest command_digest = 1;
+  Blob command = 1;
 
   // The digest of the root
   // [Directory][build.bazel.remote.execution.v2.Directory] for the input
@@ -464,7 +464,7 @@ message Action {
   // directory, as well as every subdirectory and content blob referred to, MUST
   // be in the
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
-  Digest input_root_digest = 2;
+  Blob input_root = 2;
 
   reserved 3 to 5; // Used for fields moved to [Command][build.bazel.remote.execution.v2.Command].
 
@@ -828,8 +828,8 @@ message FileNode {
   // The name of the file.
   string name = 1;
 
-  // The digest of the file's content.
-  Digest digest = 2;
+  // The file's Digest and optionally content.
+  Blob blob = 2;
 
   reserved 3; // Reserved to ensure wire-compatibility with `OutputFile`.
 
@@ -848,11 +848,11 @@ message DirectoryNode {
   // The name of the directory.
   string name = 1;
 
-  // The digest of the
+  // The digest and optionally content of the
   // [Directory][build.bazel.remote.execution.v2.Directory] object
   // represented. See [Digest][build.bazel.remote.execution.v2.Digest]
   // for information about how to take the digest of a proto message.
-  Digest digest = 2;
+  Blob blob = 2;
 }
 
 // A `SymlinkNode` represents a symbolic link.
@@ -914,6 +914,23 @@ message Digest {
 
   // The size of the blob, in bytes.
   int64 size_bytes = 2;
+}
+
+message Blob {
+  // The first two field types + numbers must match those in Digest.
+  // This is a hack to allow repurposing Digest fields, which we can
+  // replace with Blobs and old clients will ignore the newly added
+  // fields (which should be unused by old clients anyway).
+  //
+  // For V3, we might consider embedding a Digest inside Blob, but
+  // that would require deprecating more fields.
+  string hash = 1;
+  int64 size_bytes = 2; // This refers to the uncompressed size
+
+  reserved 3, 4; // Leave some room in case we want to extend Digest later(?)
+
+  bytes data = 5; // Possibly compressed data, if set
+  Compressor.Value compressor = 6; // Encoding used, if the data field is set
 }
 
 // ExecutedActionMetadata contains details about a completed execution.
@@ -1105,24 +1122,28 @@ message ActionResult {
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
   // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
   // would cause the response to exceed message size limits.
+  // DEPRECATED. Servers should prefer to return the data as part of `stdout`
+  // if `acceptable_compressors` was populated in the request.
   bytes stdout_raw = 5;
 
-  // The digest for a blob containing the standard output of the action, which
+  // The digest and optionally content for a blob containing the standard output of the action, which
   // can be retrieved from the
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
-  Digest stdout_digest = 6;
+  Blob stdout = 6;
 
   // The standard error buffer of the action. The server SHOULD NOT inline
   // stderr unless requested by the client in the
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
   // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
   // would cause the response to exceed message size limits.
+  // DEPRECATED. Servers should prefer to return the data as part of `stderr`
+  // if `acceptable_compressors` was populated in the request.
   bytes stderr_raw = 7;
 
-  // The digest for a blob containing the standard error of the action, which
+  // The digest and optionally content for a blob containing the standard error of the action, which
   // can be retrieved from the
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
-  Digest stderr_digest = 8;
+  Blob stderr = 8;
 
   // The details of the execution that originally produced this result.
   ExecutedActionMetadata execution_metadata = 9;
@@ -1138,8 +1159,8 @@ message OutputFile {
   // relative path, it MUST NOT begin with a leading forward slash.
   string path = 1;
 
-  // The digest of the file's content.
-  Digest digest = 2;
+  // The file's digest and optionally content.
+  Blob blob = 2;
 
   reserved 3; // Used for a removed field in an earlier version of the API.
 
@@ -1151,6 +1172,8 @@ message OutputFile {
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
   // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
   // would cause the response to exceed message size limits.
+  // DEPRECATED. Servers should prefer to populate `blob.data` if this is a response to
+  // a request with acceptable compressors specified.
   bytes contents = 5;
 
   // The supported node properties of the OutputFile, if requested by the Action.
@@ -1183,10 +1206,10 @@ message OutputDirectory {
 
   reserved 2; // Used for a removed field in an earlier version of the API.
 
-  // The digest of the encoded
+  // The digest and optionally content of the encoded
   // [Tree][build.bazel.remote.execution.v2.Tree] proto containing the
   // directory's contents.
-  Digest tree_digest = 3;
+  Blob tree_blob = 3;
 }
 
 // An `OutputSymlink` is similar to a
@@ -1268,9 +1291,9 @@ message ExecuteRequest {
 
   reserved 2, 4, 5; // Used for removed fields in an earlier version of the API.
 
-  // The digest of the [Action][build.bazel.remote.execution.v2.Action] to
+  // The digest and optionally content of the [Action][build.bazel.remote.execution.v2.Action] to
   // execute.
-  Digest action_digest = 6;
+  Blob action_blob = 6;
 
   // An optional policy for execution of the action.
   // The server will have a default policy if this is not provided.
@@ -1280,12 +1303,17 @@ message ExecuteRequest {
   // The server will have a default policy if this is not provided.
   // This may be applied to both the ActionResult and the associated blobs.
   ResultsCachePolicy results_cache_policy = 8;
+
+  // A list of acceptable encodings to used for inlined data.  Must be
+  // `IDENTITY` (or unspecified), or one or more of the compressors
+  // supported by the server.
+  Compressor.Value compressor = 9;
 }
 
 // A `LogFile` is a log stored in the CAS.
 message LogFile {
-  // The digest of the log contents.
-  Digest digest = 1;
+  // The digest and optionally contents of the log.
+  Blob blob = 1;
 
   // This is a hint as to the purpose of the log, and is set to true if the log
   // is human-readable text that can be usefully displayed to a user, and false
@@ -1395,9 +1423,9 @@ message GetActionResultRequest {
   // omitted.
   string instance_name = 1;
 
-  // The digest of the [Action][build.bazel.remote.execution.v2.Action]
+  // The digest and optionally content of the [Action][build.bazel.remote.execution.v2.Action]
   // whose result is requested.
-  Digest action_digest = 2;
+  Blob action_digest = 2;
 
   // A hint to the server to request inlining stdout in the
   // [ActionResult][build.bazel.remote.execution.v2.ActionResult] message.
@@ -1412,6 +1440,11 @@ message GetActionResultRequest {
   // `output_files` (DEPRECATED since v2.1) in the
   // [Command][build.bazel.remote.execution.v2.Command] message.
   repeated string inline_output_files = 5;
+
+  // A list of acceptable encodings to used for inlined data.  Must be
+  // `IDENTITY` (or unspecified), or one or more of the compressors
+  // supported by the server.
+  repeated Compressor.Value acceptable_compressors = 6;
 }
 
 // A request message for
@@ -1424,9 +1457,9 @@ message UpdateActionResultRequest {
   // omitted.
   string instance_name = 1;
 
-  // The digest of the [Action][build.bazel.remote.execution.v2.Action]
+  // The digest and optionally content of the [Action][build.bazel.remote.execution.v2.Action]
   // whose result is being uploaded.
-  Digest action_digest = 2;
+  Blob action = 2;
 
   // The [ActionResult][build.bazel.remote.execution.v2.ActionResult]
   // to store in the cache.
@@ -1464,10 +1497,12 @@ message FindMissingBlobsResponse {
 message BatchUpdateBlobsRequest {
   // A request corresponding to a single blob that the client wants to upload.
   message Request {
-    // The digest of the blob. This MUST be the digest of `data`.
-    Digest digest = 1;
+    // The blob's digest and optionally content.
+    Blob blob = 1;
 
     // The raw binary data.
+    // DEPRECATED. Clients should prefer to populate `blob.data` if the
+    // server supports inline compression.
     bytes data = 2;
   }
 
@@ -1510,6 +1545,11 @@ message BatchReadBlobsRequest {
 
   // The individual blob digests.
   repeated Digest digests = 2;
+
+  // A list of acceptable encodings to used for inlined data.  Must be
+  // `IDENTITY` (or unspecified), or one or more of the compressors
+  // supported by the server.
+  repeated Compressor.Value acceptable_compressors = 3;
 }
 
 // A response message for
@@ -1517,10 +1557,12 @@ message BatchReadBlobsRequest {
 message BatchReadBlobsResponse {
   // A response corresponding to a single blob that the client tried to download.
   message Response {
-    // The digest to which this response corresponds.
-    Digest digest = 1;
+    // The Blob to which this response corresponds.
+    Blob blob = 1;
 
     // The raw binary data.
+    // DEPRECATED. Servers should prefer to return the data as part of the blob
+    // message if `BatchReadBlobsRequest.acceptable_compressors` was populated.
     bytes data = 2;
 
     // The result of attempting to download that blob.
@@ -1724,6 +1766,11 @@ message CacheCapabilities {
   // Note that this does not imply which if any compressors are supported by
   // the server at the gRPC level.
   repeated Compressor.Value supported_compressor = 6;
+
+  // Whether compression of inlined data is also supported (if so, the
+  // server must support each of the compressors specified in the
+  // `supported_compressor` field).
+  bool inlined_compressed_blobs = 7;
 }
 
 // Capabilities of the remote execution system.
