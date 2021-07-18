@@ -1700,7 +1700,7 @@ message Compressor {
 message CacheCapabilities {
   // All the digest functions supported by the remote cache.
   // Remote cache may support multiple digest functions simultaneously.
-  repeated DigestFunction.Value digest_function = 1;
+  repeated DigestFunction.Value digest_functions = 1;
 
   // Capabilities for updating the action cache.
   ActionCacheUpdateCapabilities action_cache_update_capabilities = 2;
@@ -1723,7 +1723,7 @@ message CacheCapabilities {
   //
   // Note that this does not imply which if any compressors are supported by
   // the server at the gRPC level.
-  repeated Compressor.Value supported_compressor = 6;
+  repeated Compressor.Value supported_compressors = 6;
 }
 
 // Capabilities of the remote execution system.
