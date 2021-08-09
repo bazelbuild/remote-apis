@@ -457,14 +457,28 @@ message Action {
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
   Digest command_digest = 1;
 
-  // The digest of the root
-  // [Directory][build.bazel.remote.execution.v2.Directory] for the input
-  // files. The files in the directory tree are available in the correct
-  // location on the build machine before the command is executed. The root
-  // directory, as well as every subdirectory and content blob referred to, MUST
-  // be in the
-  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
-  Digest input_root_digest = 2;
+  one_of input_root {
+    // The digest of the root
+    // [Directory][build.bazel.remote.execution.v2.Directory] for the input
+    // files. The files in the directory tree are available in the correct
+    // location on the build machine before the command is executed. The root
+    // directory, as well as every subdirectory and content blob referred to, MUST
+    // be in the
+    // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+    Digest input_root_digest = 2;
+
+    // The digest of the root
+    // [RelaxedFileTree][build.bazel.remote.execution.v2.RelaxedFileTree] for the input
+    // files. The files in the directory tree are available in the correct
+    // location on the build machine before the command is executed. The root
+    // directory, as well as every subdirectory and content blob referred to, MUST
+    // be in the
+    // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+    //
+    // Support for this field can be checked using the
+    // [Capabilities][build.bazel.remote.execution.v2.Capabilities] API.
+    Digest relaxed_input_root_digest = 11;
+  }
 
   reserved 3 to 5; // Used for fields moved to [Command][build.bazel.remote.execution.v2.Command].
 
@@ -876,6 +890,166 @@ message SymlinkNode {
   NodeProperties node_properties = 4;
 }
 
+// A `RelaxedFileTree` represents a node in a file tree, containing zero or
+// more sub
+// [RelaxedFileTreeNodes][build.bazel.remote.execution.v2.RelaxedFileTree] and
+// zero or more children
+// [RelaxedFileNodes][build.bazel.remote.execution.v2.RelaxedFileNode],
+// [RelaxedDirectoryNodes][build.bazel.remote.execution.v2.RelaxedDirectoryNode]
+// and [RelaxedSymlinkNodes][build.bazel.remote.execution.v2.RelaxedSymlinkNode].
+// Each `Node` contains either its absolute or relative path, either the digest
+// of its content (either a file blob or a `RelaxedFileTree` proto) or a
+// symlink target, as well as possibly some metadata about the file or
+// directory.
+//
+// The paths MUST use `/` as path component separator, even if the environment
+// where the Action is executed use other separators. If the path starts with
+// `/` it is considered to be refering to the root of the file tree, otherwise
+// the path is relative to the parent directory. The path MUST NOT contain any
+// `.` or `..` components. An empty string refers to the same directory.
+//
+// The client SHOULD create the `RelaxedFileTree` tree in a reproducible
+// manner or there will be no cache hits. It can be constructed using a Merkle
+// tree or replicate any other internal structure of the client.
+//
+// In order to ensure consistency, the following restrictions MUST be obeyed
+// when constructing a `RelaxedFileTree`:
+//
+// * A `RelaxedFileTree` MUST NOT refer to itself, neither directly nor
+//   indirectly. Self references can create infinite file trees or simply
+//   complicate server implementations.
+// * If the same path is referred to multiple times, the digest and all
+//   metadata MUST be equal.
+//   Note that while the API itself is case-sensitive, the environment where
+//   the Action is executed may or may not be case-sensitive. That is, it is
+//   legal to call the API with a Directory that has both "Foo" and "foo" as
+//   children, but the Action may be rejected by the remote system upon
+//   execution.
+//
+// As an example, the following could be used for a file named `bar` and a
+// directory named `foo` with an executable file named `baz` (hashes shortened
+// for readability):
+//
+// ```json
+// // (RelaxedFileTree proto)
+// {
+//   files: [
+//     {
+//       name: "foo/baz",
+//       digest: {
+//         hash: "4a73bc9d03...",
+//         size: 65534
+//       },
+//       node_properties: [
+//         {
+//           "name": "MTime",
+//           "value": "2017-01-15T01:30:15.01Z"
+//         }
+//       ]
+//     }
+//   ],
+//   directories: [
+//     {
+//       name: "foo",
+//       digest: {
+//         hash: "4cf2eda940...",
+//         size: 43
+//       }
+//     }
+//   ]
+// }
+//
+// // (RelaxedFileTree proto with hash "4cf2eda940..." and size 43)
+// {
+//   files: [
+//     {
+//       name: "/bar",
+//       digest: {
+//         hash: "b2c941073e...",
+//         size: 1294,
+//       },
+//       is_executable: true
+//     }
+//   ]
+// }
+// ```
+message RelaxedFileTree {
+  // The absolute path that all relative paths of the children are based on.
+  string path = 1;
+
+  // Additional nodes in the file tree.
+  repeated RelaxedFileTreeNode nodes = 2;
+
+  // Some files in the file tree.
+  repeated RelaxedFileNode files = 3;
+
+  // Some directories in the file tree.
+  repeated RelaxedDirectoryNode directories = 4;
+
+  // Some symlinks in the file tree.
+  repeated RelaxedSymlinkNode symlinks = 5;
+}
+
+// A `RelaxedFileTreeNode` represents a sub node of a
+// [RelaxedFileTree][build.bazel.remote.execution.v2.RelaxedFileTree] which
+// is itself a `RelaxedFileTree`.
+message RelaxedFileTreeNode {
+  // The digest of the
+  // [RelaxedFileTree][build.bazel.remote.execution.v2.RelaxedFileTree]
+  // object represented. See [Digest][build.bazel.remote.execution.v2.Digest]
+  // for information about how to take the digest of a proto message.
+  Digest digest = 2;
+}
+
+// A `FileNode` represents a single file and associated metadata.
+message RelaxedFileNode {
+  // The absolute or relative path of the file.
+  string path = 1;
+
+  // The digest of the file's content.
+  Digest digest = 2;
+
+  reserved 3; // Reserved to ensure wire-compatibility with `OutputFile`.
+
+  // True if file is executable, false otherwise.
+  bool is_executable = 4;
+
+  // The node properties of the RelaxedFileNode.
+  reserved 5;
+  NodeProperties node_properties = 6;
+}
+
+// A `RelaxedDirectoryNode` represents a directory with associated metadata.
+message RelaxedDirectoryNode {
+  // The absolute or relative path of the file.
+  string path = 1;
+
+  // The node properties of the RelaxedDirectoryNode.
+  reserved 5;
+  NodeProperties node_properties = 6;
+}
+
+// A `RelaxedSymlinkNode` represents a symbolic link.
+message RelaxedSymlinkNode {
+  // The absolute or relative path of the symlink.
+  string path = 1;
+
+  // The target path of the symlink. The path separator is a forward slash `/`.
+  // The target path can be relative to the parent directory of the symlink or
+  // it can be an absolute path starting with `/`. Support for absolute paths
+  // can be checked using the [Capabilities][build.bazel.remote.execution.v2.Capabilities]
+  // API. `..` components are allowed anywhere in the target path as logical
+  // canonicalization may lead to different behavior in the presence of
+  // directory symlinks (e.g. `foo/../bar` may not be the same as `bar`).
+  // To reduce potential cache misses, canonicalization is still recommended
+  // where this is possible without impacting correctness.
+  string target = 2;
+
+  // The node properties of the RelaxedSymlinkNode.
+  reserved 3;
+  NodeProperties node_properties = 4;
+}
+
 // A content digest. A digest for a given blob consists of the size of the blob
 // and its hash. The hash algorithm to use is defined by the server.
 //
@@ -1170,6 +1344,27 @@ message Tree {
   // the client must take the digests of each of the child directories and then
   // build up a tree starting from the `root`.
   repeated Directory children = 2;
+}
+
+// A `RelaxedFileTreeNode` represents a child of a
+// [Directory][build.bazel.remote.execution.v2.Directory] which is itself
+// a `Directory` and its associated metadata. This child can be located at any
+// location in the file tree, not necessarily beneath the parent directory.
+//
+// Paths may end up duplicated, in which case the content of multiple
+// `Directory`s should be merged. There MUST not be conflicting digests or
+// node properties for paths within the resulting tree.
+message RelaxedDirectoryNode {
+  // The path of the directory. It contains zero or more components separated
+  // with `/`. The path is relative to the root If it starts with `/`,
+  // otherwise it is relative to the parent directory.
+  string path = 1;
+
+  // The digest of the
+  // [Directory][build.bazel.remote.execution.v2.Directory] object
+  // represented. See [Digest][build.bazel.remote.execution.v2.Digest]
+  // for information about how to take the digest of a proto message.
+  Digest digest = 2;
 }
 
 // An `OutputDirectory` is the output in an `ActionResult` corresponding to a
@@ -1724,6 +1919,10 @@ message CacheCapabilities {
   // Note that this does not imply which if any compressors are supported by
   // the server at the gRPC level.
   repeated Compressor.Value supported_compressors = 6;
+
+  // Whether `relaxed_input_root_digest` in the
+  // [Action][build.bazel.remote.execution.v2.Action] message is supported.
+  bool supports_relaxed_input_root = 7;
 }
 
 // Capabilities of the remote execution system.
