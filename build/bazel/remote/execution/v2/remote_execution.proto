@@ -1132,6 +1132,7 @@ message ActionResult {
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
   // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
   // would cause the response to exceed message size limits.
+  // Clients SHOULD NOT populate this field when uploading to the cache.
   bytes stdout_raw = 5;
 
   // The digest for a blob containing the standard output of the action, which
@@ -1144,6 +1145,7 @@ message ActionResult {
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
   // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
   // would cause the response to exceed message size limits.
+  // Clients SHOULD NOT populate this field when uploading to the cache.
   bytes stderr_raw = 7;
 
   // The digest for a blob containing the standard error of the action, which
@@ -1178,6 +1180,7 @@ message OutputFile {
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
   // message. The server MAY omit inlining, even if requested, and MUST do so if inlining
   // would cause the response to exceed message size limits.
+  // Clients SHOULD NOT populate this field when uploading to the cache.
   bytes contents = 5;
 
   // The supported node properties of the OutputFile, if requested by the Action.

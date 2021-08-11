@@ -1635,6 +1635,7 @@ type ActionResult struct {
 	// [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
 	// message. The server MAY omit inlining, even if requested, and MUST do so if inlining
 	// would cause the response to exceed message size limits.
+	// Clients SHOULD NOT populate this field when uploading to the cache.
 	StdoutRaw []byte `protobuf:"bytes,5,opt,name=stdout_raw,json=stdoutRaw,proto3" json:"stdout_raw,omitempty"`
 	// The digest for a blob containing the standard output of the action, which
 	// can be retrieved from the
@@ -1645,6 +1646,7 @@ type ActionResult struct {
 	// [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
 	// message. The server MAY omit inlining, even if requested, and MUST do so if inlining
 	// would cause the response to exceed message size limits.
+	// Clients SHOULD NOT populate this field when uploading to the cache.
 	StderrRaw []byte `protobuf:"bytes,7,opt,name=stderr_raw,json=stderrRaw,proto3" json:"stderr_raw,omitempty"`
 	// The digest for a blob containing the standard error of the action, which
 	// can be retrieved from the
@@ -1785,6 +1787,7 @@ type OutputFile struct {
 	// [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
 	// message. The server MAY omit inlining, even if requested, and MUST do so if inlining
 	// would cause the response to exceed message size limits.
+	// Clients SHOULD NOT populate this field when uploading to the cache.
 	Contents       []byte          `protobuf:"bytes,5,opt,name=contents,proto3" json:"contents,omitempty"`
 	NodeProperties *NodeProperties `protobuf:"bytes,7,opt,name=node_properties,json=nodeProperties,proto3" json:"node_properties,omitempty"`
 }
