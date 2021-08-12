@@ -1338,7 +1338,7 @@ message ExecuteResponse {
 // Even though these stages are numbered according to the order in which
 // they generally occur, there is no requirement that the remote
 // execution system reports events along this order. For example, an
-// operation MAY to transition from the EXECUTING stage back to QUEUED
+// operation MAY transition from the EXECUTING stage back to QUEUED
 // in case the hardware on which the operation executes fails.
 //
 // If and only if the remote execution system reports that an operation
