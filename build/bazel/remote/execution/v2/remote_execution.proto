@@ -613,10 +613,10 @@ message Command {
   // The type of the output (file or directory) is not specified, and will be
   // determined by the server after action execution. If the resulting path is
   // a file, it will be returned in an
-  // [OutputFile][build.bazel.remote.execution.v2.OutputFile]) typed field.
+  // [OutputFile][build.bazel.remote.execution.v2.OutputFile] typed field.
   // If the path is a directory, the entire directory structure will be returned
   // as a [Tree][build.bazel.remote.execution.v2.Tree] message digest, see
-  // [OutputDirectory][build.bazel.remote.execution.v2.OutputDirectory])
+  // [OutputDirectory][build.bazel.remote.execution.v2.OutputDirectory]
   // Other files or directories that may be created during command execution
   // are discarded.
   //
@@ -1510,6 +1510,12 @@ message BatchUpdateBlobsRequest {
 
     // The raw binary data.
     bytes data = 2;
+
+    // The format of `data`. Must be `IDENTITY`/unspecified, or one of the
+    // compressors advertised by the 
+    // [CacheCapabilities.supported_batch_compressors][build.bazel.remote.execution.v2.CacheCapabilities.supported_batch_compressors]
+    // field.
+    Compressor.Value compressor = 3;
   }
 
   // The instance of the execution system to operate against. A server may
@@ -1551,6 +1557,10 @@ message BatchReadBlobsRequest {
 
   // The individual blob digests.
   repeated Digest digests = 2;
+
+  // A list of acceptable encodings for the returned inlined data, in no
+  // particular order. `IDENTITY` is always allowed even if not specified here.
+  repeated Compressor.Value acceptable_compressors = 3;
 }
 
 // A response message for
@@ -1563,6 +1573,10 @@ message BatchReadBlobsResponse {
 
     // The raw binary data.
     bytes data = 2;
+
+    // The format the data is encoded in. MUST be `IDENTITY`/unspecified,
+    // or one of the acceptable compressors specified in the `BatchReadBlobsRequest`.
+    Compressor.Value compressor = 4;
 
     // The result of attempting to download that blob.
     google.rpc.Status status = 3;
@@ -1765,6 +1779,11 @@ message CacheCapabilities {
   // Note that this does not imply which if any compressors are supported by
   // the server at the gRPC level.
   repeated Compressor.Value supported_compressors = 6;
+
+  // Compressors supported for inlined data in
+  // [BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs]
+  // requests.
+  repeated Compressor.Value supported_batch_update_compressors = 7;
 }
 
 // Capabilities of the remote execution system.
