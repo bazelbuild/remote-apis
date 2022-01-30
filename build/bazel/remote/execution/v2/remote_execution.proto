@@ -255,10 +255,11 @@ service ActionCache {
 //
 // When attempting an upload, if another client has already completed the upload
 // (which may occur in the middle of a single upload if another client uploads
-// the same blob concurrently), the request will terminate immediately with
-// a response whose `committed_size` is the full size of the uploaded file
-// (regardless of how much data was transmitted by the client). If the client
-// completes the upload but the
+// the same blob concurrently), the request will terminate immediately without
+// error, and with a response whose `committed_size` is the value `-1` if this
+// is a compressed upload, or with the full size of the uploaded file if this is
+// an uncompressed upload (regardless of how much data was transmitted by the
+// client). If the client completes the upload but the
 // [Digest][build.bazel.remote.execution.v2.Digest] does not match, an
 // `INVALID_ARGUMENT` error will be returned. In either case, the client should
 // not attempt to retry the upload.
