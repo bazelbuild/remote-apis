@@ -926,6 +926,11 @@ message Digest {
 
 // ExecutedActionMetadata contains details about a completed execution.
 message ExecutedActionMetadata {
+  // A unique identifier for the execution of an action. This makes it possible
+  // to distinguish different action executions from each other, e.g. to
+  // identify if the action cache has been updated with new results.
+  string execution_uuid = 13;
+
   // The name of the worker which ran the execution.
   string worker = 1;
 
@@ -1406,6 +1411,11 @@ message ExecuteOperationMetadata {
   // The digest of the [Action][build.bazel.remote.execution.v2.Action]
   // being executed.
   Digest action_digest = 2;
+
+  // A unique identifier for an ongoing execution of the action, which will
+  // also be returned as `ActionResult.execution_metadata.execution_uuid`.
+  // If the execution is restarted, the server SHOULD provide a new identifier.
+  string execution_uuid = 5;
 
   // If set, the client can use this resource name with
   // [ByteStream.Read][google.bytestream.ByteStream.Read] to stream the
