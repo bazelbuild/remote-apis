@@ -465,6 +465,16 @@ message Action {
   // directory, as well as every subdirectory and content blob referred to, MUST
   // be in the
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+  //
+  // Implementations SHOULD make it appear as if all files in the input root are
+  // actually present in the specified locations in the input filesystem, and are
+  // unique copies of the input blobs (unless otherwise specified in the Directory
+  // tree). However, for optimization reasons implementations MAY break this
+  // illusion in action-visible ways, e.g. by hardlinking input files to each
+  // other or to files outside the input root. This will result in certain actions
+  // not being runnable on those implementations, though for portability actions
+  // SHOULD avoid being strongly dependent on inode uniqueness, and be tolerant of
+  // different ways to back a given filesystem path.
   Digest input_root_digest = 2;
 
   reserved 3 to 5; // Used for fields moved to [Command][build.bazel.remote.execution.v2.Command].
