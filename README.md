@@ -1,12 +1,38 @@
-# Remote Execution API
+# remote-apis
 
-The Remote Execution API is an API that, at its most general, allows clients to
-request execution of binaries on a remote system. It is intended primarily for
-use by build systems, such as [Bazel](bazel.build), to distribute build and test
-actions through a worker pool, and also provide a central cache of build
-results. This allows builds to execute faster, both by reusing results already
-built by other clients and by allowing many actions to be executed in parallel,
-in excess of the resource limits of the machine running the build.
+This repository contains a collection of APIs which work together to enable
+large scale distributed execution and caching on source code and other inputs.
+It describes how to upload inputs, request the execution, monitor for results,
+and cache those results. It's overall aim is to enable large scale parallel executions
+that wouldn't be feasible on a single system, while minimizing the amount of uploads
+and executions needed by storing data in a content-addressable format and caching results.
+
+### [Remote Execution API](build/bazel/remote/execution/v2/remote_execution.proto)
+
+The Remote Execution API is an API that, at its most general, allows clients to request
+execution of binaries on a remote system. It is intended primarily for use by build systems,
+such as [Bazel](bazel.build), to distribute build and test actions through a worker pool,
+and also provide a central cache of build results. This allows builds to execute
+faster, both by reusing results already built by other clients and by allowing many
+actions to be executed in parallel, in excess of the resource limits of the machine
+running the build.
+
+### [Remote Asset API](build/bazel/remote/asset/v1/remote_asset.proto)
+
+The Remote Asset API is an API to associate Qualifiers and URIs to Digests stored in
+Content Addressable Storage. It is primary intended to allow clients to use semantically
+relevant identifiers, such as a git repository or tarball location, to get the corresponding
+Digest. This mapping may be pushed by a client directly, or dynamically resolved and added
+to CAS by the asset server when fetched by a client.
+
+### [Remote Logstream API](build/bazel/remote/logstream/v1/remote_logstream.proto)
+
+The Remote Logstream API is an API supporting ordered reads and writes of `LogStream`
+resources. It is intented primarily for streaming the stdout and stderr of ongoing Action
+executions, enabling clients to view them while the Action is executing instead of waiting
+for it's completion.
+
+## API users
 
 There are a number of clients and services using these APIs, they are listed
 below.
