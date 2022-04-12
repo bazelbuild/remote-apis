@@ -470,9 +470,21 @@ type Command struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The arguments to the command. The first argument must be the path to the
-	// executable, which must be either a relative path, in which case it is
-	// evaluated with respect to the input root, or an absolute path.
+	// The arguments to the command.
+	//
+	// The first argument specifies the command to run, which may be either an
+	// absolute path, a path relative to the working directory, or an unqualified
+	// path (without path separators) which will be resolved using the operating
+	// system's equivalent of the PATH environment variable. Path separators
+	// native to the operating system running on the worker SHOULD be used. If the
+	// `environment_variables` list contains an entry for the PATH environment
+	// variable, it SHOULD be respected. If not, the resolution process is
+	// implementation-defined.
+	//
+	// Changed in v2.3. v2.2 and older require that no PATH lookups are performed,
+	// and that relative paths are resolved relative to the input root. This
+	// behavior can, however, not be relied upon, as most implementations already
+	// followed the rules described above.
 	Arguments []string `protobuf:"bytes,1,rep,name=arguments,proto3" json:"arguments,omitempty"`
 	// The environment variables to set when running the program. The worker may
 	// provide its own default environment variables; these defaults can be
