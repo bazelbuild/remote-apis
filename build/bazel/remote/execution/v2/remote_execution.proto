@@ -860,6 +860,14 @@ message FileNode {
   // The node properties of the FileNode.
   reserved 5;
   NodeProperties node_properties = 6;
+
+  // Salt to force that files in the input root have distinct inode
+  // numbers, even if all properties match.
+  //
+  // Two files inside the input root SHOULD have the same inode number
+  // iff they have the same digest, is_executable flag, node_properties,
+  // and hardlink_salt.
+  bytes hardlink_salt = 7;
 }
 
 // A `DirectoryNode` represents a child of a
