@@ -842,6 +842,58 @@ message NodeProperties {
 
   // The UNIX file mode, e.g., 0755.
   google.protobuf.UInt32Value unix_mode = 3;
+
+  // Constrains server-side unification of identical filesystem nodes.
+  NodeUnificationConstraint.Value unification_constraint = 4;
+}
+
+// A `NodeUnificationConstraint` specifies whether servers are allowed to 
+// de-duplicate identical filesystem nodes when creating the input root.
+//
+// For performance reasons, it is useful for servers to perform de-duplication
+// on identical subsets of the input tree. For example, files with identical
+// content and properties might be hardlinked to reduce I/O, or separate
+// actions might have their inputs symlinked from a shared read-only blob cache.
+//
+// Such de-duplication can prevent correct execution of actions that inspect
+// file metadata, for example:
+//
+// * Tools that use `realpath` or `readlink()` to locate runtime data might
+//   fail if their executable is a symlink into a content-addressed cache.
+//
+// * Tools that identify files by inode rather than path might be confused
+//   if multiple input files have been mapped to a single inode.
+//
+// * Mutating writeable input files may cause unexpected effects on other
+//   parts of the input root.
+//
+// Node unification constraints allow the client to selectively restrict or
+// disable this optimization.
+message NodeUnificationConstraint {
+  enum Value {
+    // The server MAY use redirects, such as symlinks, to substitute for
+    // this node.
+    //
+    // For [FileNodes][build.bazel.remote.execution.v2.FileNode] and
+    // [DirectoryNodes][build.bazel.remote.execution.v2.DirectoryNode], the
+    // effective target MUST have the same type, content, and properties as
+    // the substituted node.
+    //
+    // For [SymlinkNodes][build.bazel.remote.execution.v2.SymlinkNode], the
+    // effective target MUST have the same type, content, and properties as
+    // the target of the substituted symlink.
+    ALLOW_REDIRECTS = 0;
+
+    // The server MAY use a filesystem alias, such as a hard link or bind
+    // mount, to substitute for this node.
+    //
+    // For nodes to be de-duplicated with aliases, they MUST have the same
+    // type, content, and properties.
+    ALLOW_ALIASES = 1;
+
+    // The server MUST NOT unify this node with any other node.
+    FORBIDDEN = 2;
+  }
 }
 
 // A `FileNode` represents a single file and associated metadata.
