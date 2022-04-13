@@ -87,13 +87,6 @@ bind(
     actual = "@com_github_grpc_grpc//:grpc++",
 )
 
-load("//:repository_rules.bzl", "switched_rules_by_language")
-
-switched_rules_by_language(
-    name = "bazel_remote_apis_imports",
-    cc = True,
-)
-
 load("//:remote_apis_deps.bzl", "remote_apis_go_deps")
 
 remote_apis_go_deps()
