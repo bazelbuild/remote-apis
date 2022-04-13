@@ -1,7 +1,7 @@
 package(default_visibility = ["//visibility:public"])
 
 load("@rules_proto//proto:defs.bzl", "proto_library")
-load("@bazel_remote_apis_imports//:imports.bzl", "java_proto_library", "go_library", "go_proto_library", "cc_grpc_library")
+load("@bazel_remote_apis_imports//:imports.bzl", "cc_grpc_library")
 
 licenses(["notice"])
 
@@ -21,9 +21,9 @@ proto_library(
     ],
 )
 
-java_proto_library(
+alias(
     name = "remote_execution_java_proto",
-    deps = [":remote_execution_proto"],
+    actual = "//build/bazel/remote/execution/v2/java:remote_execution_java_proto",
 )
 
 cc_grpc_library(
@@ -41,21 +41,12 @@ cc_grpc_library(
     ],
 )
 
-go_proto_library(
+alias(
     name = "remote_execution_go_proto",
-    compilers = ["@io_bazel_rules_go//proto:go_grpc"],
-    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2",
-    proto = ":remote_execution_proto",
-    deps = [
-        "//build/bazel/semver:go_default_library",
-        "@go_googleapis//google/api:annotations_go_proto",
-        "@go_googleapis//google/longrunning:longrunning_go_proto",
-        "@go_googleapis//google/rpc:status_go_proto",
-    ],
+    actual = "//build/bazel/remote/execution/v2/go:remote_execution_go_proto",
 )
 
-go_library(
+alias(
     name = "go_default_library",
-    embed = [":remote_execution_go_proto"],
-    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2",
+    actual = "//build/bazel/remote/execution/v2/go:go_default_library",
 )
