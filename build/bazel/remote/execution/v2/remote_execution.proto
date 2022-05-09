@@ -1212,6 +1212,9 @@ message Tree {
   // recursively, all its children. In order to reconstruct the directory tree,
   // the client must take the digests of each of the child directories and then
   // build up a tree starting from the `root`.
+  // Servers SHOULD ensure that these are ordered consistently such that two
+  // actions producing equivalent output directories on the same server
+  // implementation also produce Tree messages with matching digests.
   repeated Directory children = 2;
 }
 
