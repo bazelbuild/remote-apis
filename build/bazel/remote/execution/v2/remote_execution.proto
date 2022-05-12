@@ -80,7 +80,8 @@ service Execution {
   //
   // Errors discovered during creation of the `Operation` will be reported
   // as gRPC Status errors, while errors that occurred while running the
-  // action will be reported in the `status` field of the `ExecuteResponse`. The
+  // action will be reported in the `status` field of the
+  // [ExecuteResponse][build.bazel.remote.execution.v2.ExecuteResponse]. The
   // server MUST NOT set the `error` field of the `Operation` proto.
   // The possible errors include:
   //
@@ -120,6 +121,21 @@ service Execution {
   // operation completes, and then respond with the completed operation. The
   // server MAY choose to stream additional updates as execution progresses,
   // such as to provide an update as to the state of the execution.
+  //
+  // Similarly to [Execute][build.bazel.remote.execution.v2.Execution.Execute],
+  // errors that occured while running the action will be reported in the
+  // `status` field of
+  // [ExecuteResponse][build.bazel.remote.execution.v2.ExecuteResponse].
+  // The possible errors include:
+  //
+  // * `NOT_FOUND`: The client requested an
+  //   [Operation][google.longrunning.Operation] that is not known by the server
+  //   (e.g., because
+  //   [Execute][build.bazel.remote.execution.v2.Execution.Execute] never
+  //   returned that value, or because the action was already executed and
+  //   returned the result).
+  // * All errors returned by
+  //   [Execute][build.bazel.remote.execution.v2.Execution.Execute].
   rpc WaitExecution(WaitExecutionRequest) returns (stream google.longrunning.Operation) {
     option (google.api.http) = { post: "/v2/{name=operations/**}:waitExecution" body: "*" };
   }
