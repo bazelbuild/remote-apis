@@ -424,6 +424,8 @@ service Capabilities {
   //   CacheCapabilities and ExecutionCapabilities.
   // * Execution only endpoints should return ExecutionCapabilities.
   // * CAS + Action Cache only endpoints should return CacheCapabilities.
+  //
+  // There are no method-specific errors.
   rpc GetCapabilities(GetCapabilitiesRequest) returns (ServerCapabilities) {
     option (google.api.http) = {
       get: "/v2/{instance_name=**}/capabilities"
