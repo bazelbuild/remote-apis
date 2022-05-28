@@ -6,48 +6,16 @@ This is adapted from
 https://github.com/googleapis/googleapis/blob/master/repository_rules.bzl
 """
 
-load("//:remote_apis_deps.bzl", "remote_apis_go_deps")
-
 def _switched_rules_impl(ctx):
-    disabled_rule_script = """
-def {rule_name}(**kwargs):
-    pass
-"""
-    enabled_native_rule_script = """
-{rule_name} = {native_rule_name}
-"""
-    enabled_rule_script = """
-load("{file_label}", _{rule_name} = "{rule_name}")
-"""
-    elabled_rule_scrip_alias = """
-{rule_name} = _{rule_name}
-"""
-    load_rules = []  # load() must go before everything else in .bzl files since Bazel 0.25.0
-    rules = []
-
-    for rule_name, value in ctx.attr.rules.items():
-        if not value:
-            rules.append(disabled_rule_script.format(rule_name = rule_name))
-        elif value.startswith("@"):
-            load_rules.append(enabled_rule_script.format(file_label = value, rule_name = rule_name))
-            rules.append(elabled_rule_scrip_alias.format(rule_name = rule_name))
-        elif value.startswith("native."):
-            rules.append(
-                enabled_native_rule_script.format(rule_name = rule_name, native_rule_name = value),
-            )
-        else:
-            rules.append(value)
-
     ctx.file("BUILD.bazel", "")
-    ctx.file("imports.bzl", "".join(load_rules + rules))
+    ctx.file("imports.bzl", "\n".join(ctx.attr.lines))
 
 switched_rules = repository_rule(
     implementation = _switched_rules_impl,
     attrs = {
-        "rules": attr.string_dict(
+        "lines": attr.string_list(
             allow_empty = True,
             mandatory = False,
-            default = {},
         ),
     },
 )
@@ -91,35 +59,60 @@ def switched_rules_by_language(
         rules_override (dict): Custom rule overrides (for advanced usage).
     """
 
-    rules = {}
+    loads = {}
+    symbols = {}
 
-    rules["java_proto_library"] = _switch(
-        java,
-        "native.java_proto_library",
-    )
+    symbols["java_enabled"] = java
+    if java:
+        loads["java_proto_library"] = "@rules_java//java:defs.bzl"
+        symbols["java_proto_library"] = "_java_proto_library"
 
-    rules["go_proto_library"] = _switch(
-        go,
-        "@io_bazel_rules_go//proto:def.bzl",
-    )
-    rules["go_library"] = _switch(
-        go,
-        "@io_bazel_rules_go//go:def.bzl",
-    )
+    symbols["go_enabled"] = go
+    if go:
+        loads["go_proto_library"] = "@io_bazel_rules_go//proto:def.bzl"
+        symbols["go_proto_library"] = "_go_proto_library"
 
-    rules["cc_grpc_library"] = _switch(
-        cc,
-        "@com_github_grpc_grpc//bazel:cc_grpc_library.bzl",
-    )
+    symbols["cc_enabled"] = cc
+    if cc:
+        loads["cc_grpc_library"] = "@com_github_grpc_grpc//bazel:cc_grpc_library.bzl"
+        symbols["cc_grpc_library"] = "_cc_grpc_library"
 
-    rules.update(rules_override)
+    extra_lines = []
+    for k, v in rules_override:
+        if not v:
+            if k in loads:
+                loads.pop(k)
+            if k in symbols:
+                symbols.pop(k)
+        elif v.startswith("@"):
+            loads[k] = v
+            symbols[k] = "_" + k
+        elif v.startswith("native."):
+            if k in loads:
+                loads.pop(k)
+            loads[k] = v
+        else:
+            extra_lines.append(v)
 
+    load_lines = [_load(v, k) for k, v in loads.items()]
+    symbol_lines = ["{} = {}".format(k, v) for k, v in symbols.items()]
     switched_rules(
         name = name,
-        rules = rules,
+        lines = load_lines + [
+            "def maybe_alias(name, actual, enabled, visibility = None):",
+            "    if enabled:",
+            "        native.alias(",
+            "            name = name,",
+            "            actual = actual,",
+            "            visibility = visibility,",
+            "        )",
+            "",
+            "# Export symbols",
+        ] + symbol_lines + [
+            "",
+            "# Extra statements from rules_override",
+        ] + extra_lines,
     )
-    if go:
-        remote_apis_go_deps()
 
-def _switch(enabled, enabled_value):
-    return enabled_value if enabled else ""
+def _load(pkg, symbol):
+    return "load('{0}', _{1} = '{1}')".format(pkg, symbol)

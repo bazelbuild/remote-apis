@@ -1,7 +1,7 @@
-package(default_visibility = ["//visibility:public"])
-
+load("@bazel_remote_apis_imports//:imports.bzl", "cc_grpc_library", "go_enabled", "go_proto_library", "java_proto_library", "maybe_alias")
 load("@rules_proto//proto:defs.bzl", "proto_library")
-load("@bazel_remote_apis_imports//:imports.bzl", "java_proto_library", "go_library", "go_proto_library", "cc_grpc_library")
+
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -54,8 +54,8 @@ go_proto_library(
     ],
 )
 
-go_library(
+maybe_alias(
     name = "go_default_library",
-    embed = [":remote_execution_go_proto"],
-    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2",
+    actual = ":remote_execution_go_proto",
+    enabled = go_enabled,
 )
