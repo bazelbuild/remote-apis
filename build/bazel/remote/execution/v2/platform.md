@@ -35,6 +35,8 @@ The following standard property `name`s are defined:
     - `arm-t32-be` (big endian)
     - `power-isa-be` (big endian)
     - `power-isa-le` (little endian)
+    - `rv32g` (little endian)
+    - `rv64g` (little endian)
     - `sparc-v9` (big endian)
     - `x86-32`
     - `x86-64`
