@@ -87,14 +87,9 @@ bind(
     actual = "@com_github_grpc_grpc//:grpc++",
 )
 
-load("//:repository_rules.bzl", "switched_rules_by_language")
+load("//:remote_apis_deps.bzl", "remote_apis_go_deps")
 
-switched_rules_by_language(
-    name = "bazel_remote_apis_imports",
-    cc = True,
-    go = True,
-    java = True,
-)
+remote_apis_go_deps()
 
 # Needed for the googleapis protos.
 http_archive(

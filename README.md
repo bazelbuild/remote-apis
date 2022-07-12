@@ -82,26 +82,6 @@ packages from that repository in order to generate code using this API. If you
 build the repository using the included `BUILD` files, Bazel will fetch the
 protobuf compiler and googleapis automatically.
 
-## Selecting language support
-
-The repository provides a rule that you can use in your `WORKSPACE` file to
-select which languages you are using. This allows you to depend on this
-repository without pulling in Go rules, for instance, if you aren't using Go
-rules.
-
-For instance, if you only use Java in your project, add the following to your
-`WORKSPACE` file:
-
-```starlark
-load("@bazel_remote_apis//:repository_rules.bzl", "switched_rules_by_language")
-switched_rules_by_language(
-    name = "bazel_remote_apis_imports",
-    java = True,
-)
-```
-
-You can find the complete list of supported languages in `repository_rules.bzl`.
-
 ## Using the APIs
 
 The repository contains `BUILD` files to build the protobuf library with
