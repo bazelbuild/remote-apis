@@ -1235,6 +1235,43 @@ message OutputDirectory {
   // [Tree][build.bazel.remote.execution.v2.Tree] proto containing the
   // directory's contents.
   Digest tree_digest = 3;
+
+  // If set, consumers MAY make the following assumptions about the
+  // directories contained in the the Tree, so that it may be
+  // instantiated on a local file system by scanning through it
+  // sequentially:
+  //
+  // - All directories with the same binary representation are stored
+  //   exactly once.
+  // - All directories, apart from the root directory, are referenced by
+  //   at least one parent directory.
+  // - Directories are stored in topological order, with parents being
+  //   stored before the child. The root directory is thus the first to
+  //   be stored.
+  //
+  // Additionally, the Tree MUST be encoded as a stream of records,
+  // where each record has the following format:
+  //
+  // - A tag byte, having one of the following two values:
+  //   - (1 << 3) | 2 == 0x0a: First record (the root directory).
+  //   - (2 << 3) | 2 == 0x12: Any subsequent records (child directories).
+  // - The size of the directory, encoded as a base 128 varint.
+  // - The contents of the directory, encoded as a binary serialized
+  //   Protobuf message.
+  //
+  // This encoding is a subset of the Protobuf wire format of the Tree
+  // message. As it is only permitted to store data associated with
+  // field numbers 1 and 2, the tag MUST be encoded as a single byte.
+  // More details on the Protobuf wire format can be found here:
+  // https://developers.google.com/protocol-buffers/docs/encoding
+  //
+  // It is recommended that implementations using this feature construct
+  // Tree objects manually using the specification given above, as
+  // opposed to using a Protobuf library to marshal a full Tree message.
+  // As individual Directory messages already need to be marshaled to
+  // compute their digests, constructing the Tree object manually avoids
+  // redundant marshaling.
+  bool is_topologically_sorted = 4;
 }
 
 // An `OutputSymlink` is similar to a
