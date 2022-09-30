@@ -7003,6 +7003,8 @@ type CapabilitiesClient interface {
 	//   CacheCapabilities and ExecutionCapabilities.
 	// * Execution only endpoints should return ExecutionCapabilities.
 	// * CAS + Action Cache only endpoints should return CacheCapabilities.
+	//
+	// There are no method-specific errors.
 	GetCapabilities(ctx context.Context, in *GetCapabilitiesRequest, opts ...grpc.CallOption) (*ServerCapabilities, error)
 }
 
@@ -7033,6 +7035,8 @@ type CapabilitiesServer interface {
 	//   CacheCapabilities and ExecutionCapabilities.
 	// * Execution only endpoints should return ExecutionCapabilities.
 	// * CAS + Action Cache only endpoints should return CacheCapabilities.
+	//
+	// There are no method-specific errors.
 	GetCapabilities(context.Context, *GetCapabilitiesRequest) (*ServerCapabilities, error)
 }
 
