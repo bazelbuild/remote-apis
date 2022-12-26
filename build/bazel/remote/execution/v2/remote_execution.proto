@@ -335,7 +335,10 @@ service ContentAddressableStorage {
   // already present in the CAS and do not need to be uploaded again.
   //
   // Servers SHOULD increase the lifetimes of the referenced blobs if necessary and
-  // applicable.
+  // applicable. If the server announces support for splitting blobs through
+  // [CacheCapabilities.concatenate_split_capabilities][build.bazel.remote.execution.v2.CacheCapabilities.concatenate_split_capabilities],
+  // the lifetimes of any split blobs previously derived from the referenced
+  // blobs SHOULD also be increased.
   //
   // There are no method-specific errors.
   rpc FindMissingBlobs(FindMissingBlobsRequest) returns (FindMissingBlobsResponse) {
@@ -393,6 +396,29 @@ service ContentAddressableStorage {
   rpc BatchReadBlobs(BatchReadBlobsRequest) returns (BatchReadBlobsResponse) {
     option (google.api.http) = { post: "/v2/{instance_name=**}/blobs:batchRead" body: "*" };
   }
+
+  // Create blobs by concatenating multiple smaller blobs.
+  //
+  // This method is only supported for digest functions reported through
+  // [CacheCapabilities.concatenate_split_capabilities][build.bazel.remote.execution.v2.CacheCapabilities.concatenate_split_capabilities].
+  // For other digest functions new blobs can only be created by uploading them
+  // in their entirety.
+  //
+  // This method may be called recursively to construct very large objects.
+  rpc ConcatenateBlobs(ConcatenateBlobsRequest) returns (BatchUpdateBlobsResponse);
+
+  // Create multiple blobs by splitting larger blobs, so that they can
+  // subsequently be downloaded by issuing multiple
+  // [BatchReadBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs]
+  // calls.
+  //
+  // This method is only supported for digest functions reported through
+  // [CacheCapabilities.concatenate_split_capabilities][build.bazel.remote.execution.v2.CacheCapabilities.concatenate_split_capabilities].
+  // For other digest functions new blobs can only be created by uploading them
+  // in their entirety.
+  //
+  // This method may be called recursively to split very large objects.
+  rpc SplitBlobs(SplitBlobsRequest) returns (SplitBlobsResponse);
 
   // Fetch the entire directory tree rooted at a node.
   //
@@ -1661,6 +1687,76 @@ message BatchUpdateBlobsResponse {
   repeated Response responses = 1;
 }
 
+message ConcatenateBlobsRequest {
+  message Request {
+    // The digest of the blob to create.
+    Digest large_digest = 1;
+
+    // The hashes of the smaller blobs to concatenate.
+    //
+    // All elements except for the final correspond to the hashes of
+    // blobs having size 2^k. The final element corresponds to the hash
+    // of a blob containing l bytes of trailing data, where
+    // 0 < l <= 2^k. The server may infer the values of k and l using
+    // `large_digest.size_bytes` and the length of this field.
+    repeated string small_hashes = 2;
+  }
+
+  // The instance of the execution system to operate against. A server may
+  // support multiple instances of the execution system (with their own workers,
+  // storage, caches, etc.). The server MAY require use of this field to select
+  // between them in an implementation-defined fashion, otherwise it can be
+  // omitted.
+  string instance_name = 1;
+
+  // The digest function used for constructing the concatenated blobs.
+  //
+  // This field MUST be set to a value other than UNKNOWN.
+  DigestFunction.Value digest_function = 2;
+
+  // The individual concatenation requests.
+  repeated Request requests = 3;
+}
+
+message SplitBlobsRequest {
+  // The instance of the execution system to operate against. A server may
+  // support multiple instances of the execution system (with their own workers,
+  // storage, caches, etc.). The server MAY require use of this field to select
+  // between them in an implementation-defined fashion, otherwise it can be
+  // omitted.
+  string instance_name = 1;
+
+  // The digest function used for constructing the split blobs.
+  //
+  // This field MUST be set to a value other than UNKNOWN.
+  DigestFunction.Value digest_function = 2;
+
+  // The digests of the large blobs to split into smaller blobs.
+  repeated Digest large_digests = 3;
+
+  // The size of the non-trailing blobs to create. It must be less than
+  // the sizes stored in `digests`.
+  int64 split_size_bytes = 4;
+}
+
+message SplitBlobsResponse {
+  message Response {
+    // The result of attempting to split that blob.
+    google.rpc.Status status = 1;
+
+    // The hashes of the smaller blobs that were created.
+    //
+    // All elements except the final correspond to the blobs having size
+    // `split_size_bytes`. The final element corresponds to the the
+    // non-empty blob containing trailing data, having size
+    // `digest.size_bytes % split_size_bytes`.
+    repeated string small_hashes = 2;
+  }
+
+  // The responses to the requests.
+  repeated Response responses = 1;
+}
+
 // A request message for
 // [ContentAddressableStorage.BatchReadBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs].
 message BatchReadBlobsRequest {
@@ -1943,6 +2039,47 @@ message Compressor {
   }
 }
 
+message ConcatenateSplitCapabilities {
+  // The digest function to which the capabilities apply.
+  //
+  // Servers SHOULD only announce these capabilities for digest function
+  // SHA256TREE, as none of the other digest functions permit clients to
+  // validate the integrity of hashes returned by
+  // [SplitBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlobs].
+  //
+  // Similarly, clients SHOULD also ignore capabilities for digest
+  // functions other than SHA256TREE.
+  DigestFunction.Value digest_function = 1;
+
+  // The minimum size of blobs that can be provided to
+  // [ConcatenateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.ConcatenateBlobs].
+  //
+  // For SHA256TREE, this field MUST have value 2^k, where k >= 10. It
+  // may not exceed `max_batch_total_size_bytes`, thereby ensuring
+  // that clients can upload inputs of ConcatenateBlobs using
+  // [BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs].
+  int32 min_concatenate_size_bytes = 2;
+
+  // The minimum size of blobs that can be created by calling
+  // [SplitBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlobs].
+  //
+  // For SHA256TREE, this field MUST have value 2^k, where k >= 10. It
+  // may not exceed `max_batch_total_size_bytes`, thereby ensuring
+  // that clients can download outputs of SplitBlobs using
+  // [BatchReadBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs].
+  int32 min_split_size_bytes = 3;
+
+  // The maximum combined number of entries in `small_hashes` fields
+  // that may be provided to
+  // [ConcatenateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.ConcatenateBlobs]
+  // and returned by
+  // [SplitBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlobs].
+  //
+  // If blobs need to be processed whose number of smaller blobs exceed
+  // this limit, these methods need to be called recursively.
+  int32 max_small_hashes = 4;
+}
+
 // Capabilities of the remote cache system.
 message CacheCapabilities {
   // All the digest functions supported by the remote cache.
@@ -1976,6 +2113,12 @@ message CacheCapabilities {
   // [BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs]
   // requests.
   repeated Compressor.Value supported_batch_update_compressors = 7;
+
+  // Capabilities pertaining to the
+  // [ConcatenateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.ConcatenateBlobs]
+  // and [SplitBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlobs]
+  // requests.
+  repeated ConcatenateSplitCapabilities concatenate_split_capabilities = 8;
 }
 
 // Capabilities of the remote execution system.
