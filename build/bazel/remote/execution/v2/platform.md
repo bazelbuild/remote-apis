@@ -33,6 +33,7 @@ The following standard property `name`s are defined:
     - `arm-a64-be` (big endian)
     - `arm-t32` (little endian)
     - `arm-t32-be` (big endian)
+    - `la64v100` (little endian)
     - `power-isa-be` (big endian)
     - `power-isa-le` (little endian)
     - `rv32g` (little endian)
