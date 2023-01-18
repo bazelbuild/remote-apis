@@ -1473,7 +1473,9 @@ message ExecuteOperationMetadata {
   string stderr_stream_name = 4;
 
   // Additional implementation-specific metadata to send along with the
-  // Operation.
+  // Operation. Servers MAY choose to populate this field with a partially
+  // complete [ExecutedActionMetadata][build.bazel.remote.execution.v2.ExecutedActionMetadata]
+  // message to provide updates on the ongoing execution.
   repeated google.protobuf.Any auxiliary_metadata = 5;
 }
 
