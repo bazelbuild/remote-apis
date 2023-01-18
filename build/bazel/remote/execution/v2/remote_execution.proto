@@ -1472,11 +1472,9 @@ message ExecuteOperationMetadata {
   // standard error from the endpoint hosting streamed responses.
   string stderr_stream_name = 4;
 
-  // Additional implementation-specific metadata to send along with the
-  // Operation. Servers MAY choose to populate this field with a partially
-  // complete [ExecutedActionMetadata][build.bazel.remote.execution.v2.ExecutedActionMetadata]
-  // message to provide updates on the ongoing execution.
-  repeated google.protobuf.Any auxiliary_metadata = 5;
+  // The client can read this field to view details about the ongoing
+  // execution.
+  ExecutedActionMetadata partial_execution_metadata = 5;
 }
 
 // A request message for
