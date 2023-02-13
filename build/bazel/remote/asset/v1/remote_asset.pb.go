@@ -260,6 +260,8 @@ type FetchBlobResponse struct {
 	//   requested an asset from a disallowed origin.
 	// * `ABORTED`: The operation could not be completed, typically due to a
 	//   failed consistency check.
+	// * `RESOURCE_EXHAUSTED`: There is insufficient quota of some resource to
+	//   perform the requested operation. The client may retry after a delay.
 	Status *status.Status `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
 	// The uri from the request that resulted in a successful retrieval, or from
 	// which the error indicated in `status` was obtained.
@@ -473,6 +475,8 @@ type FetchDirectoryResponse struct {
 	//   requested an asset from a disallowed origin.
 	// * `ABORTED`: The operation could not be completed, typically due to a
 	//   failed consistency check.
+	// * `RESOURCE_EXHAUSTED`: There is insufficient quota of some resource to
+	//   perform the requested operation. The client may retry after a delay.
 	Status *status.Status `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
 	// The uri from the request that resulted in a successful retrieval, or from
 	// which the error indicated in `status` was obtained.

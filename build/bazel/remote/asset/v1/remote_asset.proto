@@ -216,6 +216,8 @@ message FetchBlobResponse {
   //   requested an asset from a disallowed origin.
   // * `ABORTED`: The operation could not be completed, typically due to a
   //   failed consistency check.
+  // * `RESOURCE_EXHAUSTED`: There is insufficient quota of some resource to
+  //   perform the requested operation. The client may retry after a delay.
   google.rpc.Status status = 1;
 
   // The uri from the request that resulted in a successful retrieval, or from
@@ -295,6 +297,8 @@ message FetchDirectoryResponse {
   //   requested an asset from a disallowed origin.
   // * `ABORTED`: The operation could not be completed, typically due to a
   //   failed consistency check.
+  // * `RESOURCE_EXHAUSTED`: There is insufficient quota of some resource to
+  //   perform the requested operation. The client may retry after a delay.
   google.rpc.Status status = 1;
 
   // The uri from the request that resulted in a successful retrieval, or from
