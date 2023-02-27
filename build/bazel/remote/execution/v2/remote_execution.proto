@@ -1803,6 +1803,9 @@ message Compressor {
     // It is advised to use algorithms such as Zstandard instead, as
     // those are faster and/or provide a better compression ratio.
     DEFLATE = 2;
+
+    // Brotli compression.
+    BROTLI = 3;
   }
 }
 
