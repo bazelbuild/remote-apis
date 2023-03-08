@@ -132,8 +132,10 @@ service Execution {
   //   [Operation][google.longrunning.Operation] that is not known by the server
   //   (e.g., because
   //   [Execute][build.bazel.remote.execution.v2.Execution.Execute] never
-  //   returned that value, or because the action was already executed and
-  //   returned the result).
+  //   returned that value, because the action was already executed and returned
+  //   the result, or because the action was cancelled explicitly using
+  //   [google.longrunning.Operations.CancelOperation] or implicitly because there
+  //   was no client waiting for the action to execute).
   // * All errors returned by
   //   [Execute][build.bazel.remote.execution.v2.Execution.Execute].
   rpc WaitExecution(WaitExecutionRequest) returns (stream google.longrunning.Operation) {
