@@ -1156,6 +1156,17 @@ message ActionResult {
   // The exit code of the command.
   int32 exit_code = 4;
 
+  // An optional reason the process launched by this action terminated,
+  // and the result it returned to the parent process. Even if the
+  // remote execution environment supports setting this field, it may be
+  // absent if no result could be captured (e.g., an error occurred
+  // before any process was spawned, or execution timed out).
+  //
+  // New in version 2.3: previous versions only provided `exit_code`,
+  // making it impossible to distinguish between normal and abnormal
+  // process termination.
+  ProcessTerminationResult process_termination_result = 13;
+
   // The standard output buffer of the action. The server SHOULD NOT inline
   // stdout unless requested by the client in the
   // [GetActionResultRequest][build.bazel.remote.execution.v2.GetActionResultRequest]
@@ -1310,6 +1321,57 @@ message OutputSymlink {
   // Action.
   reserved 3;
   NodeProperties node_properties = 4;
+}
+
+// The termination result of a process, as reported by the operating
+// system to the parent process (e.g., using wait*() on POSIX-like
+// systems, or GetExitCodeProcess() on Microsoft Windows).
+//
+// Consumers SHOULD NOT assume that `reason` is exhaustive. Additional
+// operating system specific methods of process termination may be
+// covered by future versions of this protocol. Consumers MAY assume
+// that any future method indicates unsuccessful process termination.
+message ProcessTerminationResult {
+  message Exited {
+    // The exit code of the process.
+    //
+    // Implementations SHOULD preserve as many bits from the exit code
+    // as possible. On POSIX-like systems, it is recommended to use
+    // waitid(), as siginfo_t's si_status field contains the full exit
+    // code. Functions such as wait() and waitpid() tend to truncate the
+    // exit code to the bottom eight bits.
+    int64 exit_code = 1;
+  }
+
+  message Signaled {
+    // The name of the signal that was delivered that caused the process
+    // to terminate, without the "SIG" prefix (e.g., "BUS", "KILL",
+    // "SEGV").
+    string signal_name = 1;
+  }
+
+  oneof reason {
+    // Normal process termination occurred.
+    //
+    // On POSIX-like systems, this is achieved by returning from main(),
+    // by calling exit(), _exit(), or _Exit(), or when the last thread
+    // in the process terminates by returning from its start function,
+    // or through thread cancellation.
+    //
+    // If this field is set, [ActionResult.exit_code][build.bazel.remote.execution.v2.ActionResult.exit_code]
+    // MUST have the same value as [Exited.exit_code][[build.bazel.remote.execution.v2.ProcessTerminationResult.Exited.exit_code],
+    // clamped to the range of int32.
+    Exited exited = 1;
+
+    // Abnormal process termination occurred.
+    //
+    // On POSIX-like systems, this is achieved by calling abort(), or by
+    // receiving a signal for which no signal handler is installed.
+    //
+    // If this field is set, [ActionResult.exit_code][build.bazel.remote.execution.v2.ActionResult.exit_code]
+    // MUST be set to an implementation-defined non-zero value.
+    Signaled signaled = 2;
+  }
 }
 
 // An `ExecutionPolicy` can be used to control the scheduling of the action.
