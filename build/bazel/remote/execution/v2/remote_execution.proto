@@ -207,10 +207,11 @@ service ActionCache {
 // `{instance_name}/uploads/{uuid}/blobs/{hash}/{size}{/optional_metadata}`
 //
 // Where:
-// * `instance_name` is an identifier, possibly containing multiple path
-//   segments, used to distinguish between the various instances on the server,
-//   in a manner defined by the server. If it is the empty path, the leading
-//   slash is omitted, so that  the `resource_name` becomes
+// * `instance_name` is an identifier used to distinguish between the various
+//   instances on the server. Syntax and semantics of this field are defined
+//   by the server; Clients must not make any assumptions about it (e.g.,
+//   whether it spans multiple path segments or not). If it is the empty path,
+//   the leading slash is omitted, so that  the `resource_name` becomes
 //   `uploads/{uuid}/blobs/{hash}/{size}{/optional_metadata}`.
 //   To simplify parsing, a path segment cannot equal any of the following
 //   keywords: `blobs`, `uploads`, `actions`, `actionResults`, `operations`,
