@@ -1494,6 +1494,10 @@ message ExecuteOperationMetadata {
   // [ByteStream.Read][google.bytestream.ByteStream.Read] to stream the
   // standard error from the endpoint hosting streamed responses.
   string stderr_stream_name = 4;
+
+  // The client can read this field to view details about the ongoing
+  // execution.
+  ExecutedActionMetadata partial_execution_metadata = 5;
 }
 
 // A request message for
