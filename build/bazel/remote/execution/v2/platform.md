@@ -1,7 +1,10 @@
 # Platform Lexicon
 
 This lexicon defines standard platform property names and values that servers
-MAY support in the `Platform` message to facilitate interoperability.
+MAY support in the `Platform` message to facilitate interoperability. New
+values can be added by submitting a PR against this repository, which requires
+signing the [Google CLA](https://opensource.google/documentation/reference/cla).
+If signing the Google CLA is undesirable, you may submit an issue instead.
 
 The following standard property `name`s are defined:
 
