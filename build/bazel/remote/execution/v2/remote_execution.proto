@@ -1890,6 +1890,71 @@ message DigestFunction {
     // The BLAKE3 hash function.
     // See https://github.com/BLAKE3-team/BLAKE3.
     BLAKE3 = 9;
+
+    // Use git-sha1 hahsing function prefixed with a one byte marker.
+    //
+    // Since git hashes blob content differently from trees, this type of
+    // information has to be transmitted in addition to the content and the
+    // hash. To this aim, the git hash values passed over the wire are prefixed
+    // with a single-byte marker, thus allowing the remote side to distinguish a
+    // blob from a tree without inspecting the (potentially large) content. The
+    // markers are
+    //
+    // - 0x62 for a git blob (0x62 corresponds to the character b)
+    // - 0x74 for a git tree (0x74 corresponds to the character t)
+    // 
+    // So
+    //
+    //     Hash(blob) = 0x62<git sha1>
+    //     Hash(tree) = 0x74<git sha1>    
+    //
+    // Blob Upload
+    //
+    // A blob is uploaded to the remote side by passing its raw content as well as its
+    // Digest containing the git hash value for a blob prefixed by 0x62.
+    //
+    // Tree Upload
+    //
+    // Whenever a Digest of a Directory message is expected, it can be
+    // convenientely replaced by the Digest of the corresponding git tree.
+    //
+    // Using this git tree representation makes tree handling much more
+    // efficient since the effort of traversing and uploading the content of a
+    // git tree occurs only once and for each subsequent request, and the git
+    // tree id can be directly passed around. We require the invariant that if a
+    // tree is part of any CAS, then all its content is also available in this
+    // CAS. To adhere to this invariant, the client side has to prove that the
+    // content of a tree is available in the CAS before uploading this tree
+    // (i.e., leaves must be uploaded before the root). The server side has to
+    // ensure this invariant holds. In particular, if the remote side implements
+    // any pruning strategy for the CAS, it has to honor this invariant when an
+    // element gets pruned.
+    //
+    // Another consequence of this efficient tree handling is that it improves action
+    // digest calculation noticeably, since known git trees referred by the root
+    // directory do not need to be traversed. This in turn allows to faster determine
+    // whether an action result is already available in the action cache or not.
+    //
+    // Tree Download
+    //
+    // Once an action is successfully executed, it might have generated output files or
+    // output directories in its staging area on the remote side. Each output file
+    // needs to be uploaded to its CAS with the corresponding git blob hash. Each
+    // output directory needs to be translated to a git tree object and uploaded to the
+    // CAS with the corresponding git tree hash. Only if the content of a tree is
+    // available in the CAS is the server side allowed to return the tree to the
+    // client.
+    //
+    // In case of a generated output directory, the server only returns the
+    // corresponding git tree id to the client instead of a flat list of all
+    // recursively generated output directories as part of a Tree Protobuf
+    // message. The remote side promises that each blob and subtree contained in
+    // the root tree is available in the remote CAS. Such blobs and trees must
+    // be accessible, using the streaming interface, without specifying the size
+    // (since sizes are not stored in a git tree). Due to the Protobuf 3
+    // specification, which is used in this remote execution API, not specifying
+    // the size means the default value 0 is used.
+    GITSHA1 = 10;
   }
 }
 
