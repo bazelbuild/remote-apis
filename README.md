@@ -41,6 +41,7 @@ below.
 These tools use the Remote Execution API to distribute builds to workers.
 
 * [Bazel](https://bazel.build)
+* [Buck2](https://github.com/facebook/buck2)
 * [BuildStream](https://buildstream.build/)
 * [Goma Server](https://chromium.googlesource.com/infra/goma/server/)
 * [Pants](https://www.pantsbuild.org)
