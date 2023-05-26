@@ -44,6 +44,7 @@ These tools use the Remote Execution API to distribute builds to workers.
 * [Buck2](https://github.com/facebook/buck2)
 * [BuildStream](https://buildstream.build/)
 * [Goma Server](https://chromium.googlesource.com/infra/goma/server/)
+* [Justbuild](https://github.com/just-buildsystem/justbuild) (via `--compatible`)
 * [Pants](https://www.pantsbuild.org)
 * [Please](https://please.build)
 * [Recc](https://gitlab.com/bloomberg/recc)
@@ -60,6 +61,7 @@ workers implement the Remote Worker API.
 * [BuildGrid](https://buildgrid.build/) (open source)
 * [EngFlow](https://www.engflow.com/) (commercial)
 * [Flare Build Execution](https://flare.build/products/flare-build-execution) (commercial)
+* [Justbuild](https://github.com/just-buildsystem/justbuild/blob/master/doc/tutorial/just-execute.org) (via `--compatible`, open source)
 * [Scoot](https://github.com/twitter/scoot) (open source)
 * [Turbo Cache](https://github.com/allada/turbo-cache) (open source)
 
