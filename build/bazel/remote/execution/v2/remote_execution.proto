@@ -125,6 +125,14 @@ service Execution {
   // operation completes, and then respond with the completed operation. The
   // server MAY choose to stream additional updates as execution progresses,
   // such as to provide an update as to the state of the execution.
+  //
+  // In addition to the cases describe for Execute, the WaitExecution method
+  // may fail as follows:
+  //
+  // * `NOT_FOUND`: The operation no longer exists due to any of a transient
+  //   condition, an unknown operation name, or if the server implements the
+  //   Operations API DeleteOperation method and it was called for the current
+  //   execution. The client should call `Execute` to retry.
   rpc WaitExecution(WaitExecutionRequest) returns (stream google.longrunning.Operation) {
     option (google.api.http) = { post: "/v2/{name=operations/**}:waitExecution" body: "*" };
   }
