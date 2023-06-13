@@ -605,7 +605,7 @@ message Command {
   // to execution, even if they are not explicitly part of the input root.
   //
   // DEPRECATED since v2.1: Use `output_paths` instead.
-  repeated string output_files = 3;
+  repeated string output_files = 3 [ deprecated = true ];
 
   // A list of the output directories that the client expects to retrieve from
   // the action. Only the listed directories will be returned (an entire
@@ -636,7 +636,7 @@ message Command {
   // if they are not explicitly part of the input root.
   //
   // DEPRECATED since 2.1: Use `output_paths` instead.
-  repeated string output_directories = 4;
+  repeated string output_directories = 4 [ deprecated = true ];
 
   // A list of the output paths that the client expects to retrieve from the
   // action. Only the listed paths will be returned to the client as output.
@@ -676,7 +676,7 @@ message Command {
   // DEPRECATED as of v2.2: platform properties are now specified directly in
   // the action. See documentation note in the
   // [Action][build.bazel.remote.execution.v2.Action] for migration.
-  Platform platform = 5;
+  Platform platform = 5 [ deprecated = true ];
 
   // The working directory, relative to the input root, for the command to run
   // in. It must be a directory which exists in the input tree. If it is left
@@ -1052,7 +1052,7 @@ message ActionResult {
   //
   // DEPRECATED as of v2.1. Servers that wish to be compatible with v2.0 API
   // should still populate this field in addition to `output_symlinks`.
-  repeated OutputSymlink output_file_symlinks = 10;
+  repeated OutputSymlink output_file_symlinks = 10 [ deprecated = true ];
 
   // New in v2.1: this field will only be populated if the command
   // `output_paths` field was used, and not the pre v2.1 `output_files` or
@@ -1152,7 +1152,7 @@ message ActionResult {
   //
   // DEPRECATED as of v2.1. Servers that wish to be compatible with v2.0 API
   // should still populate this field in addition to `output_symlinks`.
-  repeated OutputSymlink output_directory_symlinks = 11;
+  repeated OutputSymlink output_directory_symlinks = 11 [ deprecated = true ];
 
   // The exit code of the command.
   int32 exit_code = 4;
