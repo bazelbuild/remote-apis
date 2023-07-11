@@ -2,57 +2,65 @@ workspace(name = "bazel_remote_apis")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+_bazel_skylib_version = "1.4.0"
+
+_bazel_skylib_sha256 = "f24ab666394232f834f74d19e2ff142b0af17466ea0c69a3f4c276ee75f6efce"
+
 http_archive(
     name = "bazel_skylib",
-    sha256 = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44",
-    urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
-        "https://github.com/bazelbuild/bazel-skylib/releases/download/1.0.2/bazel-skylib-1.0.2.tar.gz",
-    ],
+    sha256 = _bazel_skylib_sha256,
+    urls = ["https://github.com/bazelbuild/bazel-skylib/releases/download/{0}/bazel-skylib-{0}.tar.gz".format(_bazel_skylib_version)],
 )
 
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 
 bazel_skylib_workspace()
 
-# Pull in go rules, which we need in order to selectively pull in Go dependencies.
+# This must be above the download of gRPC (in C++ section) and
+# rules_gapic_repositories because both depend on rules_go and we need to manage
+# our version of rules_go explicitly rather than depend on the version those
+# bring in transitively.
+_io_bazel_rules_go_version = "0.34.0"
+
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "69de5c704a05ff37862f7e0f5534d4f479418afc21806c887db544a316f3cb6b",
+    sha256 = "16e9fca53ed6bd4ff4ad76facc9b7b651a89db1689a2877d6fd7b82aa824e366",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.27.0/rules_go-v0.27.0.tar.gz",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.27.0/rules_go-v0.27.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v{0}/rules_go-v{0}.zip".format(_io_bazel_rules_go_version),
+        "https://github.com/bazelbuild/rules_go/releases/download/v{0}/rules_go-v{0}.zip".format(_io_bazel_rules_go_version),
     ],
 )
 
-# Gazelle, which we need in order to selectively pull in Gazelle dependencies for Go.
+# Gazelle dependency version should match gazelle dependency expected by gRPC
+_bazel_gazelle_version = "0.24.0"
+
 http_archive(
     name = "bazel_gazelle",
-    sha256 = "62ca106be173579c0a167deb23358fdfe71ffa1e4cfdddf5582af26520f1c66f",
+    sha256 = "de69a09dc70417580aabf20a28619bb3ef60d038470c7cf8442fafcf627c21cb",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.23.0/bazel-gazelle-v0.23.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.23.0/bazel-gazelle-v0.23.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v{0}/bazel-gazelle-v{0}.tar.gz".format(_bazel_gazelle_version),
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v{0}/bazel-gazelle-v{0}.tar.gz".format(_bazel_gazelle_version),
     ],
 )
 
-# Needed for protobuf.
+# Explicitly declaring Protobuf version, while Protobuf dependency is already
+# instantiated in grpc_deps().
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "678d91d8a939a1ef9cb268e1f20c14cd55e40361dc397bb5881e4e1e532679b1",
-    strip_prefix = "protobuf-3.10.1",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.10.1.zip"],
+    sha256 = "0b0395d34e000f1229679e10d984ed7913078f3dd7f26cf0476467f5e65716f4",
+    strip_prefix = "protobuf-23.2",
+    urls = ["https://github.com/protocolbuffers/protobuf/archive/v23.2.tar.gz"],
 )
 
-load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+_grpc_version = "1.55.1"
 
-protobuf_deps()
+_grpc_sha256 = "17c0685da231917a7b3be2671a7b13b550a85fdda5e475313264c5f51c4da3f8"
 
-# Needed for C++ gRPC.
 http_archive(
     name = "com_github_grpc_grpc",
-    sha256 = "b391a327429279f6f29b9ae7e5317cd80d5e9d49cc100e6d682221af73d984a6",
-    strip_prefix = "grpc-93e8830070e9afcbaa992c75817009ee3f4b63a0",  # v1.24.3 with fixes
-    urls = ["https://github.com/grpc/grpc/archive/93e8830070e9afcbaa992c75817009ee3f4b63a0.zip"],
+    sha256 = _grpc_sha256,
+    strip_prefix = "grpc-%s" % _grpc_version,
+    urls = ["https://github.com/grpc/grpc/archive/v%s.zip" % _grpc_version],
 )
 
 # Pull in all gRPC dependencies.
@@ -60,22 +68,18 @@ load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
 
 grpc_deps()
 
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+
+protobuf_deps()
+
+
 # More gRPC dependencies. grpc_extra_deps does not work out of the box.
-load("@upb//bazel:workspace_deps.bzl", "upb_deps")
 load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")
 load("@build_bazel_apple_support//lib:repositories.bzl", "apple_support_dependencies")
-
-upb_deps()
 
 apple_rules_dependencies()
 
 apple_support_dependencies()
-
-load("@upb//bazel:repository_defs.bzl", "bazel_version_repository")
-
-bazel_version_repository(
-    name = "bazel_version",
-)
 
 bind(
     name = "grpc_cpp_plugin",
@@ -91,11 +95,31 @@ load("//:remote_apis_deps.bzl", "remote_apis_go_deps")
 
 remote_apis_go_deps()
 
+_rules_gapic_version = "0.28.0"
+
+_rules_gapic_sha256 = "921aebfb7f26c110fcdafeb6b74b1eb2d114a6d52e1bc11d6c1c011cf1da2017"
+
+http_archive(
+    name = "rules_gapic",
+    sha256 = _rules_gapic_sha256,
+    strip_prefix = "rules_gapic-%s" % _rules_gapic_version,
+    urls = ["https://github.com/googleapis/rules_gapic/archive/v%s.tar.gz" % _rules_gapic_version],
+)
+
 # Needed for the googleapis protos.
 http_archive(
     name = "googleapis",
-    build_file = "BUILD.googleapis",
-    sha256 = "7b6ea252f0b8fb5cd722f45feb83e115b689909bbb6a393a873b6cbad4ceae1d",
-    strip_prefix = "googleapis-143084a2624b6591ee1f9d23e7f5241856642f4d",
-    urls = ["https://github.com/googleapis/googleapis/archive/143084a2624b6591ee1f9d23e7f5241856642f4d.zip"],
+    sha256 = "1253e1e9826fa822d709221032069dbbc5079e3d26671bfcb8485b21870941d3",
+    strip_prefix = "googleapis-b34897064113f06083e6d5bd217826ec2c91abe3",
+    urls = ["https://github.com/googleapis/googleapis/archive/b34897064113f06083e6d5bd217826ec2c91abe3.zip"],
+)
+
+load("@googleapis//:repository_rules.bzl", "switched_rules_by_language")
+
+switched_rules_by_language(
+    name = "com_google_googleapis_imports",
+    cc = True,
+    gapic = True,
+    go = True,
+    java = True,
 )
