@@ -48,6 +48,7 @@ These tools use the Remote Execution API to distribute builds to workers.
 * [Pants](https://www.pantsbuild.org)
 * [Please](https://please.build)
 * [Recc](https://gitlab.com/bloomberg/recc)
+* [Reclient](https://github.com/bazelbuild/reclient)
 
 ### Servers
 These applications implement the Remote Execution API to serve build requests
