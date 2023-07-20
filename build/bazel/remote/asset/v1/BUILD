@@ -11,9 +11,9 @@ proto_library(
         "//build/bazel/remote/execution/v2:remote_execution_proto",
         "@com_google_protobuf//:duration_proto",
         "@com_google_protobuf//:timestamp_proto",
-        "@googleapis//:google_api_annotations_proto",
-        "@googleapis//:google_api_http_proto",
-        "@googleapis//:google_rpc_status_proto",
+        "@googleapis//google/api:annotations_proto",
+        "@googleapis//google/api:http_proto",
+        "@googleapis//google/rpc:status_proto",
     ],
 )
 

@@ -10,8 +10,8 @@ go_proto_library(
     proto = "//build/bazel/remote/asset/v1:remote_asset_proto",
     deps = [
         "//build/bazel/remote/execution/v2:remote_execution_go_proto",
-        "@go_googleapis//google/api:annotations_go_proto",
-        "@go_googleapis//google/rpc:status_go_proto",
+        "@googleapis//google/api:annotations_go_proto",
+        "@googleapis//google/rpc:status_go_proto",
     ],
 )
 
