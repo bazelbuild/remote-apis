@@ -9,10 +9,22 @@ def _maybe(repo_rule, name, **kwargs):
 
 def remote_apis_go_deps():
     """Load dependencies needed to depend on RE API for Go"""
-    go_rules_dependencies()
-    go_download_sdk(name = "go_sdk", version = "1.16.4")
+    go_download_sdk(name = "go_sdk", version = "1.20.6")
     go_register_toolchains()
-    gazelle_dependencies()
+
+    # The version of this repo needs to be in sync with @googleapis
+    go_repository(
+        name = "org_golang_google_genproto",
+        build_extra_args = ["-exclude=vendor"],
+        build_file_generation = "on",
+        build_file_proto_mode = "disable_global",
+        importpath = "google.golang.org/genproto",
+        sum = "h1:S9GbmC1iCgvbLyAokVCwiO6tVIrU9Y7c5oMx1V/ki/Y=",
+        version = "v0.0.0-20221024183307-1bc688fe9f3e",
+    )
+
+    go_rules_dependencies()
+    gazelle_dependencies(go_sdk = "go_sdk")
     _maybe(
         go_repository,
         name = "com_github_golang_protobuf",
