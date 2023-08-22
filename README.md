@@ -49,6 +49,7 @@ These tools use the Remote Execution API to distribute builds to workers.
 * [Please](https://please.build)
 * [Recc](https://gitlab.com/bloomberg/recc)
 * [Reclient](https://github.com/bazelbuild/reclient)
+* [Siso](https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/build/siso/)
 
 ### Servers
 These applications implement the Remote Execution API to serve build requests
@@ -63,6 +64,7 @@ workers implement the Remote Worker API.
 * [EngFlow](https://www.engflow.com/) (commercial)
 * [Flare Build Execution](https://flare.build/products/flare-build-execution) (commercial)
 * [Justbuild](https://github.com/just-buildsystem/justbuild/blob/master/doc/tutorial/just-execute.org) (via `--compatible`, open source)
+* [Kajiya](https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/build/kajiya/) (open source)
 * [Scoot](https://github.com/twitter/scoot) (open source)
 * [Turbo Cache](https://github.com/allada/turbo-cache) (open source)
 
