@@ -1,2 +1,4 @@
 # Include comments in generated code for godoc.
 build --experimental_proto_descriptor_sets_include_source_info
+
+build --repo_env=BAZEL_CXXOPTS="-std=c++14"
