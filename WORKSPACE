@@ -94,8 +94,31 @@ remote_apis_go_deps()
 # Needed for the googleapis protos.
 http_archive(
     name = "googleapis",
-    build_file = "BUILD.googleapis",
-    sha256 = "7b6ea252f0b8fb5cd722f45feb83e115b689909bbb6a393a873b6cbad4ceae1d",
-    strip_prefix = "googleapis-143084a2624b6591ee1f9d23e7f5241856642f4d",
-    urls = ["https://github.com/googleapis/googleapis/archive/143084a2624b6591ee1f9d23e7f5241856642f4d.zip"],
+    sha256 = "9d1a930e767c93c825398b8f8692eca3fe353b9aaadedfbcf1fca2282c85df88",
+    strip_prefix = "googleapis-64926d52febbf298cb82a8f472ade4a3969ba922",
+    urls = [
+        "https://github.com/googleapis/googleapis/archive/64926d52febbf298cb82a8f472ade4a3969ba922.zip",
+    ],
 )
+
+load("@googleapis//:repository_rules.bzl", "switched_rules_by_language")
+
+switched_rules_by_language(
+    name = "com_google_googleapis_imports",
+    cc = True,
+    java = True,
+    go = True,
+)
+
+http_archive(
+    name = "rules_gapic",
+    sha256 = "913d88485702c6605ff481678a63cfd710877252a74ff9181bf0452515039625",
+    strip_prefix = "rules_gapic-0.28.1",
+    urls = [
+        "https://github.com/googleapis/rules_gapic/archive/v0.28.1.tar.gz",
+    ],
+)
+
+load("@rules_gapic//:repositories.bzl", "rules_gapic_repositories")
+
+rules_gapic_repositories()
