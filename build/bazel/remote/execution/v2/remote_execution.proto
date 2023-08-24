@@ -220,6 +220,7 @@ service ActionCache {
 // `{instance_name}/uploads/{uuid}/blobs/{digest_function/}{hash}/{size}{/optional_metadata}`
 //
 // Where:
+//
 // * `instance_name` is an identifier used to distinguish between the various
 //   instances on the server. Syntax and semantics of this field are defined
 //   by the server; Clients must not make any assumptions about it (e.g.,
@@ -248,6 +249,7 @@ service ActionCache {
 // `{instance_name}/uploads/{uuid}/compressed-blobs/{compressor}/{digest_function/}{uncompressed_hash}/{uncompressed_size}{/optional_metadata}`
 //
 // Where:
+//
 // * `instance_name`, `uuid`, `digest_function` and `optional_metadata` are
 //   defined as above.
 // * `compressor` is a lowercase string form of a `Compressor.Value` enum
@@ -301,6 +303,7 @@ service ActionCache {
 // `{instance_name}/compressed-blobs/{compressor}/{digest_function/}{uncompressed_hash}/{uncompressed_size}`
 //
 // Where:
+//
 // * `instance_name`, `compressor` and `digest_function` are defined as for
 //   uploads.
 // * `uncompressed_hash` and `uncompressed_size` refer to the
@@ -311,6 +314,7 @@ service ActionCache {
 //   surfacing an error to the user.
 //
 // When downloading compressed blobs:
+//
 // * `ReadRequest.read_offset` refers to the offset in the uncompressed form
 //   of the blob.
 // * Servers MUST return `INVALID_ARGUMENT` if `ReadRequest.read_limit` is
@@ -373,9 +377,8 @@ service ContentAddressableStorage {
   // Individual requests may return the following errors, additionally:
   //
   // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob.
-  // * `INVALID_ARGUMENT`: The
-  // [Digest][build.bazel.remote.execution.v2.Digest] does not match the
-  // provided data.
+  // * `INVALID_ARGUMENT`: The [Digest][build.bazel.remote.execution.v2.Digest]
+  //   does not match the provided data.
   rpc BatchUpdateBlobs(BatchUpdateBlobsRequest) returns (BatchUpdateBlobsResponse) {
     option (google.api.http) = { post: "/v2/{instance_name=**}/blobs:batchUpdate" body: "*" };
   }
@@ -443,6 +446,7 @@ service Capabilities {
   // remote endpoint.
   // Only the capabilities of the services supported by the endpoint will
   // be returned:
+  //
   // * Execution + CAS + Action Cache endpoints should return both
   //   CacheCapabilities and ExecutionCapabilities.
   // * Execution only endpoints should return ExecutionCapabilities.
@@ -1264,22 +1268,22 @@ message OutputDirectory {
   // instantiated on a local file system by scanning through it
   // sequentially:
   //
-  // - All directories with the same binary representation are stored
+  // * All directories with the same binary representation are stored
   //   exactly once.
-  // - All directories, apart from the root directory, are referenced by
+  // * All directories, apart from the root directory, are referenced by
   //   at least one parent directory.
-  // - Directories are stored in topological order, with parents being
+  // * Directories are stored in topological order, with parents being
   //   stored before the child. The root directory is thus the first to
   //   be stored.
   //
   // Additionally, the Tree MUST be encoded as a stream of records,
   // where each record has the following format:
   //
-  // - A tag byte, having one of the following two values:
-  //   - (1 << 3) | 2 == 0x0a: First record (the root directory).
-  //   - (2 << 3) | 2 == 0x12: Any subsequent records (child directories).
-  // - The size of the directory, encoded as a base 128 varint.
-  // - The contents of the directory, encoded as a binary serialized
+  // * A tag byte, having one of the following two values:
+  //   * (1 << 3) | 2 == 0x0a: First record (the root directory).
+  //   * (2 << 3) | 2 == 0x12: Any subsequent records (child directories).
+  // * The size of the directory, encoded as a base 128 varint.
+  // * The contents of the directory, encoded as a binary serialized
   //   Protobuf message.
   //
   // This encoding is a subset of the Protobuf wire format of the Tree
@@ -1852,10 +1856,9 @@ message DigestFunction {
     //
     // SHA256TREE hashes are computed as follows:
     //
-    // - For blobs that are 1024 bytes or smaller, the hash is computed
+    // * For blobs that are 1024 bytes or smaller, the hash is computed
     //   using the regular SHA-256 digest function.
-    //
-    // - For blobs that are more than 1024 bytes in size, the hash is
+    // * For blobs that are more than 1024 bytes in size, the hash is
     //   computed as follows:
     //
     //   1. The blob is partitioned into a left (leading) and right
@@ -2047,6 +2050,7 @@ message ToolDetails {
 //
 // * name: `build.bazel.remote.execution.v2.requestmetadata-bin`
 // * contents: the base64 encoded binary `RequestMetadata` message.
+//
 // Note: the gRPC library serializes binary headers encoded in base64 by
 // default (https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#requests).
 // Therefore, if the gRPC library is used to pass/retrieve this

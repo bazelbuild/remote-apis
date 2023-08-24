@@ -146,10 +146,9 @@ const (
 	//
 	// SHA256TREE hashes are computed as follows:
 	//
-	// - For blobs that are 1024 bytes or smaller, the hash is computed
+	// * For blobs that are 1024 bytes or smaller, the hash is computed
 	//   using the regular SHA-256 digest function.
-	//
-	// - For blobs that are more than 1024 bytes in size, the hash is
+	// * For blobs that are more than 1024 bytes in size, the hash is
 	//   computed as follows:
 	//
 	//   1. The blob is partitioned into a left (leading) and right
@@ -2039,22 +2038,22 @@ type OutputDirectory struct {
 	// instantiated on a local file system by scanning through it
 	// sequentially:
 	//
-	// - All directories with the same binary representation are stored
+	// * All directories with the same binary representation are stored
 	//   exactly once.
-	// - All directories, apart from the root directory, are referenced by
+	// * All directories, apart from the root directory, are referenced by
 	//   at least one parent directory.
-	// - Directories are stored in topological order, with parents being
+	// * Directories are stored in topological order, with parents being
 	//   stored before the child. The root directory is thus the first to
 	//   be stored.
 	//
 	// Additionally, the Tree MUST be encoded as a stream of records,
 	// where each record has the following format:
 	//
-	// - A tag byte, having one of the following two values:
-	//   - (1 << 3) | 2 == 0x0a: First record (the root directory).
-	//   - (2 << 3) | 2 == 0x12: Any subsequent records (child directories).
-	// - The size of the directory, encoded as a base 128 varint.
-	// - The contents of the directory, encoded as a binary serialized
+	// * A tag byte, having one of the following two values:
+	//   * (1 << 3) | 2 == 0x0a: First record (the root directory).
+	//   * (2 << 3) | 2 == 0x12: Any subsequent records (child directories).
+	// * The size of the directory, encoded as a base 128 varint.
+	// * The contents of the directory, encoded as a binary serialized
 	//   Protobuf message.
 	//
 	// This encoding is a subset of the Protobuf wire format of the Tree
@@ -4210,6 +4209,7 @@ func (x *ToolDetails) GetToolVersion() string {
 //
 // * name: `build.bazel.remote.execution.v2.requestmetadata-bin`
 // * contents: the base64 encoded binary `RequestMetadata` message.
+//
 // Note: the gRPC library serializes binary headers encoded in base64 by
 // default (https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#requests).
 // Therefore, if the gRPC library is used to pass/retrieve this
@@ -6574,6 +6574,14 @@ type ExecutionClient interface {
 	// operation completes, and then respond with the completed operation. The
 	// server MAY choose to stream additional updates as execution progresses,
 	// such as to provide an update as to the state of the execution.
+	//
+	// In addition to the cases describe for Execute, the WaitExecution method
+	// may fail as follows:
+	//
+	// * `NOT_FOUND`: The operation no longer exists due to any of a transient
+	//   condition, an unknown operation name, or if the server implements the
+	//   Operations API DeleteOperation method and it was called for the current
+	//   execution. The client should call `Execute` to retry.
 	WaitExecution(ctx context.Context, in *WaitExecutionRequest, opts ...grpc.CallOption) (Execution_WaitExecutionClient, error)
 }
 
@@ -6731,6 +6739,14 @@ type ExecutionServer interface {
 	// operation completes, and then respond with the completed operation. The
 	// server MAY choose to stream additional updates as execution progresses,
 	// such as to provide an update as to the state of the execution.
+	//
+	// In addition to the cases describe for Execute, the WaitExecution method
+	// may fail as follows:
+	//
+	// * `NOT_FOUND`: The operation no longer exists due to any of a transient
+	//   condition, an unknown operation name, or if the server implements the
+	//   Operations API DeleteOperation method and it was called for the current
+	//   execution. The client should call `Execute` to retry.
 	WaitExecution(*WaitExecutionRequest, Execution_WaitExecutionServer) error
 }
 
@@ -7015,9 +7031,8 @@ type ContentAddressableStorageClient interface {
 	// Individual requests may return the following errors, additionally:
 	//
 	// * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob.
-	// * `INVALID_ARGUMENT`: The
-	// [Digest][build.bazel.remote.execution.v2.Digest] does not match the
-	// provided data.
+	// * `INVALID_ARGUMENT`: The [Digest][build.bazel.remote.execution.v2.Digest]
+	//   does not match the provided data.
 	BatchUpdateBlobs(ctx context.Context, in *BatchUpdateBlobsRequest, opts ...grpc.CallOption) (*BatchUpdateBlobsResponse, error)
 	// Download many blobs at once.
 	//
@@ -7166,9 +7181,8 @@ type ContentAddressableStorageServer interface {
 	// Individual requests may return the following errors, additionally:
 	//
 	// * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob.
-	// * `INVALID_ARGUMENT`: The
-	// [Digest][build.bazel.remote.execution.v2.Digest] does not match the
-	// provided data.
+	// * `INVALID_ARGUMENT`: The [Digest][build.bazel.remote.execution.v2.Digest]
+	//   does not match the provided data.
 	BatchUpdateBlobs(context.Context, *BatchUpdateBlobsRequest) (*BatchUpdateBlobsResponse, error)
 	// Download many blobs at once.
 	//
@@ -7348,6 +7362,7 @@ type CapabilitiesClient interface {
 	// remote endpoint.
 	// Only the capabilities of the services supported by the endpoint will
 	// be returned:
+	//
 	// * Execution + CAS + Action Cache endpoints should return both
 	//   CacheCapabilities and ExecutionCapabilities.
 	// * Execution only endpoints should return ExecutionCapabilities.
@@ -7380,6 +7395,7 @@ type CapabilitiesServer interface {
 	// remote endpoint.
 	// Only the capabilities of the services supported by the endpoint will
 	// be returned:
+	//
 	// * Execution + CAS + Action Cache endpoints should return both
 	//   CacheCapabilities and ExecutionCapabilities.
 	// * Execution only endpoints should return ExecutionCapabilities.
