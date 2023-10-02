@@ -201,6 +201,11 @@ message FetchBlobRequest {
   //
   // Specified qualifier names *MUST* be unique.
   repeated Qualifier qualifiers = 5;
+
+  // The digest function the server must use to compute the digest.
+  //
+  // If unset, the server SHOULD default to SHA256.
+  build.bazel.remote.execution.v2.DigestFunction.Value digest_function = 6;
 }
 
 // A response message for
@@ -402,6 +407,15 @@ message PushBlobRequest {
   // indirectly referencing unavailable blobs.
   repeated build.bazel.remote.execution.v2.Digest references_blobs = 6;
   repeated build.bazel.remote.execution.v2.Digest references_directories = 7;
+
+  // The digest function that was used to compute the blob digest.
+  //
+  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
+  // that case the server SHOULD infer the digest function using the
+  // length of the action digest hash and the digest functions announced
+  // in the server's capabilities.
+  build.bazel.remote.execution.v2.DigestFunction.Value digest_function = 8;
 }
 
 // A response message for
@@ -442,6 +456,15 @@ message PushDirectoryRequest {
   // indirectly referencing unavailable blobs.
   repeated build.bazel.remote.execution.v2.Digest references_blobs = 6;
   repeated build.bazel.remote.execution.v2.Digest references_directories = 7;
+
+  // The digest function that was used to compute blob digests.
+  //
+  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
+  // that case the server SHOULD infer the digest function using the
+  // length of the action digest hash and the digest functions announced
+  // in the server's capabilities.
+  build.bazel.remote.execution.v2.DigestFunction.Value digest_function = 8;
 }
 
 // A response message for
