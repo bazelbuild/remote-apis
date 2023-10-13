@@ -1984,7 +1984,7 @@ message Compressor {
     // not need to advertise it.
     IDENTITY = 0;
 
-    // Zstandard compression.
+    // Zstandard compression without dictionary.
     ZSTD = 1;
 
     // RFC 1951 Deflate. This format is identical to what is used by ZIP
@@ -1997,7 +1997,28 @@ message Compressor {
 
     // Brotli compression.
     BROTLI = 3;
+
+    // Zstandard compression with dictionary.
+    //
+    // When this is used, the server MUST advertise the dictionaries by
+    // including
+    // [ZstdDictionaryRegistry][build.bazel.remote.execution.v2.ZstdDictionaryRegistry]
+    // digest in CacheCapabilities.
+    ZSTD_DICT = 4;
   }
+}
+
+message ZstdDictionaryRegistry {
+  // Each file respresent a single Zstandard dictionary
+  // with name being the `dictId` that was added to the header
+  // of the compressed file.
+  //
+  // A special file with name `default` is used to represent the
+  // default dictionary that is used when no `dictId` is specified.
+  // Clients SHOULD prefer to use the default dictionary when possible.
+  //
+  // The `default` dictionary MUST be present.
+  repeated FileNode dictionaries = 1;
 }
 
 // Capabilities of the remote cache system.
@@ -2033,6 +2054,11 @@ message CacheCapabilities {
   // [BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs]
   // requests.
   repeated Compressor.Value supported_batch_update_compressors = 7;
+
+  // The digest of the
+  // [ZstdDictionaryRegistry][build.bazel.remote.execution.v2.ZstdDictionaryRegistry]
+  // that contains all the dictionaries supported by the remote cache.
+  Digest zstd_dictionary_registry = 8;
 }
 
 // Capabilities of the remote execution system.
