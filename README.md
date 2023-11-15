@@ -50,6 +50,7 @@ These tools use the Remote Execution API to distribute builds to workers.
 * [Recc](https://gitlab.com/bloomberg/recc)
 * [Reclient](https://github.com/bazelbuild/reclient)
 * [Siso](https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/build/siso/)
+* [trexe](https://gitlab.com/BuildGrid/trexe)
 
 ### Servers
 These applications implement the Remote Execution API to serve build requests
@@ -58,6 +59,7 @@ workers implement the Remote Worker API.
 
 * [bazel-remote](https://github.com/buchgr/bazel-remote) (open source, cache only)
 * [Buildbarn](https://github.com/buildbarn) (open source)
+* [buildbox-casd](https://gitlab.com/BuildGrid/buildbox/buildbox-casd) (open source)
 * [BuildBuddy](https://www.buildbuddy.io/) (commercial & open source)
 * [Buildfarm](https://github.com/bazelbuild/bazel-buildfarm) (open source)
 * [BuildGrid](https://buildgrid.build/) (open source)
