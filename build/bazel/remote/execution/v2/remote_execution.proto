@@ -703,6 +703,33 @@ message Command {
   // property is not recognized by the server, the server will return an
   // `INVALID_ARGUMENT`.
   repeated string output_node_properties = 8;
+
+  enum OutputDirectoryFormat {
+    // The client is only interested in receiving output directories in
+    // the form of a single Tree object, using the `tree_digest` field.
+    TREE_ONLY = 0;
+
+    // The client is only interested in receiving output directories in
+    // the form of a hierarchy of separately stored Directory objects,
+    // using the `root_directory_digest` field.
+    DIRECTORY_ONLY = 1;
+
+    // The client is interested in receiving output directories both in
+    // the form of a single Tree object and a hierarchy of separately
+    // stored Directory objects, using both the `tree_digest` and
+    // `root_directory_digest` fields.
+    TREE_AND_DIRECTORY = 2;
+  }
+
+  // The format that the worker should use to store the contents of
+  // output directories.
+  //
+  // In case this field is set to a value that is not supported by the
+  // worker, the worker SHOULD interpret this field as TREE_ONLY. The
+  // worker MAY store output directories in formats that are a superset
+  // of what was requested (e.g., interpreting DIRECTORY_ONLY as
+  // TREE_AND_DIRECTORY).
+  OutputDirectoryFormat output_directory_format = 9;
 }
 
 // A `Platform` is a set of requirements, such as hardware, operating system, or
@@ -1295,6 +1322,15 @@ message OutputDirectory {
   // compute their digests, constructing the Tree object manually avoids
   // redundant marshaling.
   bool is_topologically_sorted = 4;
+
+  // The digest of the encoded
+  // [Directory][build.bazel.remote.execution.v2.Directory] proto
+  // containing the contents the directory's root.
+  //
+  // If both `tree_digest` and `root_directory_digest` are set, this
+  // field MUST match the digest of the root directory contained in the
+  // Tree message.
+  Digest root_directory_digest = 5;
 }
 
 // An `OutputSymlink` is similar to a
