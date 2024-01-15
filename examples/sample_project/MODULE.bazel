@@ -36,7 +36,6 @@ bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.0-alpha2")
 
 # Go example dependencies; these are necessary if the project should build
 # against generated REAPI Go code
-bazel_dep(name = "rules_proto_grpc_go", version = "5.0.0-alpha2")
 bazel_dep(name = "gazelle", version = "0.35.0")
 bazel_dep(name = "rules_go", version = "0.44.2")
 
@@ -48,3 +47,7 @@ use_repo(
     "org_golang_google_genproto_googleapis_api",
     "org_golang_google_genproto_googleapis_rpc",
 )
+
+# Java example dependencies; these are necessary if the project should build
+# against the generated REAPI Java code
+bazel_dep(name = "rules_java", version = "7.3.2")

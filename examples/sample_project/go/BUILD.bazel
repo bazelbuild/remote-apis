@@ -1,19 +1,15 @@
-load("@rules_proto_grpc_go//:defs.bzl", "go_grpc_library")
-
-# Gazelle seems to want to override these rules with `go_proto_library` coming
-# from `rules_go`, with a compiler attribute to add the gRPC compiler. It's not
-# clear if that is the canonical way, so this example has hand-written rules and
-# Gazelle is told to not touch this file.
-#
-# gazelle:ignore
+load("@rules_go//proto:def.bzl", "go_grpc_library")
 
 # REAPI proto libraries
+
+# TODO(https://github.com/bazelbuild/bazel-gazelle/issues/1709): Remove `# keep`
+# directives once gazelle stops mis-generating these libraries
 
 go_grpc_library(
     name = "semver_go_grpc",
     importpath = "github.com/bazelbuild/remote-apis/build/bazel/semver",
     protos = ["@remote_execution_apis//build/bazel/semver:semver_proto"],
-)
+)  # keep
 
 go_grpc_library(
     name = "remote_execution_go_grpc",
@@ -26,13 +22,13 @@ go_grpc_library(
         "@org_golang_google_genproto_googleapis_rpc//http",
         "@org_golang_google_genproto_googleapis_rpc//status",
     ],
-)
+)  # keep
 
 go_grpc_library(
     name = "remote_logstream_go_grpc",
     importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/logstream/v1",
     protos = ["@remote_execution_apis//build/bazel/remote/logstream/v1:remote_logstream_proto"],
-)
+)  # keep
 
 go_grpc_library(
     name = "remote_asset_go_grpc",
@@ -43,4 +39,4 @@ go_grpc_library(
         "@org_golang_google_genproto_googleapis_api//annotations",
         "@org_golang_google_genproto_googleapis_rpc//status",
     ],
-)
+)  # keep
