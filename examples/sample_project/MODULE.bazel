@@ -1,3 +1,7 @@
+module(
+    name = "remote_execution_apis_example",
+)
+
 bazel_dep(name = "remote_execution_apis", version = "0.0.0.rpg.version.placeholder")
 local_path_override(
     module_name = "remote_execution_apis",

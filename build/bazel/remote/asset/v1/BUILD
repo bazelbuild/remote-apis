@@ -17,23 +17,3 @@ proto_library(
         "@com_google_googleapis//google/rpc:status_proto",
     ],
 )
-
-alias(
-    name = "remote_asset_java_proto",
-    actual = "//build/bazel/remote/asset/v1/java:remote_asset_java_proto",
-)
-
-alias(
-    name = "remote_asset_cc_proto",
-    actual = "//build/bazel/remote/asset/v1/cc:remote_asset_cc_grpc",
-)
-
-alias(
-    name = "remote_asset_go_proto",
-    actual = "//build/bazel/remote/asset/v1/go:remote_asset_go_proto",
-)
-
-alias(
-    name = "go_default_library",
-    actual = "//build/bazel/remote/asset/v1/go:go_default_library",
-)
