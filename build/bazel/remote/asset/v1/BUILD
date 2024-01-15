@@ -1,6 +1,7 @@
-package(default_visibility = ["//visibility:public"])
-
 load("@rules_proto//proto:defs.bzl", "proto_library")
+
+# gazelle:ignore
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 

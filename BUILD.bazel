@@ -1,0 +1,10 @@
+load("@gazelle//:def.bzl", "gazelle")
+
+# gazelle:prefix github.com/bazelbuild/remote-apis
+
+# gazelle:resolve proto google/api/annotations.proto @googleapis//google/api:annotations_proto
+# gazelle:resolve proto go google/api/annotations.proto @org_golang_google_genproto//googleapis/api/annotations
+
+gazelle(
+    name = "gazelle",
+)

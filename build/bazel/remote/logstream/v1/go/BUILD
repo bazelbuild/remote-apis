@@ -1,7 +1,7 @@
-package(default_visibility = ["//build/bazel/remote/logstream/v1:__pkg__"])
+load("@rules_go//go:def.bzl", "go_library")
+load("@rules_go//proto:def.bzl", "go_proto_library")
 
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
+package(default_visibility = ["//build/bazel/remote/logstream/v1:__pkg__"])
 
 go_proto_library(
     name = "remote_logstream_go_proto",

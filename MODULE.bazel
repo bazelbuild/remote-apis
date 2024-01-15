@@ -1,0 +1,50 @@
+"""remote-apis dependencies"""
+
+module(
+    name = "remote_execution_apis",
+    repo_name = "com_github_bazelbuild_remote_apis",
+)
+
+bazel_dep(name = "rules_go", version = "0.44.2")
+bazel_dep(name = "gazelle", version = "0.35.0")
+bazel_dep(name = "rules_proto", version = "6.0.0-rc1")
+bazel_dep(name = "rules_proto_grpc", version = "5.0.0-alpha2")
+bazel_dep(name = "protobuf", version = "21.7", repo_name = "com_google_protobuf")
+
+go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
+
+go_sdk.download(
+    # Latest version as of 2024-01-14
+    version = "1.21.6",
+)
+
+go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
+go_deps.from_file(go_mod = "//:go.mod")
+
+use_repo(
+    go_deps,
+    "org_golang_google_genproto",
+    "org_golang_google_grpc",
+    "org_golang_google_protobuf",
+)
+
+# googleapis workaround for lack of bzlmod support
+# From: https://github.com/bazelbuild/rules_go/issues/3685#issuecomment-1711854475
+#
+# TODO: Drop this once googleapis has official bzlmod support
+bazel_dep(name = "com_google_googleapis", version = "64926d52febbf298cb82a8f472ade4a3969ba922")
+archive_override(
+    module_name = "com_google_googleapis",
+    integrity = "sha256-nRqTDnZ8k8glOYuPhpLso/41O5qq3t+88fyiKCyF34g=",
+    patch_strip = 1,
+    patches = [
+        "patches/googleapis_add_bzlmod_support.patch",
+    ],
+    strip_prefix = "googleapis-64926d52febbf298cb82a8f472ade4a3969ba922",
+    urls = [
+        "https://github.com/googleapis/googleapis/archive/64926d52febbf298cb82a8f472ade4a3969ba922.zip",
+    ],
+)
+switched_rules = use_extension("@com_google_googleapis//:extensions.bzl", "switched_rules")
+switched_rules.use_languages()
+use_repo(switched_rules, "com_google_googleapis_imports")

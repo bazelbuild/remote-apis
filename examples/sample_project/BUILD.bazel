@@ -1,0 +1,11 @@
+load("@rules_proto_grpc_cpp//:defs.bzl", "cpp_grpc_library")
+
+cpp_grpc_library(
+    name = "semver_cpp_grpc",
+    protos = ["@remote_execution_apis//build/bazel/semver:semver_proto"],
+)
+
+cpp_grpc_library(
+    name = "remote_execution_cpp_grpc",
+    protos = ["@remote_execution_apis//build/bazel/remote/execution/v2:remote_execution_proto"],
+)

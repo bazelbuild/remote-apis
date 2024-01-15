@@ -1,0 +1,36 @@
+#bazel_dep(name = "abseil-cpp", version = "20230802.0")
+bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.0-alpha2")
+bazel_dep(name = "remote_execution_apis", version = "0.0.0.rpg.version.placeholder")
+bazel_dep(name = "toolchains_llvm", version = "0.10.3")
+
+local_path_override(
+    module_name = "remote_execution_apis",
+    path = "../..",
+)
+
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
+llvm.toolchain(
+    # This is a version of LLVM that builds absl and upb successfully with their
+    # default compile options.
+    #
+    # TODO: Update this to the latest version of LLVM possible
+    llvm_version = "13.0.0",
+)
+
+use_repo(llvm, "llvm_toolchain")
+
+register_toolchains("@llvm_toolchain//:all")
+
+bazel_dep(name = "com_google_googleapis", version = "64926d52febbf298cb82a8f472ade4a3969ba922")
+archive_override(
+    module_name = "com_google_googleapis",
+    integrity = "sha256-nRqTDnZ8k8glOYuPhpLso/41O5qq3t+88fyiKCyF34g=",
+    patch_strip = 1,
+    patches = [
+        "patches/googleapis_add_bzlmod_support.patch",
+    ],
+    strip_prefix = "googleapis-64926d52febbf298cb82a8f472ade4a3969ba922",
+    urls = [
+        "https://github.com/googleapis/googleapis/archive/64926d52febbf298cb82a8f472ade4a3969ba922.zip",
+    ],
+)
