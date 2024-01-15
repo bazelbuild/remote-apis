@@ -1,3 +1,4 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
 load("@rules_proto_grpc_cpp//:defs.bzl", "cpp_grpc_library")
 
 # protobuf proto libraries
@@ -67,5 +68,15 @@ cpp_grpc_library(
         ":remote_execution_cpp_grpc",
         # TODO: It's likely that #includes are being found via the above deps
         # without being listed here explicitly
+    ],
+)
+
+cc_binary(
+    name = "example",
+    srcs = ["example.cpp"],
+    deps = [
+        ":remote_asset_cpp_grpc",
+        ":remote_execution_cpp_grpc",
+        ":remote_logstream_cpp_grpc",
     ],
 )
