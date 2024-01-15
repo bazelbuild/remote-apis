@@ -1,0 +1,13 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "deps",
+    srcs = ["deps.go"],
+    importpath = "github.com/minorhacks/garage/go/deps",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@org_golang_google_genproto//googleapis/longrunning",
+        "@org_golang_google_genproto_googleapis_api//annotations",
+        "@org_golang_google_genproto_googleapis_rpc//status",
+    ],
+)

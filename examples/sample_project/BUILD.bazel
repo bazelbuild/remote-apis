@@ -1,0 +1,11 @@
+load("@gazelle//:def.bzl", "gazelle")
+
+# gazelle:prefix github.com/minorhacks/garage
+gazelle(
+    name = "gazelle",
+)
+
+alias(
+    name = "go_build_update",
+    actual = "gazelle",
+)

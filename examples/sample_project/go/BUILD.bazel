@@ -1,0 +1,46 @@
+load("@rules_proto_grpc_go//:defs.bzl", "go_grpc_library")
+
+# Gazelle seems to want to override these rules with `go_proto_library` coming
+# from `rules_go`, with a compiler attribute to add the gRPC compiler. It's not
+# clear if that is the canonical way, so this example has hand-written rules and
+# Gazelle is told to not touch this file.
+#
+# gazelle:ignore
+
+# REAPI proto libraries
+
+go_grpc_library(
+    name = "semver_go_grpc",
+    importpath = "github.com/bazelbuild/remote-apis/build/bazel/semver",
+    protos = ["@remote_execution_apis//build/bazel/semver:semver_proto"],
+)
+
+go_grpc_library(
+    name = "remote_execution_go_grpc",
+    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2",
+    protos = ["@remote_execution_apis//build/bazel/remote/execution/v2:remote_execution_proto"],
+    deps = [
+        ":semver_go_grpc",
+        "@org_golang_google_genproto//googleapis/longrunning",
+        "@org_golang_google_genproto_googleapis_api//annotations",
+        "@org_golang_google_genproto_googleapis_rpc//http",
+        "@org_golang_google_genproto_googleapis_rpc//status",
+    ],
+)
+
+go_grpc_library(
+    name = "remote_logstream_go_grpc",
+    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/logstream/v1",
+    protos = ["@remote_execution_apis//build/bazel/remote/logstream/v1:remote_logstream_proto"],
+)
+
+go_grpc_library(
+    name = "remote_asset_go_grpc",
+    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/asset/v1",
+    protos = ["@remote_execution_apis//build/bazel/remote/asset/v1:remote_asset_proto"],
+    deps = [
+        ":remote_execution_go_grpc",
+        "@org_golang_google_genproto_googleapis_api//annotations",
+        "@org_golang_google_genproto_googleapis_rpc//status",
+    ],
+)
