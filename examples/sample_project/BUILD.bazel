@@ -54,3 +54,18 @@ cpp_grpc_library(
         ":semver_cpp_grpc",
     ],
 )
+
+cpp_grpc_library(
+    name = "remote_logstream_cpp_grpc",
+    protos = ["@remote_execution_apis//build/bazel/remote/logstream/v1:remote_logstream_proto"],
+)
+
+cpp_grpc_library(
+    name = "remote_asset_cpp_grpc",
+    protos = ["@remote_execution_apis//build/bazel/remote/asset/v1:remote_asset_proto"],
+    deps = [
+        ":remote_execution_cpp_grpc",
+        # TODO: It's likely that #includes are being found via the above deps
+        # without being listed here explicitly
+    ],
+)
