@@ -1,3 +1,4 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
 load("@rules_go//proto:def.bzl", "go_grpc_library")
 
 # REAPI proto libraries
@@ -40,3 +41,21 @@ go_grpc_library(
         "@org_golang_google_genproto_googleapis_rpc//status",
     ],
 )  # keep
+
+go_library(
+    name = "go_lib",
+    srcs = ["example.go"],
+    importpath = "github.com/bazelbuild/remote-apis/example/sample_project/go",
+    visibility = ["//visibility:private"],
+    deps = [
+        ":remote_asset_go_grpc",
+        ":remote_execution_go_grpc",
+        ":remote_logstream_go_grpc",
+    ],
+)
+
+go_binary(
+    name = "go",
+    embed = [":go_lib"],
+    visibility = ["//visibility:public"],
+)
