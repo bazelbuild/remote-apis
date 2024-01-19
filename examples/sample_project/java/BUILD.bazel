@@ -1,33 +1,11 @@
-load("@rules_java//java:defs.bzl", "java_binary", "java_proto_library")
-
-# REAPI proto libraries
-
-java_proto_library(
-    name = "semver_java_grpc",
-    deps = ["@remote_execution_apis//build/bazel/semver:semver_proto"],
-)
-
-java_proto_library(
-    name = "remote_execution_java_grpc",
-    deps = ["@remote_execution_apis//build/bazel/remote/execution/v2:remote_execution_proto"],
-)
-
-java_proto_library(
-    name = "remote_logstream_java_grpc",
-    deps = ["@remote_execution_apis//build/bazel/remote/logstream/v1:remote_logstream_proto"],
-)
-
-java_proto_library(
-    name = "remote_asset_java_grpc",
-    deps = ["@remote_execution_apis//build/bazel/remote/asset/v1:remote_asset_proto"],
-)
+load("@rules_java//java:defs.bzl", "java_binary")
 
 java_binary(
     name = "Example",
     srcs = ["Example.java"],
     deps = [
-        ":remote_asset_java_grpc",
-        ":remote_execution_java_grpc",
-        ":remote_logstream_java_grpc",
+        "@remote_execution_apis//build/bazel/remote/asset/v1:remote_asset_java_grpc",
+        "@remote_execution_apis//build/bazel/remote/execution/v2:remote_execution_java_grpc",
+        "@remote_execution_apis//build/bazel/remote/logstream/v1:remote_logstream_java_grpc",
     ],
 )

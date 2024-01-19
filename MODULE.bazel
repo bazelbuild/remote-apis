@@ -9,6 +9,7 @@ module(
 bazel_dep(name = "gazelle", version = "0.35.0")
 bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "rules_go", version = "0.44.2")
+bazel_dep(name = "rules_java", version = "7.3.2")
 bazel_dep(name = "rules_proto", version = "6.0.0-rc1")
 bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.0-alpha2")
 bazel_dep(name = "protobuf", version = "21.7", repo_name = "com_google_protobuf")

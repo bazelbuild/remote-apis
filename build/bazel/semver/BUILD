@@ -1,6 +1,7 @@
+load("@rules_go//proto:def.bzl", "go_grpc_library")
+load("@rules_java//java:defs.bzl", "java_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@rules_proto_grpc_cpp//:defs.bzl", "cpp_grpc_library")
-load("@rules_go//proto:def.bzl", "go_grpc_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -23,6 +24,12 @@ go_grpc_library(
 cpp_grpc_library(
     name = "semver_cpp_grpc",
     protos = [":semver_proto"],
+)
+
+# java targets
+java_proto_library(
+    name = "semver_java_grpc",
+    deps = [":semver_proto"],
 )
 
 # TODO: Should the dependencies below be moved/removed in favor of a third-party

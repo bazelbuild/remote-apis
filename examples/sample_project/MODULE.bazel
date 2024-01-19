@@ -2,6 +2,19 @@ module(
     name = "remote_execution_apis_example",
 )
 
+# C++ example dependencies; these are necessary if the project should build
+# against generated REAPI C++ code
+bazel_dep(name = "rules_cc", version = "0.0.9")
+
+# Go example dependencies; these are necessary if the project should build
+# against generated REAPI Go code
+bazel_dep(name = "gazelle", version = "0.35.0")
+bazel_dep(name = "rules_go", version = "0.44.2")
+
+# Java example dependencies; these are necessary if the project should build
+# against the generated REAPI Java code
+bazel_dep(name = "rules_java", version = "7.3.2")
+
 bazel_dep(name = "remote_execution_apis", version = "0.0.0.rpg.version.placeholder")
 local_path_override(
     module_name = "remote_execution_apis",
@@ -20,6 +33,7 @@ llvm.toolchain(
 use_repo(llvm, "llvm_toolchain")
 register_toolchains("@llvm_toolchain//:all")
 
+# TODO: Remove this once googleapis is a bzlmod module
 bazel_dep(name = "com_google_googleapis", version = "64926d52febbf298cb82a8f472ade4a3969ba922")
 archive_override(
     module_name = "com_google_googleapis",
@@ -34,15 +48,6 @@ archive_override(
     ],
 )
 
-# C++ example dependencies; these are necessary if the project should build
-# against generated REAPI C++ code
-bazel_dep(name = "rules_cc", version = "0.0.9")
-
-# Go example dependencies; these are necessary if the project should build
-# against generated REAPI Go code
-bazel_dep(name = "gazelle", version = "0.35.0")
-bazel_dep(name = "rules_go", version = "0.44.2")
-
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")
 use_repo(
@@ -51,7 +56,3 @@ use_repo(
     "org_golang_google_genproto_googleapis_api",
     "org_golang_google_genproto_googleapis_rpc",
 )
-
-# Java example dependencies; these are necessary if the project should build
-# against the generated REAPI Java code
-bazel_dep(name = "rules_java", version = "7.3.2")

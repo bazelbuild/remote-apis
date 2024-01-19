@@ -1,4 +1,5 @@
 load("@rules_go//proto:def.bzl", "go_grpc_library")
+load("@rules_java//java:defs.bzl", "java_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@rules_proto_grpc_cpp//:defs.bzl", "cpp_grpc_library")
 
@@ -37,4 +38,9 @@ cpp_grpc_library(
     deps = [
         "//build/bazel/remote/execution/v2:remote_execution_cpp_grpc",
     ],
+)
+
+java_proto_library(
+    name = "remote_asset_java_grpc",
+    deps = [":remote_asset_proto"],
 )

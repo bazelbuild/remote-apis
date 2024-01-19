@@ -1,6 +1,7 @@
 # gazelle:ignore
 
 load("@rules_go//proto:def.bzl", "go_grpc_library")
+load("@rules_java//java:defs.bzl", "java_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 load("@rules_proto_grpc_cpp//:defs.bzl", "cpp_grpc_library")
 
@@ -46,4 +47,9 @@ cpp_grpc_library(
         "//build/bazel/semver:operations_cpp_grpc",
         "//build/bazel/semver:semver_cpp_grpc",
     ],
+)
+
+java_proto_library(
+    name = "remote_execution_java_grpc",
+    deps = [":remote_execution_proto"],
 )
