@@ -3,6 +3,7 @@ module github.com/bazelbuild/remote-apis/examples/sample_project
 go 1.21.6
 
 require (
+	github.com/bazelbuild/remote-apis v0.0.0-20231221155620-d20ae8b97fd3
 	google.golang.org/genproto v0.0.0-20240108191215-35c7eff3a6b1
 	google.golang.org/genproto/googleapis/api v0.0.0-20240108191215-35c7eff3a6b1
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240108191215-35c7eff3a6b1

@@ -1,46 +1,9 @@
 load("@rules_go//go:def.bzl", "go_binary", "go_library")
-load("@rules_go//proto:def.bzl", "go_grpc_library")
 
-# REAPI proto libraries
-
-# TODO(https://github.com/bazelbuild/bazel-gazelle/issues/1709): Remove `# keep`
-# directives once gazelle stops mis-generating these libraries
-
-go_grpc_library(
-    name = "semver_go_grpc",
-    importpath = "github.com/bazelbuild/remote-apis/build/bazel/semver",
-    protos = ["@remote_execution_apis//build/bazel/semver:semver_proto"],
-)  # keep
-
-go_grpc_library(
-    name = "remote_execution_go_grpc",
-    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2",
-    protos = ["@remote_execution_apis//build/bazel/remote/execution/v2:remote_execution_proto"],
-    deps = [
-        ":semver_go_grpc",
-        "@org_golang_google_genproto//googleapis/longrunning",
-        "@org_golang_google_genproto_googleapis_api//annotations",
-        "@org_golang_google_genproto_googleapis_rpc//http",
-        "@org_golang_google_genproto_googleapis_rpc//status",
-    ],
-)  # keep
-
-go_grpc_library(
-    name = "remote_logstream_go_grpc",
-    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/logstream/v1",
-    protos = ["@remote_execution_apis//build/bazel/remote/logstream/v1:remote_logstream_proto"],
-)  # keep
-
-go_grpc_library(
-    name = "remote_asset_go_grpc",
-    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/asset/v1",
-    protos = ["@remote_execution_apis//build/bazel/remote/asset/v1:remote_asset_proto"],
-    deps = [
-        ":remote_execution_go_grpc",
-        "@org_golang_google_genproto_googleapis_api//annotations",
-        "@org_golang_google_genproto_googleapis_rpc//status",
-    ],
-)  # keep
+# Gazelle seems to want to add package-level deps that don't exist to this
+# go_lib
+#
+# gazelle:ignore
 
 go_library(
     name = "go_lib",
@@ -48,9 +11,9 @@ go_library(
     importpath = "github.com/bazelbuild/remote-apis/example/sample_project/go",
     visibility = ["//visibility:private"],
     deps = [
-        ":remote_asset_go_grpc",
-        ":remote_execution_go_grpc",
-        ":remote_logstream_go_grpc",
+        "@remote_execution_apis//build/bazel/remote/asset/v1:remote_asset_go_grpc",  # keep
+        "@remote_execution_apis//build/bazel/remote/execution/v2:remote_execution_go_grpc",  # keep
+        "@remote_execution_apis//build/bazel/remote/logstream/v1:remote_logstream_go_grpc",  # keep
     ],
 )
 
