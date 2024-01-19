@@ -4,8 +4,8 @@ java_binary(
     name = "Example",
     srcs = ["Example.java"],
     deps = [
-        "@remote_execution_apis//build/bazel/remote/asset/v1:remote_asset_java_grpc",
-        "@remote_execution_apis//build/bazel/remote/execution/v2:remote_execution_java_grpc",
-        "@remote_execution_apis//build/bazel/remote/logstream/v1:remote_logstream_java_grpc",
+        "@bazel_remote_apis//build/bazel/remote/asset/v1:remote_asset_java_grpc",
+        "@bazel_remote_apis//build/bazel/remote/execution/v2:remote_execution_java_grpc",
+        "@bazel_remote_apis//build/bazel/remote/logstream/v1:remote_logstream_java_grpc",
     ],
 )

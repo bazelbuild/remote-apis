@@ -11,9 +11,9 @@ go_library(
     importpath = "github.com/bazelbuild/remote-apis/example/sample_project/go",
     visibility = ["//visibility:private"],
     deps = [
-        "@remote_execution_apis//build/bazel/remote/asset/v1:remote_asset_go_grpc",  # keep
-        "@remote_execution_apis//build/bazel/remote/execution/v2:remote_execution_go_grpc",  # keep
-        "@remote_execution_apis//build/bazel/remote/logstream/v1:remote_logstream_go_grpc",  # keep
+        "@bazel_remote_apis//build/bazel/remote/asset/v1:remote_asset_go_grpc",  # keep
+        "@bazel_remote_apis//build/bazel/remote/execution/v2:remote_execution_go_grpc",  # keep
+        "@bazel_remote_apis//build/bazel/remote/logstream/v1:remote_logstream_go_grpc",  # keep
     ],
 )
 

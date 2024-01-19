@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "694e9d8b9e8b86583a0fe0161328f8fc1eae3931d2d34ca593bccca5c8213eb8",
+  "moduleFileHash": "2334d8b2c0629b0d575f24849a3c7300f2e41418a3b0725375c548f1613c8d88",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -14,14 +14,14 @@
   },
   "localOverrideHashes": {
     "bazel_tools": "922ea6752dc9105de5af957f7a99a6933c0a6a712d23df6aad16a9c399f7e787",
-    "remote_execution_apis": "7a4bc71a06168b273410ad5d9f93b510e905d820c27823afbc99f25d58e22633"
+    "bazel_remote_apis": "06b97e10c8ce551419240c4286ff90392b70dab3a0fd3ed821059a802f284244"
   },
   "moduleDepGraph": {
     "<root>": {
-      "name": "remote_execution_apis_example",
+      "name": "bazel_remote_apis_example",
       "version": "",
       "key": "<root>",
-      "repoName": "remote_execution_apis_example",
+      "repoName": "bazel_remote_apis_example",
       "executionPlatformsToRegister": [],
       "toolchainsToRegister": [
         "@llvm_toolchain//:all"
@@ -95,7 +95,7 @@
         "gazelle": "gazelle@0.35.0",
         "rules_go": "rules_go@0.44.2",
         "rules_java": "rules_java@7.3.2",
-        "remote_execution_apis": "remote_execution_apis@_",
+        "bazel_remote_apis": "bazel_remote_apis@_",
         "toolchains_llvm": "toolchains_llvm@0.10.3",
         "com_google_googleapis": "com_google_googleapis@_",
         "bazel_tools": "bazel_tools@_",
@@ -482,10 +482,10 @@
         }
       }
     },
-    "remote_execution_apis@_": {
-      "name": "remote_execution_apis",
+    "bazel_remote_apis@_": {
+      "name": "bazel_remote_apis",
       "version": "",
-      "key": "remote_execution_apis@_",
+      "key": "bazel_remote_apis@_",
       "repoName": "com_github_bazelbuild_remote_apis",
       "executionPlatformsToRegister": [],
       "toolchainsToRegister": [],
@@ -493,9 +493,9 @@
         {
           "extensionBzlFile": "@gazelle//:extensions.bzl",
           "extensionName": "go_deps",
-          "usingModule": "remote_execution_apis@_",
+          "usingModule": "bazel_remote_apis@_",
           "location": {
-            "file": "@@remote_execution_apis~override//:MODULE.bazel",
+            "file": "@@bazel_remote_apis~override//:MODULE.bazel",
             "line": 34,
             "column": 24
           },
@@ -515,7 +515,7 @@
               },
               "devDependency": false,
               "location": {
-                "file": "@@remote_execution_apis~override//:MODULE.bazel",
+                "file": "@@bazel_remote_apis~override//:MODULE.bazel",
                 "line": 35,
                 "column": 18
               }
@@ -527,9 +527,9 @@
         {
           "extensionBzlFile": "@com_google_googleapis//:extensions.bzl",
           "extensionName": "switched_rules",
-          "usingModule": "remote_execution_apis@_",
+          "usingModule": "bazel_remote_apis@_",
           "location": {
-            "file": "@@remote_execution_apis~override//:MODULE.bazel",
+            "file": "@@bazel_remote_apis~override//:MODULE.bazel",
             "line": 62,
             "column": 31
           },
@@ -543,7 +543,7 @@
               "attributeValues": {},
               "devDependency": false,
               "location": {
-                "file": "@@remote_execution_apis~override//:MODULE.bazel",
+                "file": "@@bazel_remote_apis~override//:MODULE.bazel",
                 "line": 63,
                 "column": 29
               }
@@ -1954,12 +1954,12 @@
         "bzlTransitiveDigest": "zP01muRk4s4xWGK3gNPXOyDMQkOPsIhu99akeKWFFQ0=",
         "accumulatedFileDigests": {
           "@@//:go.mod": "7041006ed0cdd66851f17ce4ae44c9cd79c49cb4b595aa2c1454e949913d9e1a",
-          "@@remote_execution_apis~override//:go.mod": "7d0c646b9acb621d8fa7996da52790249064d95b83fa1ec72ea710c3d8f5bda9",
+          "@@bazel_remote_apis~override//:go.mod": "7d0c646b9acb621d8fa7996da52790249064d95b83fa1ec72ea710c3d8f5bda9",
           "@@rules_go~0.44.2//:go.mod": "de22304b720f7f61350ec1c9739de6c0a1b1103fd22bfeb6e92c6c843ddc6d6e",
           "@@//:go.sum": "9566d02d489d0a3cdef631120526ee560141e782da8d3d62eb2a9264f69092e7",
           "@@gazelle~0.35.0//:go.mod": "48dc6e771c3028ee1c18b9ffc81e596fd5f6d7e0016c5ef280e30f2821f60473",
           "@@gazelle~0.35.0//:go.sum": "7c4460e8ecb5dd8691a51d4fa2e9e4751108b933636497ce46db499fc2e7a88d",
-          "@@remote_execution_apis~override//:go.sum": "ce34ebc00191f902639365582862efff0829f7bf672d8bf39f431d24cc0a9349",
+          "@@bazel_remote_apis~override//:go.sum": "ce34ebc00191f902639365582862efff0829f7bf672d8bf39f431d24cc0a9349",
           "@@rules_go~0.44.2//:go.sum": "d56fdb19b21a5f12bcf625c49432371ac39c2def0f564098fbda107f7c080f40"
         },
         "envVariables": {},
@@ -2260,7 +2260,7 @@
             "attributes": {
               "name": "gazelle~0.35.0~go_deps~bazel_gazelle_go_repository_config",
               "importpaths": {
-                "@remote_execution_apis~override": "github.com/bazelbuild/remote-apis",
+                "@bazel_remote_apis~override": "github.com/bazelbuild/remote-apis",
                 "org_golang_google_genproto": "google.golang.org/genproto",
                 "org_golang_google_genproto_googleapis_api": "google.golang.org/genproto/googleapis/api",
                 "org_golang_google_genproto_googleapis_rpc": "google.golang.org/genproto/googleapis/rpc",
@@ -2289,7 +2289,7 @@
               "module_names": {
                 "@gazelle~0.35.0": "gazelle",
                 "@rules_go~0.44.2": "rules_go",
-                "@remote_execution_apis~override": "remote_execution_apis"
+                "@bazel_remote_apis~override": "bazel_remote_apis"
               },
               "build_naming_conventions": {}
             }

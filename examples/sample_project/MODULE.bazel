@@ -1,5 +1,5 @@
 module(
-    name = "remote_execution_apis_example",
+    name = "bazel_remote_apis_example",
 )
 
 # C++ example dependencies; these are necessary if the project should build
@@ -15,9 +15,9 @@ bazel_dep(name = "rules_go", version = "0.44.2")
 # against the generated REAPI Java code
 bazel_dep(name = "rules_java", version = "7.3.2")
 
-bazel_dep(name = "remote_execution_apis", version = "0.0.0.rpg.version.placeholder")
+bazel_dep(name = "bazel_remote_apis", version = "0.0.0.rpg.version.placeholder")
 local_path_override(
-    module_name = "remote_execution_apis",
+    module_name = "bazel_remote_apis",
     path = "../..",
 )
 

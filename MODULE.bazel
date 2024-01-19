@@ -1,7 +1,7 @@
 """remote-apis dependencies"""
 
 module(
-    name = "remote_execution_apis",
+    name = "bazel_remote_apis",
     repo_name = "com_github_bazelbuild_remote_apis",
 )
 

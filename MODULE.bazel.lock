@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "7a4bc71a06168b273410ad5d9f93b510e905d820c27823afbc99f25d58e22633",
+  "moduleFileHash": "06b97e10c8ce551419240c4286ff90392b70dab3a0fd3ed821059a802f284244",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -17,7 +17,7 @@
   },
   "moduleDepGraph": {
     "<root>": {
-      "name": "remote_execution_apis",
+      "name": "bazel_remote_apis",
       "version": "",
       "key": "<root>",
       "repoName": "com_github_bazelbuild_remote_apis",
