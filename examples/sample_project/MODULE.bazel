@@ -37,7 +37,6 @@ archive_override(
 # C++ example dependencies; these are necessary if the project should build
 # against generated REAPI C++ code
 bazel_dep(name = "rules_cc", version = "0.0.9")
-bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.0-alpha2")
 
 # Go example dependencies; these are necessary if the project should build
 # against generated REAPI Go code

@@ -5,10 +5,30 @@ module(
     repo_name = "com_github_bazelbuild_remote_apis",
 )
 
+# deps
 bazel_dep(name = "gazelle", version = "0.35.0")
+bazel_dep(name = "rules_cc", version = "0.0.9")
 bazel_dep(name = "rules_go", version = "0.44.2")
 bazel_dep(name = "rules_proto", version = "6.0.0-rc1")
+bazel_dep(name = "rules_proto_grpc_cpp", version = "5.0.0-alpha2")
 bazel_dep(name = "protobuf", version = "21.7", repo_name = "com_google_protobuf")
+
+# dev deps
+bazel_dep(name = "toolchains_llvm", version = "0.10.3", dev_dependency = True)
+
+# Top-level projects will need a C++ toolchain to build protoc, grpc, etc., but
+# we shouldn't dictate their toolchain, so the toolchain is marked as a dev
+# dependency.
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm", dev_dependency = True)
+llvm.toolchain(
+    # This is a version of LLVM that builds absl and upb successfully with their
+    # default compile options.
+    #
+    # TODO: Update this to the latest version of LLVM possible
+    llvm_version = "13.0.0",
+)
+use_repo(llvm, "llvm_toolchain")
+register_toolchains("@llvm_toolchain//:all", dev_dependency = True)
 
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")

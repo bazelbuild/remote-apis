@@ -1,5 +1,6 @@
 load("@rules_go//proto:def.bzl", "go_grpc_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_proto_grpc_cpp//:defs.bzl", "cpp_grpc_library")
 
 # gazelle:ignore
 package(default_visibility = ["//visibility:public"])
@@ -29,3 +30,11 @@ go_grpc_library(
         "@org_golang_google_genproto_googleapis_rpc//status",
     ],
 )  # keep
+
+cpp_grpc_library(
+    name = "remote_asset_cpp_grpc",
+    protos = [":remote_asset_proto"],
+    deps = [
+        "//build/bazel/remote/execution/v2:remote_execution_cpp_grpc",
+    ],
+)
