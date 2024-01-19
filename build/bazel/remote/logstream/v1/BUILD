@@ -19,6 +19,11 @@ go_grpc_library(
     protos = [":remote_logstream_proto"],
 )
 
+alias(
+    name = "go_default_library",
+    actual = ":remote_logstream_go_grpc",
+)
+
 cpp_grpc_library(
     name = "remote_logstream_cpp_grpc",
     protos = [":remote_logstream_proto"],

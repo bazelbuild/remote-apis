@@ -32,6 +32,11 @@ go_grpc_library(
     ],
 )  # keep
 
+alias(
+    name = "go_default_library",
+    actual = ":remote_asset_go_grpc",
+)
+
 cpp_grpc_library(
     name = "remote_asset_cpp_grpc",
     protos = [":remote_asset_proto"],

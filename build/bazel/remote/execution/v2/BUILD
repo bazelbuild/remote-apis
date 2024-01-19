@@ -38,6 +38,11 @@ go_grpc_library(
     ],
 )
 
+alias(
+    name = "go_default_library",
+    actual = ":remote_execution_go_grpc",
+)
+
 cpp_grpc_library(
     name = "remote_execution_cpp_grpc",
     protos = [":remote_execution_proto"],

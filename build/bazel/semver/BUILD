@@ -20,6 +20,11 @@ go_grpc_library(
     protos = [":semver_proto"],
 )
 
+alias(
+    name = "go_default_library",
+    actual = ":semver_go_grpc",
+)
+
 # C++ targets
 cpp_grpc_library(
     name = "semver_cpp_grpc",
