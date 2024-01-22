@@ -2029,6 +2029,11 @@ message ZstdDictionaries {
 
 // Capabilities of the remote cache system.
 message CacheCapabilities {
+  message QualifiedDigest {
+    Digest digest = 1;
+    DigestFunction.value digest_function = 2;
+  }
+
   // All the digest functions supported by the remote cache.
   // Remote cache may support multiple digest functions simultaneously.
   repeated DigestFunction.Value digest_functions = 1;
@@ -2064,7 +2069,7 @@ message CacheCapabilities {
   // The digest of the
   // [ZstdDictionaries][build.bazel.remote.execution.v2.ZstdDictionaries]
   // that contains all the dictionaries supported by the remote cache.
-  Digest zstd_dictionaries = 8;
+  QualifiedDigest zstd_dictionaries = 8;
 }
 
 // Capabilities of the remote execution system.
