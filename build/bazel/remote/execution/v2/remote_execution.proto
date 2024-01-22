@@ -2002,23 +2002,29 @@ message Compressor {
     //
     // When this is used, the server MUST advertise the dictionaries by
     // including
-    // [ZstdDictionaryRegistry][build.bazel.remote.execution.v2.ZstdDictionaryRegistry]
+    // [ZstdDictionaries][build.bazel.remote.execution.v2.ZstdDictionaries]
     // digest in CacheCapabilities.
     ZSTD_DICT = 4;
   }
 }
 
-message ZstdDictionaryRegistry {
-  // Each file respresent a single Zstandard dictionary
-  // with name being the `dictId` that was added to the header
-  // of the compressed file.
-  //
-  // A special file with name `default` is used to represent the
-  // default dictionary that is used when no `dictId` is specified.
-  // Clients SHOULD prefer to use the default dictionary when possible.
-  //
-  // The `default` dictionary MUST be present.
-  repeated FileNode dictionaries = 1;
+message ZstdDictionaries {
+  message Dictionary {
+    uint32 id 1;
+    Digest digest 2;
+  }
+
+  // The dictionary ID that clients SHOULD use when uploading
+  // objects into the Content Addressable Storage. An entry for
+  // this dictionary ID MUST be present in `dictionaries`.
+  uint32 default_dictionary_id = 1;
+
+  // Dictionaries that may be used by the server when returning
+  // objects stored in the Content Addressable Storage. The key
+  // corresponds to a dictionary ID, as described in RFC 8878,
+  // section 5, while the value refers to a dictionary
+  // as described in RFC 8878, chapter 6.
+  repeated Dictionary dictionaries = 2;
 }
 
 // Capabilities of the remote cache system.
@@ -2056,9 +2062,9 @@ message CacheCapabilities {
   repeated Compressor.Value supported_batch_update_compressors = 7;
 
   // The digest of the
-  // [ZstdDictionaryRegistry][build.bazel.remote.execution.v2.ZstdDictionaryRegistry]
+  // [ZstdDictionaries][build.bazel.remote.execution.v2.ZstdDictionaries]
   // that contains all the dictionaries supported by the remote cache.
-  Digest zstd_dictionary_registry = 8;
+  Digest zstd_dictionaries = 8;
 }
 
 // Capabilities of the remote execution system.
