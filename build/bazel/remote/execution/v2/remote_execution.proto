@@ -1823,6 +1823,15 @@ message GetCapabilitiesRequest {
   // between them in an implementation-defined fashion, otherwise it can be
   // omitted.
   string instance_name = 1;
+
+  // All the digest functions supported by the client.
+  // Server should consider which digest functions the client supports to use
+  // the correct Digest in the
+  // [ServerCapabilities][build.bazel.remote.execution.v2.ServerCapabilities]
+  // response.
+  // If there is no overlapping between client's and server's supported digest
+  // functions, then server MAY omit the digest fields in the response.
+  repeated DigestFunction.Value digest_functions = 1;
 }
 
 // A response message for
@@ -2069,6 +2078,16 @@ message CacheCapabilities {
   // The digest of the
   // [ZstdDictionaries][build.bazel.remote.execution.v2.ZstdDictionaries]
   // that contains all the dictionaries supported by the remote cache.
+  //
+  // Digest function used should be one of the digest functions that both
+  // client and server support, as specified in digest_functions field in
+  // [CacheCapabilities.digest_functions][build.bazel.remote.execution.v2.CacheCapabilities.digest_functions]
+  // and
+  // [GetCapabilitiesRequest.digest_functions][build.bazel.remote.execution.v2.GetCapabilitiesRequest.digest_functions].
+  //
+  // If there is no overlapping between client's and server's supported
+  // dictionaries, then server MAY omit the dictionaries field in the
+  // response.
   QualifiedDigest zstd_dictionaries = 8;
 }
 
