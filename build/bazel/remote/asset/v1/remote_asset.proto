@@ -240,14 +240,16 @@ message FetchBlobResponse {
   // The digest of the file's contents, available for download through the CAS.
   build.bazel.remote.execution.v2.Digest blob_digest = 5;
 
-  // This field SHOULD be set to the digest function that was used by the server
-  // to compute [FetchBlobResponse.blob_digest].
-  // Clients could use this to determine whether the server honors
-  // [FetchBlobRequest.digest_function] that was set in the request.
+  // Indicates if the server used the client-requested digest function for
+  // computing [FetchBlobResponse.blob_digest].
   //
-  // If unset, clients SHOULD default to use SHA256 regardless of the requested
-  // [FetchBlobRequest.digest_function].
-  build.bazel.remote.execution.v2.DigestFunction.Value digest_function = 6;
+  // If `true`, the server respected the [FetchBlobRequest.digest_function]
+  // choice made by the client. Clients can rely on this to verify that the
+  // server computed `blob_digest` using the requested digest function.
+  //
+  // If this field is unset, clients SHOULD assume SHA256 was used for digest
+  // computation, regardless of the function requested in [FetchBlobRequest.digest_function].
+  bool respect_digest_function = 6;
 }
 
 // A request message for
@@ -336,14 +338,16 @@ message FetchDirectoryResponse {
   // [ContentAddressableStorage.GetTree].
   build.bazel.remote.execution.v2.Digest root_directory_digest = 5;
 
-  // This field SHOULD be set to the digest function that was used by the server
-  // to compute [FetchBlobResponse.root_directory_digest].
-  // Clients could use this to determine whether the server honors
-  // [FetchDirectoryRequest.digest_function] that was set in the request.
+  // Indicates if the server used the client-requested digest function for
+  // computing [FetchBlobResponse.root_directory_digest].
   //
-  // If unset, clients SHOULD default to use SHA256 regardless of the requested
-  // [FetchDirectoryRequest.digest_function].
-  build.bazel.remote.execution.v2.DigestFunction.Value digest_function = 6;
+  // If `true`, the server respected the [FetchDirectoryRequest.digest_function]
+  // choice made by the client. Clients can rely on this to verify that the
+  // server computed `blob_digest` using the requested digest function.
+  //
+  // If this field is unset, clients SHOULD assume SHA256 was used for digest
+  // computation, regardless of the function requested in [FetchDirectoryRequest.digest_function].
+  bool respect_digest_function = 6;
 }
 
 // The Push service is complementary to the Fetch, and allows for
