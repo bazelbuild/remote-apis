@@ -981,7 +981,8 @@ message SymlinkNode {
 // serializing, but care should be taken to avoid shortcuts. For instance,
 // concatenating two messages to merge them may produce duplicate fields.
 message Digest {
-  // The hash, represented as a lowercase hex string including any leading zeroes.
+  // The hash, represented as a lowercase hexadecimal string, padded with
+  // leading zeroes up to the hash function length.
   string hash = 1;
 
   // The size of the blob, in bytes.
