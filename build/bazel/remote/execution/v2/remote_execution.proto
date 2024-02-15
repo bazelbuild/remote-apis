@@ -981,8 +981,8 @@ message SymlinkNode {
 // serializing, but care should be taken to avoid shortcuts. For instance,
 // concatenating two messages to merge them may produce duplicate fields.
 message Digest {
-  // The hash. In the case of SHA-256, it will always be a lowercase hex string
-  // exactly 64 characters long.
+  // The hash, represented as a lowercase hexadecimal string, padded with
+  // leading zeroes up to the hash function length.
   string hash = 1;
 
   // The size of the blob, in bytes.
