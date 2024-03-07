@@ -75,8 +75,8 @@ Typically, workers are domain specific, optimized for custom scheduling
 protocols defined by the server implementation.
 
 * [Remote Worker API](https://goo.gl/oojM5H)
-* [Buildfarn](https://bazelbuild.github.io/bazel-buildfarm/docs/architecture/queues/)
-* [Buildbarn](https://nluug.nl/bestanden/presentaties/2023-05-11-ed-schouten-buildbarn-a-distributed-build-cluster.pdf)
+* [Buildfarm](https://bazelbuild.github.io/bazel-buildfarm/docs/architecture/queues/)
+* [Buildbarn](https://github.com/buildbarn/bb-remote-execution/blob/master/pkg/proto/remoteworker/remoteworker.proto)
 * [BuildGrid](https://buildgrid.build/developer/data_model.html#rwapi)
 
 ## API Community
