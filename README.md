@@ -53,8 +53,7 @@ These tools use the Remote Execution API to distribute builds to workers.
 
 ### Servers
 These applications implement the Remote Execution API to serve build requests
-from the clients above. These are then distributed to workers; some of these
-workers implement the Remote Worker API.
+from the clients above. Client requests are then distributed to workers.
 
 * [bazel-remote](https://github.com/buchgr/bazel-remote) (open source, cache only)
 * [Buildbarn](https://github.com/buildbarn) (open source)
@@ -67,6 +66,18 @@ workers implement the Remote Worker API.
 * [Kajiya](https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/build/kajiya/) (open source)
 * [Scoot](https://github.com/twitter/scoot) (open source)
 * [Turbo Cache](https://github.com/allada/turbo-cache) (open source)
+
+### Workers
+Servers are responsible for managing a pool of workers.
+The Remote Worker API defines a reference protocol for worker and server
+communication, although, adhering to this protocol is not a requirement.
+Typically, workers are domain specific, optimized for custom scheduling
+protocols defined by the server implementation.
+
+* [Remote Worker API](https://goo.gl/oojM5H)
+* [Buildfarn](https://bazelbuild.github.io/bazel-buildfarm/docs/architecture/queues/)
+* [Buildbarn](https://nluug.nl/bestanden/presentaties/2023-05-11-ed-schouten-buildbarn-a-distributed-build-cluster.pdf)
+* [BuildGrid](https://buildgrid.build/developer/data_model.html#rwapi)
 
 ## API Community
 
