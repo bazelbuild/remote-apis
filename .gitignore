@@ -2,6 +2,7 @@
 *~
 # Ignore Vim swap files.
 .*.sw*
-# Ignore bazel directories
+# Ignore bazel directories, including those in nested workspaces (such as the
+# examples).
 **/bazel-*
 

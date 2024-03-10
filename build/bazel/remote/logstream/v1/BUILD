@@ -29,7 +29,8 @@ cpp_grpc_library(
     protos = [":remote_logstream_proto"],
 )
 
+# TODO: Include/replace with gRPC stub generation targets when feasible
 java_proto_library(
-    name = "remote_logstream_java_grpc",
+    name = "remote_logstream_java_proto",
     deps = [":remote_logstream_proto"],
 )

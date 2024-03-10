@@ -45,7 +45,8 @@ cpp_grpc_library(
     ],
 )
 
+# TODO: Include/replace with gRPC stub generation targets when feasible
 java_proto_library(
-    name = "remote_asset_java_grpc",
+    name = "remote_asset_java_proto",
     deps = [":remote_asset_proto"],
 )

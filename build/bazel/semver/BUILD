@@ -32,8 +32,9 @@ cpp_grpc_library(
 )
 
 # java targets
+# TODO: Include/replace with gRPC stub generation targets when feasible
 java_proto_library(
-    name = "semver_java_grpc",
+    name = "semver_java_proto",
     deps = [":semver_proto"],
 )
 
