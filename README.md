@@ -53,8 +53,7 @@ These tools use the Remote Execution API to distribute builds to workers.
 
 ### Servers
 These applications implement the Remote Execution API to serve build requests
-from the clients above. These are then distributed to workers; some of these
-workers implement the Remote Worker API.
+from the clients above.
 
 * [bazel-remote](https://github.com/buchgr/bazel-remote) (open source, cache only)
 * [Buildbarn](https://github.com/buildbarn) (open source)
@@ -67,6 +66,26 @@ workers implement the Remote Worker API.
 * [Kajiya](https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/build/kajiya/) (open source)
 * [Scoot](https://github.com/twitter/scoot) (open source)
 * [Turbo Cache](https://github.com/allada/turbo-cache) (open source)
+
+### Workers
+Servers generally distribute work to a fleet of workers. While there is no
+standard API for communication between the server and workers, links to the
+APIs from some existing implementations are provided as a reference below.
+
+The [Remote Worker API](https://docs.google.com/document/d/1s_AzRRD2mdyktKUj2HWBn99rMg_3tcPvdjx3MPbFidU) 
+defines a generic protocol for worker and server communication, although, 
+this API is considered too heavyweight for most use-cases.
+
+*Adhering to any one of these protocols is not a requirement.*
+
+* [Buildfarm Operation Queues](https://bazelbuild.github.io/bazel-buildfarm/docs/architecture/queues/)
+  * Uses sets of queues for managing different payload requirements.
+* [Buildbarn Remote Worker](https://github.com/buildbarn/bb-remote-execution/blob/master/pkg/proto/remoteworker/remoteworker.proto)
+  * Uses a custom protocol for workers to connect to a scheduler and receive instructions.
+* [BuildGrid Bots](https://buildgrid.build/developer/data_model.html#rwapi)
+  * A server implementation of the Remote Workers API.
+* [Buildbox Worker](https://gitlab.com/BuildGrid/buildbox/buildbox-worker)
+  * A worker implementation of the Remote Workers API.
 
 ## API Community
 
