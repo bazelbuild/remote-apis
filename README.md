@@ -68,14 +68,12 @@ from the clients above.
 * [Turbo Cache](https://github.com/allada/turbo-cache) (open source)
 
 ### Workers
-Servers generally distribute work to a fleet of workers. While there is no
-standard API for communication between the server and workers, links to the
-APIs from some existing implementations are provided as a reference below.
-
-The [Remote Worker API](https://docs.google.com/document/d/1s_AzRRD2mdyktKUj2HWBn99rMg_3tcPvdjx3MPbFidU) 
+Servers generally distribute work to a fleet of workers.
+The [Remote Worker API](https://docs.google.com/document/d/1s_AzRRD2mdyktKUj2HWBn99rMg_3tcPvdjx3MPbFidU)
 defines a generic protocol for worker and server communication, although, 
-this API is considered too heavyweight for most use-cases.
-
+this API is considered too heavyweight for most use-cases. Because of that, 
+many implementations have designed their own protocols. Links to these APIs
+are provided as a reference below.
 *Adhering to any one of these protocols is not a requirement.*
 
 * [Buildfarm Operation Queues](https://bazelbuild.github.io/bazel-buildfarm/docs/architecture/queues/)
