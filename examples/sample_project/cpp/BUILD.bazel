@@ -1,0 +1,11 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
+cc_binary(
+    name = "example",
+    srcs = ["example.cpp"],
+    deps = [
+        "@bazel_remote_apis//build/bazel/remote/asset/v1:remote_asset_cpp_grpc",
+        "@bazel_remote_apis//build/bazel/remote/execution/v2:remote_execution_cpp_grpc",
+        "@bazel_remote_apis//build/bazel/remote/logstream/v1:remote_logstream_cpp_grpc",
+    ],
+)
