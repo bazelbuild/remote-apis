@@ -1433,6 +1433,20 @@ message ExecuteRequest {
   // length of the action digest hash and the digest functions announced
   // in the server's capabilities.
   DigestFunction.Value digest_function = 9;
+
+  // A hint to the server to request inlining stdout in the
+  // [ActionResult][build.bazel.remote.execution.v2.ActionResult] message.
+  bool inline_stdout = 10;
+
+  // A hint to the server to request inlining stderr in the
+  // [ActionResult][build.bazel.remote.execution.v2.ActionResult] message.
+  bool inline_stderr = 11;
+
+  // A hint to the server to inline the contents of the listed output files.
+  // Each path needs to exactly match one file path in either `output_paths` or
+  // `output_files` (DEPRECATED since v2.1) in the
+  // [Command][build.bazel.remote.execution.v2.Command] message.
+  repeated string inline_output_files = 12;
 }
 
 // A `LogFile` is a log stored in the CAS.
