@@ -60,7 +60,10 @@ cpp_grpc_library(
 
 cpp_grpc_library(
     name = "client_cpp_grpc",
-    protos = ["@com_google_googleapis//google/api:client_proto"],
+    protos = [
+        "@com_google_googleapis//google/api:client_proto",
+        "@com_google_googleapis//google/api:launch_stage_proto",
+    ],
 )
 
 cpp_grpc_library(

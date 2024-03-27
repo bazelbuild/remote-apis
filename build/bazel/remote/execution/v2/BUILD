@@ -14,14 +14,14 @@ proto_library(
     srcs = ["remote_execution.proto"],
     deps = [
         "//build/bazel/semver:semver_proto",
-        "@com_google_protobuf//:any_proto",
-        "@com_google_protobuf//:duration_proto",
-        "@com_google_protobuf//:timestamp_proto",
-        "@com_google_protobuf//:wrappers_proto",
         "@com_google_googleapis//google/api:annotations_proto",
         "@com_google_googleapis//google/api:http_proto",
         "@com_google_googleapis//google/longrunning:operations_proto",
         "@com_google_googleapis//google/rpc:status_proto",
+        "@com_google_protobuf//:any_proto",
+        "@com_google_protobuf//:duration_proto",
+        "@com_google_protobuf//:timestamp_proto",
+        "@com_google_protobuf//:wrappers_proto",
     ],
 )
 
@@ -31,7 +31,7 @@ go_grpc_library(
     protos = [":remote_execution_proto"],
     deps = [
         "//build/bazel/semver:semver_go_grpc",
-        "@org_golang_google_genproto//googleapis/longrunning",
+        "@com_google_googleapis//google/longrunning:longrunning_go_proto",
         "@org_golang_google_genproto_googleapis_api//annotations",
         "@org_golang_google_genproto_googleapis_rpc//http",
         "@org_golang_google_genproto_googleapis_rpc//status",
