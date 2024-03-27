@@ -5,4 +5,4 @@
 # Ignore bazel directories, including those in nested workspaces (such as the
 # examples).
 **/bazel-*
-
+MODULE.bazel.lock
