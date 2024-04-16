@@ -430,6 +430,103 @@ service ContentAddressableStorage {
   rpc GetTree(GetTreeRequest) returns (stream GetTreeResponse) {
     option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{root_digest.hash}/{root_digest.size_bytes}:getTree" };
   }
+
+  // Split a blob into chunks.
+  //
+  // This splitting API aims to reduce download traffic between client and
+  // server, e.g., if a client needs to fetch a large blob that just has been
+  // modified slightly since the last built. In this case, there is no need to
+  // fetch the entire blob data, but just the binary differences between the two
+  // blob versions, which are typically determined by deduplication techniques
+  // such as content-defined chunking.
+  //
+  // Clients can use this API before downloading a blob to determine which parts
+  // of the blob are already present locally and do not need to be downloaded
+  // again. The server splits the blob into chunks according to a specified
+  // content-defined chunking algorithm and returns a list of the chunk digests
+  // in the order in which the chunks have to be concatenated to assemble the
+  // requested blob.
+  //
+  // A client can expect the following guarantees from the server if a split
+  // request is answered successfully:
+  //  1. The blob chunks are stored in CAS.
+  //  2. Concatenating the blob chunks in the order of the digest list returned
+  //     by the server results in the original blob.
+  //
+  // The usage of this API is optional for clients but it allows them to
+  // download only the missing parts of a large blob instead of the entire blob
+  // data, which in turn can considerably reduce download network traffic.
+  //
+  // Since the generated chunks are stored as blobs, they underlie the same
+  // lifetimes as other blobs. However, their lifetime is extended if they are
+  // part of the result of a split blob request.
+  //
+  // For the client, it is recommended to verify whether the digest of the blob
+  // assembled by the fetched chunks results in the requested blob digest.
+  //
+  // If several clients use blob splitting, it is recommended that they request
+  // the same splitting algorithm to benefit from each others chunking data. In
+  // combination with blob splicing, an agreement about the chunking algorithm
+  // is recommended since both client as well as server side can benefit from
+  // each others chunking data.
+  //
+  // Servers are free to implement this functionality, but they need to declare
+  // whether they support it or not by setting the
+  // [CacheCapabilities.blob_split_support][build.bazel.remote.execution.v2.CacheCapabilities.blob_split_support]
+  // field accordingly.
+  //
+  // Errors:
+  //
+  // * `NOT_FOUND`: The requested blob is not present in the CAS.
+  // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob
+  //   chunks.
+  rpc SplitBlob(SplitBlobRequest) returns (SplitBlobResponse) {
+    option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{blob_digest.hash}/{blob_digest.size_bytes}:splitBlob" };
+  }
+
+  // Splice a blob from chunks.
+  //
+  // This is the complementary operation to the
+  // [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob]
+  // function to handle the splitted upload of large blobs to save upload
+  // traffic.
+  //
+  // If a client needs to upload a large blob and is able to split a blob into
+  // chunks locally according to some content-defined chunking algorithm, it can
+  // first determine which parts of the blob are already available in the remote
+  // CAS and upload the missing chunks, and then use this API to instruct the
+  // server to splice the original blob from the remotely available blob chunks.
+  //
+  // In order to ensure data consistency of the CAS, the server will verify the
+  // spliced result whether digest calculation results in the provided digest
+  // from the request and will reject a splice request if this check fails.
+  //
+  // The usage of this API is optional for clients but it allows them to upload
+  // only the missing parts of a large blob instead of the entire blob data,
+  // which in turn can considerably reduce upload network traffic.
+  //
+  // In order to split a blob into chunks, it is recommended for the client to
+  // use one of the servers' advertised chunking algorithms by
+  // [CacheCapabilities.supported_chunking_algorithms][build.bazel.remote.execution.v2.CacheCapabilities.supported_chunking_algorithms]
+  // to benefit from each others chunking data. If several clients use blob
+  // splicing, it is recommended that they use the same splitting algorithm to
+  // split their blobs into chunks.
+  //
+  // Servers are free to implement this functionality, but they need to declare
+  // whether they support it or not by setting the
+  // [CacheCapabilities.blob_splice_support][build.bazel.remote.execution.v2.CacheCapabilities.blob_splice_support]
+  // field accordingly.
+  //
+  // Errors:
+  //
+  // * `NOT_FOUND`: At least one of the blob chunks is not present in the CAS.
+  // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the
+  //   spliced blob.
+  // * `INVALID_ARGUMENT`: The digest of the spliced blob is different from the
+  //   provided expected digest.
+  rpc SpliceBlob(SpliceBlobRequest) returns (SpliceBlobResponse) {
+    option (google.api.http) = { post: "/v2/{instance_name=**}/blobs:spliceBlob" body: "*" };
+  }
 }
 
 // The Capabilities service may be used by remote execution clients to query
@@ -1829,6 +1926,97 @@ message GetTreeResponse {
 }
 
 // A request message for
+// [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob].
+message SplitBlobRequest {
+  // The instance of the execution system to operate against. A server may
+  // support multiple instances of the execution system (with their own workers,
+  // storage, caches, etc.). The server MAY require use of this field to select
+  // between them in an implementation-defined fashion, otherwise it can be
+  // omitted.
+  string instance_name = 1;
+
+  // The digest of the blob to be splitted.
+  Digest blob_digest = 2;
+
+  // The chunking algorithm to be used. Must be DEFAULT or one of the algorithms
+  // advertised by the
+  // [CacheCapabilities.supported_chunking_algorithms][build.bazel.remote.execution.v2.CacheCapabilities.supported_chunking_algorithms]
+  // field.
+  ChunkingAlgorithm.Value chunking_algorithm = 3;
+
+  // The digest function of the blob to be splitted.
+  //
+  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
+  // that case the server SHOULD infer the digest function using the
+  // length of the blob digest hashes and the digest functions announced
+  // in the server's capabilities.
+  DigestFunction.Value digest_function = 4;
+}
+
+// A response message for
+// [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob].
+message SplitBlobResponse {
+  // The ordered list of digests of the chunks into which the blob was splitted.
+  // The original blob is assembled by concatenating the chunk data according to
+  // the order of the digests given by this list.
+  repeated Digest chunk_digests = 1;
+
+  // The digest function of the chunks.
+  //
+  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
+  // that case the server SHOULD infer the digest function using the
+  // length of the blob digest hashes and the digest functions announced
+  // in the server's capabilities.
+  DigestFunction.Value digest_function = 2;
+}
+
+// A request message for
+// [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob].
+message SpliceBlobRequest {
+  // The instance of the execution system to operate against. A server may
+  // support multiple instances of the execution system (with their own workers,
+  // storage, caches, etc.). The server MAY require use of this field to select
+  // between them in an implementation-defined fashion, otherwise it can be
+  // omitted.
+  string instance_name = 1;
+
+  // Expected digest of the spliced blob.
+  Digest blob_digest = 2;
+
+  // The ordered list of digests of the chunks which need to be concatenated to
+  // assemble the original blob.
+  repeated Digest chunk_digests = 3;
+
+  // The digest function of the blob to be spliced as well as of the chunks to
+  // be concatenated.
+  //
+  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
+  // that case the server SHOULD infer the digest function using the
+  // length of the blob digest hashes and the digest functions announced
+  // in the server's capabilities.
+  DigestFunction.Value digest_function = 4;
+}
+
+// A response message for
+// [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob].
+message SpliceBlobResponse {
+  // Computed digest of the spliced blob.
+  Digest blob_digest = 1;
+
+  // The digest function of the spliced blob.
+  //
+  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
+  // that case the server SHOULD infer the digest function using the
+  // length of the blob digest hashes and the digest functions announced
+  // in the server's capabilities.
+  DigestFunction.Value digest_function = 2;
+}
+
+// A request message for
 // [Capabilities.GetCapabilities][build.bazel.remote.execution.v2.Capabilities.GetCapabilities].
 message GetCapabilitiesRequest {
   // The instance of the execution system to operate against. A server may
@@ -2014,6 +2202,42 @@ message Compressor {
   }
 }
 
+// Content-defined chunking algorithms used for splitting blobs into chunks.
+message ChunkingAlgorithm {
+  enum Value {
+    // No special constraints about the used chunking algorithm. If a client
+    // selects this value this means he does not care about which exact chunking
+    // algorithm is used. Thus, the server is free to use any chunking algorithm
+    // at its disposal. A server does not need to advertise this value.
+    DEFAULT = 0;
+
+    // Content-defined chunking using Rabin fingerprints. An implementation of
+    // this scheme in presented in this paper
+    // https://link.springer.com/chapter/10.1007/978-1-4613-9323-8_11. The final
+    // implementation of this algorithm should be configured to have the
+    // following properties on resulting chunk sizes.
+    //  - Minimum chunk size: 128 KB
+    //  - Average chunk size: 512 KB (0x000000000007FFFF bit mask)
+    //  - Maximum chunk size: 2048 KB
+    // The irreducible polynomial to be used for the modulo divisions is the
+    // following 64-bit polynomial of degree 53: 0x003DA3358B4DC173. The window
+    // size to be used is 64 bits.
+    RABINCDC = 1;
+
+    // Content-defined chunking using the FastCDC algorithm. The algorithm is
+    // described in this paper https://ieeexplore.ieee.org/document/9055082
+    // (Algorithm 2, FastCDC8KB). The algorithm should be configured to have the
+    // following properties on resulting chunk sizes.
+    //  - Minimum chunk size: 128 KB
+    //  - Average chunk size: 512 KB
+    //  - Maximum chunk size: 2048 KB
+    // The 256 64-bit random numbers in the Gear table are to be created with
+    // the Mersenne Twister pseudo-random number generator for 64-bit numbers
+    // with a state size of 19937 bits and a seed of 0.
+    FASTCDC = 2;
+  }
+}
+
 // Capabilities of the remote cache system.
 message CacheCapabilities {
   // All the digest functions supported by the remote cache.
@@ -2047,6 +2271,28 @@ message CacheCapabilities {
   // [BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs]
   // requests.
   repeated Compressor.Value supported_batch_update_compressors = 7;
+
+  // All specifically defined chunking algorithms supported by the remote cache
+  // in addition to a DEFAULT implementation. A remote cache may support
+  // multiple chunking algorithms simultaneously. A server always has to provide
+  // a DEFAULT implementation, but does not need to advertise it here. This
+  // field is mainly existing for negotiation purposes between client and server
+  // to agree on an exact chunking algorithm.
+  repeated ChunkingAlgorithm.Value supported_chunking_algorithms = 8;
+
+  // Whether blob splitting is supported for the particular server/instance. If
+  // yes, the server/instance implements the specified behavior for blob
+  // splitting and a meaningful result can be expected from the
+  // [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob]
+  // operation.
+  bool blob_split_support = 9;
+
+  // Whether blob splicing is supported for the particular server/instance. If
+  // yes, the server/instance implements the specified behavior for blob
+  // splicing and a meaningful result can be expected from the
+  // [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob]
+  // operation.
+  bool blob_splice_support = 10;
 }
 
 // Capabilities of the remote execution system.
