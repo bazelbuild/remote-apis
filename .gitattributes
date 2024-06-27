@@ -1,0 +1,6 @@
+# Github excludes files in 'build' directory from their search by default.
+# This negates the exclusion.
+#
+# For more information, see:
+#   https://docs.github.com/en/search-github/searching-on-github/finding-files-on-github#customizing-excluded-files
+build/** linguist-generated=false
