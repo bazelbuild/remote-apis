@@ -10,9 +10,9 @@ go_proto_library(
     proto = "//build/bazel/remote/execution/v2:remote_execution_proto",
     deps = [
         "//build/bazel/semver:semver_go_proto",
-        "@org_golang_google_genproto//googleapis/api/annotations",
-        "@org_golang_google_genproto//googleapis/longrunning",
-        "@org_golang_google_genproto//googleapis/rpc/status",
+        "@com_google_cloud_go_longrunning//autogen/longrunningpb",
+        "@org_golang_google_genproto_googleapis_api//annotations",
+        "@org_golang_google_genproto_googleapis_rpc//status",
     ],
 )
 
