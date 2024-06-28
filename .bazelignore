@@ -1,0 +1,3 @@
+# The examples/ dir has example bazel workspaces that show how to import
+# remote-apis, and should not be treated as part of this workspace.
+examples
