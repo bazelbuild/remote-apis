@@ -14,13 +14,22 @@ def remote_apis_go_deps():
 
     # The version of this repo needs to be in sync with @googleapis
     go_repository(
-        name = "org_golang_google_genproto",
-        build_extra_args = ["-exclude=vendor"],
-        build_file_generation = "on",
-        build_file_proto_mode = "disable_global",
-        importpath = "google.golang.org/genproto",
-        sum = "h1:S9GbmC1iCgvbLyAokVCwiO6tVIrU9Y7c5oMx1V/ki/Y=",
-        version = "v0.0.0-20221024183307-1bc688fe9f3e",
+        name = "org_golang_google_genproto_googleapis_api",
+        importpath = "google.golang.org/genproto/googleapis/api",
+        sum = "h1:DTJM0R8LECCgFeUwApvcEJHz85HLagW8uRENYxHh1ww=",
+        version = "v0.0.0-20240429193739-8cf5692501f6",
+    )
+    go_repository(
+        name = "org_golang_google_genproto_googleapis_rpc",
+        importpath = "google.golang.org/genproto/googleapis/rpc",
+        sum = "h1:DujSIu+2tC9Ht0aPNA7jgj23Iq8Ewi5sgkQ++wdvonE=",
+        version = "v0.0.0-20240429193739-8cf5692501f6",
+    )
+    go_repository(
+        name = "com_google_cloud_go_longrunning",
+        importpath = "cloud.google.com/go/longrunning",
+        sum = "h1:WLbHekDbjK1fVFD3ibpFFVoyizlLRl73I7YKuAKilhU=",
+        version = "v0.5.7",
     )
 
     go_rules_dependencies()
@@ -29,27 +38,12 @@ def remote_apis_go_deps():
         go_repository,
         name = "com_github_golang_protobuf",
         importpath = "github.com/golang/protobuf",
-        tag = "v1.3.2",
+        tag = "v1.34.0",
     )
     _maybe(
         go_repository,
         name = "org_golang_google_grpc",
         build_file_proto_mode = "disable",
         importpath = "google.golang.org/grpc",
-        sum = "h1:uSZWeQJX5j11bIQ4AJoj+McDBo29cY1MCoC1wO3ts+c=",
-        version = "v1.37.0",
-    )
-    _maybe(
-        go_repository,
-        name = "org_golang_x_net",
-        importpath = "golang.org/x/net",
-        sum = "h1:oWX7TPOiFAMXLq8o0ikBYfCJVlRHBcsciT5bXOrH628=",
-        version = "v0.0.0-20190311183353-d8887717615a",
-    )
-    _maybe(
-        go_repository,
-        name = "org_golang_x_text",
-        importpath = "golang.org/x/text",
-        sum = "h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=",
-        version = "v0.3.0",
+        version = "v1.63.2",
     )

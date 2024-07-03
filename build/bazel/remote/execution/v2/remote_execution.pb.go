@@ -21,10 +21,10 @@
 package remoteexecution
 
 import (
+	longrunningpb "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	context "context"
 	semver "github.com/bazelbuild/remote-apis/build/bazel/semver"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
-	longrunning "google.golang.org/genproto/googleapis/longrunning"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -5866,7 +5866,7 @@ var file_build_bazel_remote_execution_v2_remote_execution_proto_goTypes = []inte
 	(*anypb.Any)(nil),                          // 60: google.protobuf.Any
 	(*status.Status)(nil),                      // 61: google.rpc.Status
 	(*semver.SemVer)(nil),                      // 62: build.bazel.semver.SemVer
-	(*longrunning.Operation)(nil),              // 63: google.longrunning.Operation
+	(*longrunningpb.Operation)(nil),            // 63: google.longrunning.Operation
 }
 var file_build_bazel_remote_execution_v2_remote_execution_proto_depIdxs = []int32{
 	14,  // 0: build.bazel.remote.execution.v2.Action.command_digest:type_name -> build.bazel.remote.execution.v2.Digest
@@ -6760,7 +6760,7 @@ func (c *executionClient) Execute(ctx context.Context, in *ExecuteRequest, opts 
 }
 
 type Execution_ExecuteClient interface {
-	Recv() (*longrunning.Operation, error)
+	Recv() (*longrunningpb.Operation, error)
 	grpc.ClientStream
 }
 
@@ -6768,8 +6768,8 @@ type executionExecuteClient struct {
 	grpc.ClientStream
 }
 
-func (x *executionExecuteClient) Recv() (*longrunning.Operation, error) {
-	m := new(longrunning.Operation)
+func (x *executionExecuteClient) Recv() (*longrunningpb.Operation, error) {
+	m := new(longrunningpb.Operation)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -6792,7 +6792,7 @@ func (c *executionClient) WaitExecution(ctx context.Context, in *WaitExecutionRe
 }
 
 type Execution_WaitExecutionClient interface {
-	Recv() (*longrunning.Operation, error)
+	Recv() (*longrunningpb.Operation, error)
 	grpc.ClientStream
 }
 
@@ -6800,8 +6800,8 @@ type executionWaitExecutionClient struct {
 	grpc.ClientStream
 }
 
-func (x *executionWaitExecutionClient) Recv() (*longrunning.Operation, error) {
-	m := new(longrunning.Operation)
+func (x *executionWaitExecutionClient) Recv() (*longrunningpb.Operation, error) {
+	m := new(longrunningpb.Operation)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -6925,7 +6925,7 @@ func _Execution_Execute_Handler(srv interface{}, stream grpc.ServerStream) error
 }
 
 type Execution_ExecuteServer interface {
-	Send(*longrunning.Operation) error
+	Send(*longrunningpb.Operation) error
 	grpc.ServerStream
 }
 
@@ -6933,7 +6933,7 @@ type executionExecuteServer struct {
 	grpc.ServerStream
 }
 
-func (x *executionExecuteServer) Send(m *longrunning.Operation) error {
+func (x *executionExecuteServer) Send(m *longrunningpb.Operation) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -6946,7 +6946,7 @@ func _Execution_WaitExecution_Handler(srv interface{}, stream grpc.ServerStream)
 }
 
 type Execution_WaitExecutionServer interface {
-	Send(*longrunning.Operation) error
+	Send(*longrunningpb.Operation) error
 	grpc.ServerStream
 }
 
@@ -6954,7 +6954,7 @@ type executionWaitExecutionServer struct {
 	grpc.ServerStream
 }
 
-func (x *executionWaitExecutionServer) Send(m *longrunning.Operation) error {
+func (x *executionWaitExecutionServer) Send(m *longrunningpb.Operation) error {
 	return x.ServerStream.SendMsg(m)
 }
 
