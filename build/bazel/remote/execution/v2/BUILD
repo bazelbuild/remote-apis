@@ -1,6 +1,11 @@
-package(default_visibility = ["//visibility:public"])
+# gazelle:ignore
 
+load("@rules_go//proto:def.bzl", "go_grpc_library")
+load("@rules_java//java:defs.bzl", "java_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_proto_grpc_cpp//:defs.bzl", "cpp_grpc_library")
+
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -13,29 +18,44 @@ proto_library(
         "@com_google_protobuf//:duration_proto",
         "@com_google_protobuf//:timestamp_proto",
         "@com_google_protobuf//:wrappers_proto",
-        "@googleapis//google/api:annotations_proto",
-        "@googleapis//google/api:http_proto",
-        "@googleapis//google/longrunning:operations_proto",
-        "@googleapis//google/rpc:status_proto",
+        "@com_google_googleapis//google/api:annotations_proto",
+        "@com_google_googleapis//google/api:http_proto",
+        "@com_google_googleapis//google/longrunning:operations_proto",
+        "@com_google_googleapis//google/rpc:status_proto",
+    ],
+)
+
+go_grpc_library(
+    name = "remote_execution_go_grpc",
+    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2",
+    protos = [":remote_execution_proto"],
+    deps = [
+        "//build/bazel/semver:semver_go_grpc",
+        "@org_golang_google_genproto//googleapis/longrunning",
+        "@org_golang_google_genproto_googleapis_api//annotations",
+        "@org_golang_google_genproto_googleapis_rpc//http",
+        "@org_golang_google_genproto_googleapis_rpc//status",
     ],
 )
 
 alias(
-    name = "remote_execution_java_proto",
-    actual = "//build/bazel/remote/execution/v2/java:remote_execution_java_proto",
-)
-
-alias(
-    name = "remote_execution_cc_proto",
-    actual = "//build/bazel/remote/execution/v2/cc:remote_execution_cc_grpc",
-)
-
-alias(
-    name = "remote_execution_go_proto",
-    actual = "//build/bazel/remote/execution/v2/go:remote_execution_go_proto",
-)
-
-alias(
     name = "go_default_library",
-    actual = "//build/bazel/remote/execution/v2/go:go_default_library",
+    actual = ":remote_execution_go_grpc",
+)
+
+cpp_grpc_library(
+    name = "remote_execution_cpp_grpc",
+    protos = [":remote_execution_proto"],
+    deps = [
+        "//build/bazel/semver:annotations_cpp_grpc",
+        "//build/bazel/semver:http_cpp_grpc",
+        "//build/bazel/semver:operations_cpp_grpc",
+        "//build/bazel/semver:semver_cpp_grpc",
+    ],
+)
+
+# TODO: Include/replace with gRPC stub generation targets when feasible
+java_proto_library(
+    name = "remote_execution_java_proto",
+    deps = [":remote_execution_proto"],
 )

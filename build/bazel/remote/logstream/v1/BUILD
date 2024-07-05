@@ -1,6 +1,10 @@
-package(default_visibility = ["//visibility:public"])
-
+load("@rules_java//java:defs.bzl", "java_proto_library")
+load("@rules_go//proto:def.bzl", "go_grpc_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_proto_grpc_cpp//:defs.bzl", "cpp_grpc_library")
+
+# gazelle:ignore
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -9,22 +13,24 @@ proto_library(
     srcs = ["remote_logstream.proto"],
 )
 
-alias(
-    name = "remote_logstream_java_proto",
-    actual = "//build/bazel/remote/logstream/v1/java:remote_logstream_java_proto",
-)
-
-alias(
-    name = "remote_logstream_cc_proto",
-    actual = "//build/bazel/remote/logstream/v1/cc:remote_logstream_cc_grpc",
-)
-
-alias(
-    name = "remote_logstream_go_proto",
-    actual = "//build/bazel/remote/logstream/v1/go:remote_logstream_go_proto",
+go_grpc_library(
+    name = "remote_logstream_go_grpc",
+    importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/logstream/v1",
+    protos = [":remote_logstream_proto"],
 )
 
 alias(
     name = "go_default_library",
-    actual = "//build/bazel/remote/logstream/v1/go:go_default_library",
+    actual = ":remote_logstream_go_grpc",
+)
+
+cpp_grpc_library(
+    name = "remote_logstream_cpp_grpc",
+    protos = [":remote_logstream_proto"],
+)
+
+# TODO: Include/replace with gRPC stub generation targets when feasible
+java_proto_library(
+    name = "remote_logstream_java_proto",
+    deps = [":remote_logstream_proto"],
 )
