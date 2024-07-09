@@ -2133,3 +2133,14 @@ message RequestMetadata {
   // or equality across invocations, though some client tools may offer these guarantees.
   string configuration_id = 7;
 }
+
+// An optional Metadata to attach to any RPC request to tell the server about the blob
+// inside, or referenced by, a request.  The server may use this for better load 
+// balancing, or other purposes.
+//
+// To use it, the client attaches the header to the call using the canonical proto
+// serialization:
+//
+// * name: `build.bazel.remote.execution.v2.blob-digest`
+// * contents: the plained text digest of the blob in the form of "{hash}/{size}".
+message BlobDigest {}
