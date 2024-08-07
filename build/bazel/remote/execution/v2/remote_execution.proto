@@ -2103,8 +2103,8 @@ message ToolDetails {
 // metadata, the user may ignore the base64 encoding and assume it is simply
 // serialized as a binary message.
 message RequestMetadata {
-  // The details for the tool invoking the requests.
-  ToolDetails tool_details = 1;
+  // The details for the tools involved in sending the requests.
+  repeated ToolDetails tool_details = 1;
 
   // An identifier that ties multiple requests to the same action.
   // For example, multiple requests to the CAS, Action Cache, and Execution
