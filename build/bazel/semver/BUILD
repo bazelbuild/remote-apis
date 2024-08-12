@@ -1,6 +1,8 @@
-package(default_visibility = ["//visibility:public"])
-
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//proto:def.bzl", "go_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
+
+package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
 
@@ -9,22 +11,27 @@ proto_library(
     srcs = ["semver.proto"],
 )
 
-alias(
+# Java
+java_proto_library(
     name = "semver_java_proto",
-    actual = "//build/bazel/semver/java:semver_java_proto",
+    deps = ["//build/bazel/semver:semver_proto"],
 )
 
-alias(
+# C++
+cc_proto_library(
     name = "semver_cc_proto",
-    actual = "//build/bazel/semver/cc:semver_cc_proto",
+    deps = ["//build/bazel/semver:semver_proto"],
 )
 
-alias(
+# Go
+go_proto_library(
     name = "semver_go_proto",
-    actual = "//build/bazel/semver/go:semver_go_proto",
+    importpath = "github.com/bazelbuild/remote-apis/build/bazel/semver",
+    proto = ":semver_proto",
 )
 
-alias(
+go_library(
     name = "go_default_library",
-    actual = "//build/bazel/semver/go:go_default_library",
+    embed = [":semver_go_proto"],
+    importpath = "github.com/bazelbuild/remote-apis/build/bazel/semver",
 )

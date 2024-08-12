@@ -1,0 +1,33 @@
+load("@bazel_gazelle//:def.bzl", "gazelle")
+
+# gazelle:prefix github.com/bazelbuild/remote-apis
+# gazelle:go_naming_convention go_default_library
+#
+# For some reason, Gazelle prefers to pick the go_default_library target for
+# dependencies between our go_proto_library targets. This leads to a build
+# error when someone depends on such a library then, due to an error about
+# the target used for compilation being different from the one used for
+# linking. These resolve directives are a workaround for this issue.
+#
+# gazelle:resolve proto go build/bazel/remote/asset/v1/remote_asset.proto //build/bazel/remote/asset/v1:remote_asset_go_proto
+# gazelle:resolve proto go build/bazel/remote/execution/v2/remote_execution.proto //build/bazel/remote/execution/v2:remote_execution_go_proto
+# gazelle:resolve proto go build/bazel/remote/logstream/v1/remote_logstream.proto //build/bazel/remote/logstream/v1:remote_logstream_go_proto
+# gazelle:resolve proto go build/bazel/semver/semver.proto //build/bazel/semver:semver_go_proto
+#
+# Manual resolves for protobuf imports of Google APIs are required since
+# Gazelle v0.32.0.
+#
+# Context:
+# - https://github.com/bazelbuild/bazel-gazelle/releases/tag/v0.32.0
+# - https://github.com/bazelbuild/bazel-gazelle/issues/1422
+# - https://github.com/bazelbuild/bazel-gazelle/pull/1561
+#
+# gazelle:resolve proto proto google/api/annotations.proto @googleapis//google/api:annotations_proto
+# gazelle:resolve proto go    google/api/annotations.proto @org_golang_google_genproto_googleapis_api//annotations
+# gazelle:resolve proto proto google/longrunning/operations.proto @googleapis//google/longrunning:operations_proto
+# gazelle:resolve proto go    google/longrunning/operations.proto @com_google_cloud_go_longrunning//autogen/longrunningpb
+# gazelle:resolve proto proto google/rpc/code.proto @googleapis//google/rpc:code_proto
+# gazelle:resolve proto go    google/rpc/code.proto @org_golang_google_genproto_googleapis_rpc//code
+# gazelle:resolve proto proto google/rpc/status.proto @googleapis//google/rpc:status_proto
+# gazelle:resolve proto go    google/rpc/status.proto @org_golang_google_genproto_googleapis_rpc//status
+gazelle(name = "gazelle")
