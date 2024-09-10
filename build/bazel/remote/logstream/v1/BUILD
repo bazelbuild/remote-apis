@@ -34,7 +34,10 @@ cc_grpc_library(
 # Go
 go_proto_library(
     name = "remote_logstream_go_proto",
-    compilers = ["@rules_go//proto:go_grpc"],
+    compilers = [
+        "@rules_go//proto:go_proto",
+        "@rules_go//proto:go_grpc_v2",
+    ],
     importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/logstream/v1",
     proto = ":remote_logstream_proto",
 )

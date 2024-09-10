@@ -13,9 +13,12 @@ bazel build --output_groups=go_generated_srcs \
 
 GEN_CMD_PATHS=(
 	"build/bazel/remote/asset/v1/remote_asset.pb.go"
+	"build/bazel/remote/asset/v1/remote_asset_grpc.pb.go"
+	"build/bazel/remote/execution/v2/remote_execution.pb.go"
+	"build/bazel/remote/execution/v2/remote_execution_grpc.pb.go"
 	"build/bazel/remote/logstream/v1/remote_logstream.pb.go"
-      "build/bazel/remote/execution/v2/remote_execution.pb.go"
-      "build/bazel/semver/semver.pb.go"
+	"build/bazel/remote/logstream/v1/remote_logstream_grpc.pb.go"
+	"build/bazel/semver/semver.pb.go"
 )
 
 bazel_bin="$(bazel info bazel-bin)"
