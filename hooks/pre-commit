@@ -1,15 +1,26 @@
-#!/bin/sh
+#!/usr/bin/env bash
+#
 # Precommit hook to rebuild generated go code. Fails if building or copying the
 # files fails.
+#
 set -e
-bazel build build/bazel/remote/execution/v2:remote_execution_go_proto \
-      build/bazel/remote/asset/v1:remote_asset_go_proto \
-      build/bazel/remote/logstream/v1:remote_logstream_go_proto
 
-for i in "build/bazel/remote/execution/v2/remote_execution.pb.go" \
-	 "build/bazel/semver/semver.pb.go" \
-	 "build/bazel/remote/asset/v1/remote_asset.pb.go" \
-	 "build/bazel/remote/logstream/v1/remote_logstream.pb.go" ; do
-    cp "$(find $(bazel info bazel-bin) -path "*/$i")" "$i"
-    git add "$i"
+bazel build --output_groups=go_generated_srcs \
+      //build/bazel/remote/asset/v1:remote_asset_go_proto \
+      //build/bazel/remote/execution/v2:remote_execution_go_proto \
+      //build/bazel/remote/logstream/v1:remote_logstream_go_proto \
+      //build/bazel/semver:semver_go_proto
+
+GEN_CMD_PATHS=(
+	"build/bazel/remote/asset/v1/remote_asset.pb.go"
+	"build/bazel/remote/logstream/v1/remote_logstream.pb.go"
+      "build/bazel/remote/execution/v2/remote_execution.pb.go"
+      "build/bazel/semver/semver.pb.go"
+)
+
+bazel_bin="$(bazel info bazel-bin)"
+for i in "${GEN_CMD_PATHS[@]}"; do
+      echo "Copying $i ..."
+      cp "$(find "$bazel_bin" -path "*/$i")" "$i"
+      git add "$i"
 done
