@@ -44,7 +44,10 @@ cc_grpc_library(
 # Go
 go_proto_library(
     name = "remote_execution_go_proto",
-    compilers = ["@rules_go//proto:go_grpc"],
+    compilers = [
+        "@rules_go//proto:go_proto",
+        "@rules_go//proto:go_grpc_v2",
+    ],
     importpath = "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2",
     proto = ":remote_execution_proto",
     deps = [
