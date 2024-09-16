@@ -3,7 +3,6 @@ module(
     version = "",
 )
 
-bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "grpc", version = "1.65.0")
 bazel_dep(name = "rules_proto", version = "6.0.2")
 bazel_dep(name = "protobuf", version = "27.3")
