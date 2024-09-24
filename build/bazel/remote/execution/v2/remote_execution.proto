@@ -1557,6 +1557,15 @@ message ExecuteOperationMetadata {
   // The client can read this field to view details about the ongoing
   // execution.
   ExecutedActionMetadata partial_execution_metadata = 5;
+
+  // The digest function that was used to compute the action digest.
+  //
+  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
+  // that case the server SHOULD infer the digest function using the
+  // length of the action digest hash and the digest functions announced
+  // in the server's capabilities.
+  DigestFunction.Value digest_function = 6;
 }
 
 // A request message for

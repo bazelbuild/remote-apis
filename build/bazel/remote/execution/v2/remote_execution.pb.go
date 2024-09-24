@@ -2797,6 +2797,14 @@ type ExecuteOperationMetadata struct {
 	// The client can read this field to view details about the ongoing
 	// execution.
 	PartialExecutionMetadata *ExecutedActionMetadata `protobuf:"bytes,5,opt,name=partial_execution_metadata,json=partialExecutionMetadata,proto3" json:"partial_execution_metadata,omitempty"`
+	// The digest function that was used to compute the action digest.
+	//
+	// If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+	// SHA384, SHA512, or VSO, the client MAY leave this field unset. In
+	// that case the server SHOULD infer the digest function using the
+	// length of the action digest hash and the digest functions announced
+	// in the server's capabilities.
+	DigestFunction DigestFunction_Value `protobuf:"varint,6,opt,name=digest_function,json=digestFunction,proto3,enum=build.bazel.remote.execution.v2.DigestFunction_Value" json:"digest_function,omitempty"`
 }
 
 func (x *ExecuteOperationMetadata) Reset() {
@@ -2864,6 +2872,13 @@ func (x *ExecuteOperationMetadata) GetPartialExecutionMetadata() *ExecutedAction
 		return x.PartialExecutionMetadata
 	}
 	return nil
+}
+
+func (x *ExecuteOperationMetadata) GetDigestFunction() DigestFunction_Value {
+	if x != nil {
+		return x.DigestFunction
+	}
+	return DigestFunction_UNKNOWN
 }
 
 // A request message for
@@ -5274,7 +5289,7 @@ var file_build_bazel_remote_execution_v2_remote_execution_proto_rawDesc = []byte
 	0x48, 0x45, 0x5f, 0x43, 0x48, 0x45, 0x43, 0x4b, 0x10, 0x01, 0x12, 0x0a, 0x0a, 0x06, 0x51, 0x55,
 	0x45, 0x55, 0x45, 0x44, 0x10, 0x02, 0x12, 0x0d, 0x0a, 0x09, 0x45, 0x58, 0x45, 0x43, 0x55, 0x54,
 	0x49, 0x4e, 0x47, 0x10, 0x03, 0x12, 0x0d, 0x0a, 0x09, 0x43, 0x4f, 0x4d, 0x50, 0x4c, 0x45, 0x54,
-	0x45, 0x44, 0x10, 0x04, 0x22, 0x88, 0x03, 0x0a, 0x18, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x65,
+	0x45, 0x44, 0x10, 0x04, 0x22, 0xe8, 0x03, 0x0a, 0x18, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x65,
 	0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74,
 	0x61, 0x12, 0x4b, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e,
 	0x32, 0x35, 0x2e, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x2e, 0x62, 0x61, 0x7a, 0x65, 0x6c, 0x2e, 0x72,
@@ -5298,7 +5313,13 @@ var file_build_bazel_remote_execution_v2_remote_execution_proto_rawDesc = []byte
 	0x65, 0x2e, 0x65, 0x78, 0x65, 0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x32, 0x2e, 0x45,
 	0x78, 0x65, 0x63, 0x75, 0x74, 0x65, 0x64, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x65, 0x74,
 	0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x18, 0x70, 0x61, 0x72, 0x74, 0x69, 0x61, 0x6c, 0x45, 0x78,
-	0x65, 0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x22,
+	0x65, 0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x12,
+	0x5e, 0x0a, 0x0f, 0x64, 0x69, 0x67, 0x65, 0x73, 0x74, 0x5f, 0x66, 0x75, 0x6e, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x18, 0x06, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x35, 0x2e, 0x62, 0x75, 0x69, 0x6c, 0x64,
+	0x2e, 0x62, 0x61, 0x7a, 0x65, 0x6c, 0x2e, 0x72, 0x65, 0x6d, 0x6f, 0x74, 0x65, 0x2e, 0x65, 0x78,
+	0x65, 0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x76, 0x32, 0x2e, 0x44, 0x69, 0x67, 0x65, 0x73,
+	0x74, 0x46, 0x75, 0x6e, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52,
+	0x0e, 0x64, 0x69, 0x67, 0x65, 0x73, 0x74, 0x46, 0x75, 0x6e, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x22,
 	0x2a, 0x0a, 0x14, 0x57, 0x61, 0x69, 0x74, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x69, 0x6f, 0x6e,
 	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18,
 	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0xe5, 0x02, 0x0a, 0x16,
@@ -5921,72 +5942,73 @@ var file_build_bazel_remote_execution_v2_remote_execution_proto_depIdxs = []int3
 	1,   // 53: build.bazel.remote.execution.v2.ExecuteOperationMetadata.stage:type_name -> build.bazel.remote.execution.v2.ExecutionStage.Value
 	14,  // 54: build.bazel.remote.execution.v2.ExecuteOperationMetadata.action_digest:type_name -> build.bazel.remote.execution.v2.Digest
 	15,  // 55: build.bazel.remote.execution.v2.ExecuteOperationMetadata.partial_execution_metadata:type_name -> build.bazel.remote.execution.v2.ExecutedActionMetadata
-	14,  // 56: build.bazel.remote.execution.v2.GetActionResultRequest.action_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	2,   // 57: build.bazel.remote.execution.v2.GetActionResultRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	14,  // 58: build.bazel.remote.execution.v2.UpdateActionResultRequest.action_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	16,  // 59: build.bazel.remote.execution.v2.UpdateActionResultRequest.action_result:type_name -> build.bazel.remote.execution.v2.ActionResult
-	22,  // 60: build.bazel.remote.execution.v2.UpdateActionResultRequest.results_cache_policy:type_name -> build.bazel.remote.execution.v2.ResultsCachePolicy
-	2,   // 61: build.bazel.remote.execution.v2.UpdateActionResultRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	14,  // 62: build.bazel.remote.execution.v2.FindMissingBlobsRequest.blob_digests:type_name -> build.bazel.remote.execution.v2.Digest
-	2,   // 63: build.bazel.remote.execution.v2.FindMissingBlobsRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	14,  // 64: build.bazel.remote.execution.v2.FindMissingBlobsResponse.missing_blob_digests:type_name -> build.bazel.remote.execution.v2.Digest
-	53,  // 65: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.requests:type_name -> build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request
-	2,   // 66: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	54,  // 67: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.responses:type_name -> build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response
-	14,  // 68: build.bazel.remote.execution.v2.BatchReadBlobsRequest.digests:type_name -> build.bazel.remote.execution.v2.Digest
-	4,   // 69: build.bazel.remote.execution.v2.BatchReadBlobsRequest.acceptable_compressors:type_name -> build.bazel.remote.execution.v2.Compressor.Value
-	2,   // 70: build.bazel.remote.execution.v2.BatchReadBlobsRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	55,  // 71: build.bazel.remote.execution.v2.BatchReadBlobsResponse.responses:type_name -> build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response
-	14,  // 72: build.bazel.remote.execution.v2.GetTreeRequest.root_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	2,   // 73: build.bazel.remote.execution.v2.GetTreeRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	8,   // 74: build.bazel.remote.execution.v2.GetTreeResponse.directories:type_name -> build.bazel.remote.execution.v2.Directory
-	46,  // 75: build.bazel.remote.execution.v2.ServerCapabilities.cache_capabilities:type_name -> build.bazel.remote.execution.v2.CacheCapabilities
-	47,  // 76: build.bazel.remote.execution.v2.ServerCapabilities.execution_capabilities:type_name -> build.bazel.remote.execution.v2.ExecutionCapabilities
-	62,  // 77: build.bazel.remote.execution.v2.ServerCapabilities.deprecated_api_version:type_name -> build.bazel.semver.SemVer
-	62,  // 78: build.bazel.remote.execution.v2.ServerCapabilities.low_api_version:type_name -> build.bazel.semver.SemVer
-	62,  // 79: build.bazel.remote.execution.v2.ServerCapabilities.high_api_version:type_name -> build.bazel.semver.SemVer
-	56,  // 80: build.bazel.remote.execution.v2.PriorityCapabilities.priorities:type_name -> build.bazel.remote.execution.v2.PriorityCapabilities.PriorityRange
-	2,   // 81: build.bazel.remote.execution.v2.CacheCapabilities.digest_functions:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	42,  // 82: build.bazel.remote.execution.v2.CacheCapabilities.action_cache_update_capabilities:type_name -> build.bazel.remote.execution.v2.ActionCacheUpdateCapabilities
-	43,  // 83: build.bazel.remote.execution.v2.CacheCapabilities.cache_priority_capabilities:type_name -> build.bazel.remote.execution.v2.PriorityCapabilities
-	3,   // 84: build.bazel.remote.execution.v2.CacheCapabilities.symlink_absolute_path_strategy:type_name -> build.bazel.remote.execution.v2.SymlinkAbsolutePathStrategy.Value
-	4,   // 85: build.bazel.remote.execution.v2.CacheCapabilities.supported_compressors:type_name -> build.bazel.remote.execution.v2.Compressor.Value
-	4,   // 86: build.bazel.remote.execution.v2.CacheCapabilities.supported_batch_update_compressors:type_name -> build.bazel.remote.execution.v2.Compressor.Value
-	2,   // 87: build.bazel.remote.execution.v2.ExecutionCapabilities.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	43,  // 88: build.bazel.remote.execution.v2.ExecutionCapabilities.execution_priority_capabilities:type_name -> build.bazel.remote.execution.v2.PriorityCapabilities
-	2,   // 89: build.bazel.remote.execution.v2.ExecutionCapabilities.digest_functions:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	48,  // 90: build.bazel.remote.execution.v2.RequestMetadata.tool_details:type_name -> build.bazel.remote.execution.v2.ToolDetails
-	24,  // 91: build.bazel.remote.execution.v2.ExecuteResponse.ServerLogsEntry.value:type_name -> build.bazel.remote.execution.v2.LogFile
-	14,  // 92: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request.digest:type_name -> build.bazel.remote.execution.v2.Digest
-	4,   // 93: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request.compressor:type_name -> build.bazel.remote.execution.v2.Compressor.Value
-	14,  // 94: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response.digest:type_name -> build.bazel.remote.execution.v2.Digest
-	61,  // 95: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response.status:type_name -> google.rpc.Status
-	14,  // 96: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.digest:type_name -> build.bazel.remote.execution.v2.Digest
-	4,   // 97: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.compressor:type_name -> build.bazel.remote.execution.v2.Compressor.Value
-	61,  // 98: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.status:type_name -> google.rpc.Status
-	23,  // 99: build.bazel.remote.execution.v2.Execution.Execute:input_type -> build.bazel.remote.execution.v2.ExecuteRequest
-	28,  // 100: build.bazel.remote.execution.v2.Execution.WaitExecution:input_type -> build.bazel.remote.execution.v2.WaitExecutionRequest
-	29,  // 101: build.bazel.remote.execution.v2.ActionCache.GetActionResult:input_type -> build.bazel.remote.execution.v2.GetActionResultRequest
-	30,  // 102: build.bazel.remote.execution.v2.ActionCache.UpdateActionResult:input_type -> build.bazel.remote.execution.v2.UpdateActionResultRequest
-	31,  // 103: build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs:input_type -> build.bazel.remote.execution.v2.FindMissingBlobsRequest
-	33,  // 104: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs:input_type -> build.bazel.remote.execution.v2.BatchUpdateBlobsRequest
-	35,  // 105: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs:input_type -> build.bazel.remote.execution.v2.BatchReadBlobsRequest
-	37,  // 106: build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree:input_type -> build.bazel.remote.execution.v2.GetTreeRequest
-	39,  // 107: build.bazel.remote.execution.v2.Capabilities.GetCapabilities:input_type -> build.bazel.remote.execution.v2.GetCapabilitiesRequest
-	63,  // 108: build.bazel.remote.execution.v2.Execution.Execute:output_type -> google.longrunning.Operation
-	63,  // 109: build.bazel.remote.execution.v2.Execution.WaitExecution:output_type -> google.longrunning.Operation
-	16,  // 110: build.bazel.remote.execution.v2.ActionCache.GetActionResult:output_type -> build.bazel.remote.execution.v2.ActionResult
-	16,  // 111: build.bazel.remote.execution.v2.ActionCache.UpdateActionResult:output_type -> build.bazel.remote.execution.v2.ActionResult
-	32,  // 112: build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs:output_type -> build.bazel.remote.execution.v2.FindMissingBlobsResponse
-	34,  // 113: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs:output_type -> build.bazel.remote.execution.v2.BatchUpdateBlobsResponse
-	36,  // 114: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs:output_type -> build.bazel.remote.execution.v2.BatchReadBlobsResponse
-	38,  // 115: build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree:output_type -> build.bazel.remote.execution.v2.GetTreeResponse
-	40,  // 116: build.bazel.remote.execution.v2.Capabilities.GetCapabilities:output_type -> build.bazel.remote.execution.v2.ServerCapabilities
-	108, // [108:117] is the sub-list for method output_type
-	99,  // [99:108] is the sub-list for method input_type
-	99,  // [99:99] is the sub-list for extension type_name
-	99,  // [99:99] is the sub-list for extension extendee
-	0,   // [0:99] is the sub-list for field type_name
+	2,   // 56: build.bazel.remote.execution.v2.ExecuteOperationMetadata.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	14,  // 57: build.bazel.remote.execution.v2.GetActionResultRequest.action_digest:type_name -> build.bazel.remote.execution.v2.Digest
+	2,   // 58: build.bazel.remote.execution.v2.GetActionResultRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	14,  // 59: build.bazel.remote.execution.v2.UpdateActionResultRequest.action_digest:type_name -> build.bazel.remote.execution.v2.Digest
+	16,  // 60: build.bazel.remote.execution.v2.UpdateActionResultRequest.action_result:type_name -> build.bazel.remote.execution.v2.ActionResult
+	22,  // 61: build.bazel.remote.execution.v2.UpdateActionResultRequest.results_cache_policy:type_name -> build.bazel.remote.execution.v2.ResultsCachePolicy
+	2,   // 62: build.bazel.remote.execution.v2.UpdateActionResultRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	14,  // 63: build.bazel.remote.execution.v2.FindMissingBlobsRequest.blob_digests:type_name -> build.bazel.remote.execution.v2.Digest
+	2,   // 64: build.bazel.remote.execution.v2.FindMissingBlobsRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	14,  // 65: build.bazel.remote.execution.v2.FindMissingBlobsResponse.missing_blob_digests:type_name -> build.bazel.remote.execution.v2.Digest
+	53,  // 66: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.requests:type_name -> build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request
+	2,   // 67: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	54,  // 68: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.responses:type_name -> build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response
+	14,  // 69: build.bazel.remote.execution.v2.BatchReadBlobsRequest.digests:type_name -> build.bazel.remote.execution.v2.Digest
+	4,   // 70: build.bazel.remote.execution.v2.BatchReadBlobsRequest.acceptable_compressors:type_name -> build.bazel.remote.execution.v2.Compressor.Value
+	2,   // 71: build.bazel.remote.execution.v2.BatchReadBlobsRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	55,  // 72: build.bazel.remote.execution.v2.BatchReadBlobsResponse.responses:type_name -> build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response
+	14,  // 73: build.bazel.remote.execution.v2.GetTreeRequest.root_digest:type_name -> build.bazel.remote.execution.v2.Digest
+	2,   // 74: build.bazel.remote.execution.v2.GetTreeRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	8,   // 75: build.bazel.remote.execution.v2.GetTreeResponse.directories:type_name -> build.bazel.remote.execution.v2.Directory
+	46,  // 76: build.bazel.remote.execution.v2.ServerCapabilities.cache_capabilities:type_name -> build.bazel.remote.execution.v2.CacheCapabilities
+	47,  // 77: build.bazel.remote.execution.v2.ServerCapabilities.execution_capabilities:type_name -> build.bazel.remote.execution.v2.ExecutionCapabilities
+	62,  // 78: build.bazel.remote.execution.v2.ServerCapabilities.deprecated_api_version:type_name -> build.bazel.semver.SemVer
+	62,  // 79: build.bazel.remote.execution.v2.ServerCapabilities.low_api_version:type_name -> build.bazel.semver.SemVer
+	62,  // 80: build.bazel.remote.execution.v2.ServerCapabilities.high_api_version:type_name -> build.bazel.semver.SemVer
+	56,  // 81: build.bazel.remote.execution.v2.PriorityCapabilities.priorities:type_name -> build.bazel.remote.execution.v2.PriorityCapabilities.PriorityRange
+	2,   // 82: build.bazel.remote.execution.v2.CacheCapabilities.digest_functions:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	42,  // 83: build.bazel.remote.execution.v2.CacheCapabilities.action_cache_update_capabilities:type_name -> build.bazel.remote.execution.v2.ActionCacheUpdateCapabilities
+	43,  // 84: build.bazel.remote.execution.v2.CacheCapabilities.cache_priority_capabilities:type_name -> build.bazel.remote.execution.v2.PriorityCapabilities
+	3,   // 85: build.bazel.remote.execution.v2.CacheCapabilities.symlink_absolute_path_strategy:type_name -> build.bazel.remote.execution.v2.SymlinkAbsolutePathStrategy.Value
+	4,   // 86: build.bazel.remote.execution.v2.CacheCapabilities.supported_compressors:type_name -> build.bazel.remote.execution.v2.Compressor.Value
+	4,   // 87: build.bazel.remote.execution.v2.CacheCapabilities.supported_batch_update_compressors:type_name -> build.bazel.remote.execution.v2.Compressor.Value
+	2,   // 88: build.bazel.remote.execution.v2.ExecutionCapabilities.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	43,  // 89: build.bazel.remote.execution.v2.ExecutionCapabilities.execution_priority_capabilities:type_name -> build.bazel.remote.execution.v2.PriorityCapabilities
+	2,   // 90: build.bazel.remote.execution.v2.ExecutionCapabilities.digest_functions:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	48,  // 91: build.bazel.remote.execution.v2.RequestMetadata.tool_details:type_name -> build.bazel.remote.execution.v2.ToolDetails
+	24,  // 92: build.bazel.remote.execution.v2.ExecuteResponse.ServerLogsEntry.value:type_name -> build.bazel.remote.execution.v2.LogFile
+	14,  // 93: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request.digest:type_name -> build.bazel.remote.execution.v2.Digest
+	4,   // 94: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request.compressor:type_name -> build.bazel.remote.execution.v2.Compressor.Value
+	14,  // 95: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response.digest:type_name -> build.bazel.remote.execution.v2.Digest
+	61,  // 96: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response.status:type_name -> google.rpc.Status
+	14,  // 97: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.digest:type_name -> build.bazel.remote.execution.v2.Digest
+	4,   // 98: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.compressor:type_name -> build.bazel.remote.execution.v2.Compressor.Value
+	61,  // 99: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.status:type_name -> google.rpc.Status
+	23,  // 100: build.bazel.remote.execution.v2.Execution.Execute:input_type -> build.bazel.remote.execution.v2.ExecuteRequest
+	28,  // 101: build.bazel.remote.execution.v2.Execution.WaitExecution:input_type -> build.bazel.remote.execution.v2.WaitExecutionRequest
+	29,  // 102: build.bazel.remote.execution.v2.ActionCache.GetActionResult:input_type -> build.bazel.remote.execution.v2.GetActionResultRequest
+	30,  // 103: build.bazel.remote.execution.v2.ActionCache.UpdateActionResult:input_type -> build.bazel.remote.execution.v2.UpdateActionResultRequest
+	31,  // 104: build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs:input_type -> build.bazel.remote.execution.v2.FindMissingBlobsRequest
+	33,  // 105: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs:input_type -> build.bazel.remote.execution.v2.BatchUpdateBlobsRequest
+	35,  // 106: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs:input_type -> build.bazel.remote.execution.v2.BatchReadBlobsRequest
+	37,  // 107: build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree:input_type -> build.bazel.remote.execution.v2.GetTreeRequest
+	39,  // 108: build.bazel.remote.execution.v2.Capabilities.GetCapabilities:input_type -> build.bazel.remote.execution.v2.GetCapabilitiesRequest
+	63,  // 109: build.bazel.remote.execution.v2.Execution.Execute:output_type -> google.longrunning.Operation
+	63,  // 110: build.bazel.remote.execution.v2.Execution.WaitExecution:output_type -> google.longrunning.Operation
+	16,  // 111: build.bazel.remote.execution.v2.ActionCache.GetActionResult:output_type -> build.bazel.remote.execution.v2.ActionResult
+	16,  // 112: build.bazel.remote.execution.v2.ActionCache.UpdateActionResult:output_type -> build.bazel.remote.execution.v2.ActionResult
+	32,  // 113: build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs:output_type -> build.bazel.remote.execution.v2.FindMissingBlobsResponse
+	34,  // 114: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs:output_type -> build.bazel.remote.execution.v2.BatchUpdateBlobsResponse
+	36,  // 115: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs:output_type -> build.bazel.remote.execution.v2.BatchReadBlobsResponse
+	38,  // 116: build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree:output_type -> build.bazel.remote.execution.v2.GetTreeResponse
+	40,  // 117: build.bazel.remote.execution.v2.Capabilities.GetCapabilities:output_type -> build.bazel.remote.execution.v2.ServerCapabilities
+	109, // [109:118] is the sub-list for method output_type
+	100, // [100:109] is the sub-list for method input_type
+	100, // [100:100] is the sub-list for extension type_name
+	100, // [100:100] is the sub-list for extension extendee
+	0,   // [0:100] is the sub-list for field type_name
 }
 
 func init() { file_build_bazel_remote_execution_v2_remote_execution_proto_init() }
