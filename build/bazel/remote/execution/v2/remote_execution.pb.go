@@ -2799,11 +2799,11 @@ type ExecuteOperationMetadata struct {
 	PartialExecutionMetadata *ExecutedActionMetadata `protobuf:"bytes,5,opt,name=partial_execution_metadata,json=partialExecutionMetadata,proto3" json:"partial_execution_metadata,omitempty"`
 	// The digest function that was used to compute the action digest.
 	//
-	// If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
-	// SHA384, SHA512, or VSO, the client MAY leave this field unset. In
-	// that case the server SHOULD infer the digest function using the
-	// length of the action digest hash and the digest functions announced
-	// in the server's capabilities.
+	// If the digest function used is one of BLAKE3, MD5, MURMUR3, SHA1,
+	// SHA256, SHA256TREE, SHA384, SHA512, or VSO, the server MAY leave
+	// this field unset. In that case the client SHOULD infer the digest
+	// function using the length of the action digest hash and the digest
+	// functions announced in the server's capabilities.
 	DigestFunction DigestFunction_Value `protobuf:"varint,6,opt,name=digest_function,json=digestFunction,proto3,enum=build.bazel.remote.execution.v2.DigestFunction_Value" json:"digest_function,omitempty"`
 }
 
