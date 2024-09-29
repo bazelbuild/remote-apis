@@ -1,5 +1,5 @@
 module(
-    name = "bazel_remote_apis",
+    name = "remote-apis",
     version = "",
 )
 

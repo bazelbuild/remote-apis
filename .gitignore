@@ -8,3 +8,4 @@
 /bazel-out
 /bazel-remote-apis
 /bazel-testlogs
+MODULE.bazel.lock
