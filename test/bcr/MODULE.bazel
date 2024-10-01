@@ -1,0 +1,7 @@
+module(name = "bazel_remote_apis_test", version = "")
+
+bazel_dep(name = "bazel_remote_apis")
+local_path_override(
+  module_name = "bazel_remote_apis",
+  path = "../..",
+)

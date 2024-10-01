@@ -1,0 +1,43 @@
+# Cut a release whenever a new tag is pushed to the repo.
+# You should use an annotated tag, like `git tag -a v1.2.3`.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+  # In case of problems, enable manual dispatch from the GitHub UI.
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        required: true
+        type: string
+
+# Uses the `release_ruleset` workflow to generate provenance attestation files
+# referenced by the `publish-to-bcr` workflow.
+#
+# Based on .github/workflows/release.yml from bazel-contrib/rules_scala v7.2.4.
+# See .bcr/README.md.
+
+permissions:
+  attestations: write # Needed to attest provenance
+  contents: write # Needed to create release
+  id-token: write # Needed to attest provenance
+
+jobs:
+  release:
+    uses: bazel-contrib/.github/.github/workflows/release_ruleset.yaml@v7.4.0
+    with:
+      bazel_test_command: "bazel build //..."
+      prerelease: false
+      release_files: remote-apis-*.tar.gz
+      tag_name: ${{ inputs.tag_name || github.ref_name }}
+
+  publish-to-bcr:
+    needs: release
+    uses: ./.github/workflows/publish-to-bcr.yml
+    with:
+      tag_name: ${{ inputs.tag_name || github.ref_name }}
+    secrets:
+      bcr_publish_token: ${{ secrets.bcr_publish_token }}
