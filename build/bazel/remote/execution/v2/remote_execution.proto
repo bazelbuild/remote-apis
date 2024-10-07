@@ -1664,7 +1664,7 @@ message UpdateActionResultRequest {
   // semantics. (The inclusion of UNSPECIFIED is necessary for backwards
   // compatibility because this functionality was left out of earlier versions
   // of the API specification.
-  Overwrite overwrite;
+  Overwrite overwrite = 6;
 }
 
 // A request message for
