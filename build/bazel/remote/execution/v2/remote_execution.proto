@@ -1645,6 +1645,26 @@ message UpdateActionResultRequest {
   // length of the action digest hash and the digest functions announced
   // in the server's capabilities.
   DigestFunction.Value digest_function = 5;
+
+  enum Overwrite {
+    UNSPECIFIED = 0;
+    OVERWRITE = 1;
+    NOOVERWRITE = 2;
+  }
+  // Whether or not an existing entry should be overwritten. This is the remote
+  // cache equivalent of skip_cache_lookup in
+  // [ExecuteRequest][build.bazel.remote.execution.v2.Action]. Overwriting an
+  // existing entry can lead to cache thrashing on downstream entries, but
+  // means the client doesn't need to download the outputs from an existing
+  // entry. If OVERWRITE is specified, the server MUST return the provided
+  // input as the result of a successful call to UpdateActionResult. If
+  // NOOVERWRITE is specified, the server MUST return an existing entry, if one
+  // exists, or the provided input if not. If UNSPECIFIED is provided, the
+  // server may choose whether to follow the OVERWRITE or NOOVERWRITE
+  // semantics. (The inclusion of UNSPECIFIED is necessary for backwards
+  // compatibility because this functionality was left out of earlier versions
+  // of the API specification.
+  Overwrite overwrite;
 }
 
 // A request message for
