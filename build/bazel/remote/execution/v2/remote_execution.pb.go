@@ -163,8 +163,21 @@ func (ExecutionStage_Value) EnumDescriptor() ([]byte, []int) {
 type UpdateActionResultRequest_Overwrite int32
 
 const (
+	// The server may choose to follow either OVERWRITE or NOOVERWRITE
+	// semantics. This option is included for backward compatibility with
+	// earlier API versions.
 	UpdateActionResultRequest_UNSPECIFIED UpdateActionResultRequest_Overwrite = 0
-	UpdateActionResultRequest_OVERWRITE   UpdateActionResultRequest_Overwrite = 1
+	// On a successful call, the server MUST write the provided ActionResult
+	// to the cache and use that ActionResult as the return value, even if
+	// another cache result already exists. Overwriting eliminates the need
+	// for the client to download alternate outputs, but can cause cache
+	// thrashing on downstream Actions.
+	UpdateActionResultRequest_OVERWRITE UpdateActionResultRequest_Overwrite = 1
+	// On a successful call, if a preexisting cache result already exists,
+	// the server MUST ignore the provided ActionResult and return the existing
+	// one instead. If a preexisting cache result does not exist, the server
+	// MUST write the provided ActionResult to the cache and use that
+	// ActionResult as the return value.
 	UpdateActionResultRequest_NOOVERWRITE UpdateActionResultRequest_Overwrite = 2
 )
 
@@ -3123,19 +3136,9 @@ type UpdateActionResultRequest struct {
 	// length of the action digest hash and the digest functions announced
 	// in the server's capabilities.
 	DigestFunction DigestFunction_Value `protobuf:"varint,5,opt,name=digest_function,json=digestFunction,proto3,enum=build.bazel.remote.execution.v2.DigestFunction_Value" json:"digest_function,omitempty"`
-	// Whether or not an existing entry should be overwritten. This is the remote
-	// cache equivalent of skip_cache_lookup in
-	// [ExecuteRequest][build.bazel.remote.execution.v2.Action]. Overwriting an
-	// existing entry can lead to cache thrashing on downstream entries, but
-	// means the client doesn't need to download the outputs from an existing
-	// entry. If OVERWRITE is specified, the server MUST return the provided
-	// input as the result of a successful call to UpdateActionResult. If
-	// NOOVERWRITE is specified, the server MUST return an existing entry, if one
-	// exists, or the provided input if not. If UNSPECIFIED is provided, the
-	// server may choose whether to follow the OVERWRITE or NOOVERWRITE
-	// semantics. (The inclusion of UNSPECIFIED is necessary for backwards
-	// compatibility because this functionality was left out of earlier versions
-	// of the API specification.
+	// Determines whether an existing entry should be overwritten. This is the
+	// remote cache equivalent of skip_cache_lookup in
+	// [ExecuteRequest][build.bazel.remote.execution.v2.Action].
 	Overwrite UpdateActionResultRequest_Overwrite `protobuf:"varint,6,opt,name=overwrite,proto3,enum=build.bazel.remote.execution.v2.UpdateActionResultRequest_Overwrite" json:"overwrite,omitempty"`
 }
 

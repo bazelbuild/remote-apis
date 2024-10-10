@@ -1647,23 +1647,26 @@ message UpdateActionResultRequest {
   DigestFunction.Value digest_function = 5;
 
   enum Overwrite {
+    // The server may choose to follow either OVERWRITE or NOOVERWRITE
+    // semantics. This option is included for backward compatibility with
+    // earlier API versions.
     UNSPECIFIED = 0;
+    // On a successful call, the server MUST write the provided ActionResult
+    // to the cache and use that ActionResult as the return value, even if
+    // another cache result already exists. Overwriting eliminates the need
+    // for the client to download alternate outputs, but can cause cache
+    // thrashing on downstream Actions.
     OVERWRITE = 1;
+    // On a successful call, if a preexisting cache result already exists,
+    // the server MUST ignore the provided ActionResult and return the existing
+    // one instead. If a preexisting cache result does not exist, the server
+    // MUST write the provided ActionResult to the cache and use that
+    // ActionResult as the return value.
     NOOVERWRITE = 2;
   }
-  // Whether or not an existing entry should be overwritten. This is the remote
-  // cache equivalent of skip_cache_lookup in
-  // [ExecuteRequest][build.bazel.remote.execution.v2.Action]. Overwriting an
-  // existing entry can lead to cache thrashing on downstream entries, but
-  // means the client doesn't need to download the outputs from an existing
-  // entry. If OVERWRITE is specified, the server MUST return the provided
-  // input as the result of a successful call to UpdateActionResult. If
-  // NOOVERWRITE is specified, the server MUST return an existing entry, if one
-  // exists, or the provided input if not. If UNSPECIFIED is provided, the
-  // server may choose whether to follow the OVERWRITE or NOOVERWRITE
-  // semantics. (The inclusion of UNSPECIFIED is necessary for backwards
-  // compatibility because this functionality was left out of earlier versions
-  // of the API specification.
+  // Determines whether an existing entry should be overwritten. This is the
+  // remote cache equivalent of skip_cache_lookup in
+  // [ExecuteRequest][build.bazel.remote.execution.v2.Action].
   Overwrite overwrite = 6;
 }
 
