@@ -32,8 +32,30 @@ option java_outer_classname = "RemoteExecutionProto";
 option java_package = "build.bazel.remote.execution.v2";
 option objc_class_prefix = "REX";
 
+// The Remote Execution API allows clients to request the execution of binaries
+// on a remote system. Practically, the remote system is usually a pool of
+// worker machines, although other implementations are possible. The API
+// comprises three services:
+//
+// - ContentAddressableStorage service, which enables clients to transfer and
+//   address arbitrary data based on the hash of the contents of that data.
+// - Execution service, which enables clients to trigger the execution
+//   of a binary on the remote system, using data from the
+//   ContentAddressableStorage service as input.
+// - ActionCache service, which caches the results of calling the Execution
+//   service for future retrieval.
+//
+// Versions
+// - v2.0
+//   - Initial spec
+// - v2.1
+//   - No notes provided
+// - v2.2
+//   - No notes provided
+// - v2.3
+//   - No notes provided
 
-// The Remote Execution API is used to execute an
+// The Execution service is used to execute an
 // [Action][build.bazel.remote.execution.v2.Action] on the remote
 // workers.
 //

@@ -108,13 +108,27 @@ protobuf compiler and googleapis automatically.
 
 ## Using the APIs
 
+### Versions and Releases
+
+The various APIs in this repository are versioned independently using SemVer
+semantics. The current version of each API can be found at the top of its
+respective proto file.
+
+New releases are created on GitHub approximately monthly, and are tagged
+according to the version of the execution API in the release. If a new release
+is necessary due to changes in one of the other APIs, the release triggers a
+point release bump in the execution API.
+
+For further explanation of versioning and releases within the repository, see
+[issue 315](https://github.com/bazelbuild/remote-apis/issues/315).
+
+### Bazel
+
 The repository contains `BUILD` files to build the protobuf library with
 [Bazel](https://bazel.build/). If you wish to use them with your own project in
 Bazel, you will possibly want to declare `cc_proto_library`,
 `java_proto_library`, etc. rules that depend on them.
 
-Other build systems will have to run protoc on the protobuf files, and link in
-the googleapis and well-known proto types, manually.
 
 ### Go (for non-Bazel build systems)
 
@@ -130,6 +144,11 @@ Import it with, for example:
 ```
 repb "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2"
 ```
+
+### Other Build Systems
+
+Other build systems will have to run protoc on the protobuf files, and link in
+the googleapis and well-known proto types, manually.
 
 ## Development
 
