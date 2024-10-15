@@ -1647,7 +1647,7 @@ message UpdateActionResultRequest {
   DigestFunction.Value digest_function = 5;
 
   enum Overwrite {
-    // The server may choose to follow either OVERWRITE or NOOVERWRITE
+    // The server may choose to follow either OVERWRITE or NO_OVERWRITE
     // semantics. This option is included for backward compatibility with
     // earlier API versions.
     UNSPECIFIED = 0;
@@ -1662,7 +1662,7 @@ message UpdateActionResultRequest {
     // one instead. If a preexisting cache result does not exist, the server
     // MUST write the provided ActionResult to the cache and use that
     // ActionResult as the return value.
-    NOOVERWRITE = 2;
+    NO_OVERWRITE = 2;
   }
   // Determines whether an existing entry should be overwritten. This is the
   // remote cache equivalent of skip_cache_lookup in
