@@ -417,8 +417,18 @@ type ActionCacheClient interface {
 	// [Command][build.bazel.remote.execution.v2.Command], into the
 	// `ContentAddressableStorage`.
 	//
-	// Server implementations MAY modify the
+	// If the request does not specify a value for the
+	// `UpdateActionResultRequest.overwrite` bit, or if it specifies the value
+	// but the server does not support that bit, the server MAY modify the
 	// `UpdateActionResultRequest.action_result` and return an equivalent value.
+	// The definition of what constitutes an "equivalent value" is
+	// implementation-dependent.
+	//
+	// If the request specifies a value for `UpdateActionResultRequest.overwrite`
+	// then the semantics of that value MUST be followed, and depending on the
+	// request and system state the return value may be either empty or an
+	// ActionResult. The returned ActionResult may be identical to, isomorphic
+	// to, or different from the ActionResult provided as input.
 	//
 	// Errors:
 	//
@@ -482,8 +492,18 @@ type ActionCacheServer interface {
 	// [Command][build.bazel.remote.execution.v2.Command], into the
 	// `ContentAddressableStorage`.
 	//
-	// Server implementations MAY modify the
+	// If the request does not specify a value for the
+	// `UpdateActionResultRequest.overwrite` bit, or if it specifies the value
+	// but the server does not support that bit, the server MAY modify the
 	// `UpdateActionResultRequest.action_result` and return an equivalent value.
+	// The definition of what constitutes an "equivalent value" is
+	// implementation-dependent.
+	//
+	// If the request specifies a value for `UpdateActionResultRequest.overwrite`
+	// then the semantics of that value MUST be followed, and depending on the
+	// request and system state the return value may be either empty or an
+	// ActionResult. The returned ActionResult may be identical to, isomorphic
+	// to, or different from the ActionResult provided as input.
 	//
 	// Errors:
 	//

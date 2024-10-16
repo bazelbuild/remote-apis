@@ -163,21 +163,27 @@ func (ExecutionStage_Value) EnumDescriptor() ([]byte, []int) {
 type UpdateActionResultRequest_Overwrite int32
 
 const (
-	// The server may choose to follow either OVERWRITE or NO_OVERWRITE
-	// semantics. This option is included for backward compatibility with
-	// earlier API versions.
+	// The server MUST behave as if the client did not specify a value, falling
+	// back to whatever legacy behavior the server previously implemented. Due
+	// to earlier verions of the API being underspecified, the legacy behavior
+	// may not map directly onto the behavior for either OVERWRITE or
+	// NO_OVERWRITE (e.g., earlier versions of the API were unclear about
+	// whether an empty return value was supported).
 	UpdateActionResultRequest_UNSPECIFIED UpdateActionResultRequest_Overwrite = 0
-	// On a successful call, the server MUST write the provided ActionResult
-	// to the cache and use that ActionResult as the return value, even if
-	// another cache result already exists. Overwriting eliminates the need
-	// for the client to download alternate outputs, but can cause cache
+	// On a successful call, the server SHOULD write the provided ActionResult to
+	// the cache and return an empty value, even if another ActionResult for
+	// the provided key already exists in the cache. Overwriting eliminates the
+	// need for the client to download alternate outputs, but can cause cache
 	// thrashing on downstream Actions.
 	UpdateActionResultRequest_OVERWRITE UpdateActionResultRequest_Overwrite = 1
-	// On a successful call, if a preexisting cache result already exists,
-	// the server MUST ignore the provided ActionResult and return the existing
-	// one instead. If a preexisting cache result does not exist, the server
-	// MUST write the provided ActionResult to the cache and use that
-	// ActionResult as the return value.
+	// On a successful call, if no ActionResult for the provided key exists in
+	// the cache, the server SHOULD write the provided ActionResult to the
+	// cache and return an empty value. If an ActionResult for the provided key
+	// already exists in the cache, the server SHOULD NOT write the provided
+	// ActionResult to the cache, and SHOULD instead return the ActionResult
+	// from the cache. If the ActionResult in the cache is identical to the
+	// provided ActionResult, the server MAY choose to return an empty value
+	// instead, as if the provided ActionResult had been written to the cache.
 	UpdateActionResultRequest_NO_OVERWRITE UpdateActionResultRequest_Overwrite = 2
 )
 
