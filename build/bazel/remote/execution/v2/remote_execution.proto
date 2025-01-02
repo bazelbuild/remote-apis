@@ -175,7 +175,7 @@ service ActionCache {
   //
   // In order to allow the server to perform access control based on the type of
   // action, and to assist with client debugging, the client MUST first upload
-  // the [Action][build.bazel.remote.execution.v2.Execution] that produced the
+  // the [Action][build.bazel.remote.execution.v2.Action] that produced the
   // result, along with its
   // [Command][build.bazel.remote.execution.v2.Command], into the
   // `ContentAddressableStorage`.
@@ -1967,7 +1967,7 @@ message ActionCacheUpdateCapabilities {
 
 // Allowed values for priority in
 // [ResultsCachePolicy][build.bazel.remoteexecution.v2.ResultsCachePolicy] and
-// [ExecutionPolicy][build.bazel.remoteexecution.v2.ResultsCachePolicy]
+// [ExecutionPolicy][build.bazel.remoteexecution.v2.ExecutionPolicy]
 // Used for querying both cache and execution valid priority ranges.
 message PriorityCapabilities {
   // Supported range of priorities, including boundaries.
