@@ -2056,6 +2056,11 @@ message CacheCapabilities {
   // [BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs]
   // requests.
   repeated Compressor.Value supported_batch_update_compressors = 7;
+
+  // Maximum size of blobs that the server will accept in uploads.
+  // A value of 0 means no limit is set, not that blob uploads are
+  // not accepted.
+  int64 max_blob_size_bytes = 8;
 }
 
 // Capabilities of the remote execution system.
