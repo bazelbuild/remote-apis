@@ -2774,7 +2774,7 @@ func (*ExecutionStage) Descriptor() ([]byte, []int) {
 // Metadata about an ongoing
 // [execution][build.bazel.remote.execution.v2.Execution.Execute], which
 // will be contained in the [metadata
-// field][google.longrunning.Operation.response] of the
+// field][google.longrunning.Operation.metadata] of the
 // [Operation][google.longrunning.Operation].
 type ExecuteOperationMetadata struct {
 	state         protoimpl.MessageState
@@ -3938,7 +3938,7 @@ func (x *ActionCacheUpdateCapabilities) GetUpdateEnabled() bool {
 
 // Allowed values for priority in
 // [ResultsCachePolicy][build.bazel.remoteexecution.v2.ResultsCachePolicy] and
-// [ExecutionPolicy][build.bazel.remoteexecution.v2.ResultsCachePolicy]
+// [ExecutionPolicy][build.bazel.remoteexecution.v2.ExecutionPolicy]
 // Used for querying both cache and execution valid priority ranges.
 type PriorityCapabilities struct {
 	state         protoimpl.MessageState
