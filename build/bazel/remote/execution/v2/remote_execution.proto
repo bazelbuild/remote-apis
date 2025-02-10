@@ -430,6 +430,106 @@ service ContentAddressableStorage {
   rpc GetTree(GetTreeRequest) returns (stream GetTreeResponse) {
     option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{root_digest.hash}/{root_digest.size_bytes}:getTree" };
   }
+
+  // Split a blob into chunks.
+  //
+  // This call splits a blob into chunks, stores the chunks in the CAS, and
+  // returns a list of the chunk digests. Using this list, a client can check
+  // which chunks are locally available and just fetch the missing ones. The
+  // desired blob can be assembled by concatenating the fetched chunks in the
+  // order of the digests from the list.
+  //
+  // This rpc can be used to reduce the required data to download a large blob
+  // from CAS if chunks from earlier downloads of a different version of this
+  // blob are locally available. For this procedure to work properly, blobs need
+  // to be split in a content-defined way, rather than with fixed-sized
+  // chunking.
+  //
+  // If a split request is answered successfully, a client can expect the
+  // following guarantees from the server:
+  //  1. The blob chunks are stored in CAS.
+  //  2. Concatenating the blob chunks in the order of the digest list returned
+  //     by the server results in the original blob.
+  //
+  // Servers are free to implement this functionality, but they need to declare
+  // whether they support it or not by setting the
+  // [CacheCapabilities.blob_split_support][build.bazel.remote.execution.v2.CacheCapabilities.blob_split_support]
+  // field accordingly.
+  //
+  // Clients are free to use this functionality, it is just an optimization to
+  // reduce download network traffic, when downloading large blobs from the CAS.
+  // However, clients need to check first the server capabilities, whether blob
+  // splitting is supported by the server.
+  //
+  // Hints:
+  //
+  // * For clients, it is recommended to verify whether the digest of the blob
+  //   assembled by the fetched chunks results in the requested blob digest.
+  //
+  // * Since the generated chunks are stored as blobs, they underlie the same
+  //   lifetimes as other blobs. However, their lifetimes are extended if they
+  //   are part of the result of a split blob request.
+  //
+  // * When blob splitting and splicing is used at the same time, the clients
+  //   and the server should out-of-band agree upon a chunking algorithm used by
+  //   all parties to benefit from each others chunk data and avoid unnecessary
+  //   data duplication.
+  //
+  // Errors:
+  //
+  // * `NOT_FOUND`: The requested blob is not present in the CAS.
+  // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob
+  //   chunks.
+  rpc SplitBlob(SplitBlobRequest) returns (SplitBlobResponse) {
+    option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{blob_digest.hash}/{blob_digest.size_bytes}:splitBlob" };
+  }
+
+  // Splice a blob from chunks.
+  //
+  // This is the complementary operation to the
+  // [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob]
+  // function to handle the chunked upload of large blobs to save upload
+  // traffic.
+  //
+  // If a client needs to upload a large blob and is able to split a blob into
+  // chunks in such a way that reusable chunks are obtained, e.g., by means of
+  // content-defined chunking, it can first determine which parts of the blob
+  // are already available in the remote CAS and upload the missing chunks, and
+  // then use this API to instruct the server to splice the original blob from
+  // the remotely available blob chunks.
+  //
+  // Servers are free to implement this functionality, but they need to declare
+  // whether they support it or not by setting the
+  // [CacheCapabilities.blob_splice_support][build.bazel.remote.execution.v2.CacheCapabilities.blob_splice_support]
+  // field accordingly.
+  //
+  // Clients are free to use this functionality, it is just an optimization to
+  // reduce upload traffic, when uploading large blobs to the CAS. However,
+  // clients need to check first the server capabilities, whether blob splicing
+  // is supported by the server.
+  //
+  // Hints:
+  //
+  // * In order to ensure data consistency of the CAS, the server will verify
+  //   the spliced result whether digest calculation results in the provided
+  //   digest from the request and will reject a splice request if this check
+  //   fails.
+  //
+  // * When blob splitting and splicing is used at the same time, the clients
+  //   and the server should out-of-band agree upon a chunking algorithm used by
+  //   all parties to benefit from each others chunk data and avoid unnecessary
+  //   data duplication.
+  //
+  // Errors:
+  //
+  // * `NOT_FOUND`: At least one of the blob chunks is not present in the CAS.
+  // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the
+  //   spliced blob.
+  // * `INVALID_ARGUMENT`: The digest of the spliced blob is different from the
+  //   provided expected digest.
+  rpc SpliceBlob(SpliceBlobRequest) returns (SpliceBlobResponse) {
+    option (google.api.http) = { post: "/v2/{instance_name=**}/blobs:spliceBlob" body: "*" };
+  }
 }
 
 // The Capabilities service may be used by remote execution clients to query
@@ -1838,6 +1938,91 @@ message GetTreeResponse {
 }
 
 // A request message for
+// [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob].
+message SplitBlobRequest {
+  // The instance of the execution system to operate against. A server may
+  // support multiple instances of the execution system (with their own workers,
+  // storage, caches, etc.). The server MAY require use of this field to select
+  // between them in an implementation-defined fashion, otherwise it can be
+  // omitted.
+  string instance_name = 1;
+
+  // The digest of the blob to be split.
+  Digest blob_digest = 2;
+
+  // The digest function of the blob to be split.
+  //
+  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
+  // that case the server SHOULD infer the digest function using the
+  // length of the blob digest hashes and the digest functions announced
+  // in the server's capabilities.
+  DigestFunction.Value digest_function = 4;
+}
+
+// A response message for
+// [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob].
+message SplitBlobResponse {
+  // The ordered list of digests of the chunks into which the blob was split.
+  // The original blob is assembled by concatenating the chunk data according to
+  // the order of the digests given by this list.
+  repeated Digest chunk_digests = 1;
+
+  // The digest function of the chunks.
+  //
+  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
+  // that case the server SHOULD infer the digest function using the
+  // length of the blob digest hashes and the digest functions announced
+  // in the server's capabilities.
+  DigestFunction.Value digest_function = 2;
+}
+
+// A request message for
+// [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob].
+message SpliceBlobRequest {
+  // The instance of the execution system to operate against. A server may
+  // support multiple instances of the execution system (with their own workers,
+  // storage, caches, etc.). The server MAY require use of this field to select
+  // between them in an implementation-defined fashion, otherwise it can be
+  // omitted.
+  string instance_name = 1;
+
+  // Expected digest of the spliced blob.
+  Digest blob_digest = 2;
+
+  // The ordered list of digests of the chunks which need to be concatenated to
+  // assemble the original blob.
+  repeated Digest chunk_digests = 3;
+
+  // The digest function of the blob to be spliced as well as of the chunks to
+  // be concatenated.
+  //
+  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
+  // that case the server SHOULD infer the digest function using the
+  // length of the blob digest hashes and the digest functions announced
+  // in the server's capabilities.
+  DigestFunction.Value digest_function = 4;
+}
+
+// A response message for
+// [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob].
+message SpliceBlobResponse {
+  // Computed digest of the spliced blob.
+  Digest blob_digest = 1;
+
+  // The digest function of the spliced blob.
+  //
+  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
+  // that case the server SHOULD infer the digest function using the
+  // length of the blob digest hashes and the digest functions announced
+  // in the server's capabilities.
+  DigestFunction.Value digest_function = 2;
+}
+
+// A request message for
 // [Capabilities.GetCapabilities][build.bazel.remote.execution.v2.Capabilities.GetCapabilities].
 message GetCapabilitiesRequest {
   // The instance of the execution system to operate against. A server may
@@ -2056,6 +2241,20 @@ message CacheCapabilities {
   // [BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs]
   // requests.
   repeated Compressor.Value supported_batch_update_compressors = 7;
+
+  // Whether blob splitting is supported for the particular server/instance. If
+  // yes, the server/instance implements the specified behavior for blob
+  // splitting and a meaningful result can be expected from the
+  // [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob]
+  // operation.
+  bool blob_split_support = 9;
+
+  // Whether blob splicing is supported for the particular server/instance. If
+  // yes, the server/instance implements the specified behavior for blob
+  // splicing and a meaningful result can be expected from the
+  // [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob]
+  // operation.
+  bool blob_splice_support = 10;
 }
 
 // Capabilities of the remote execution system.
