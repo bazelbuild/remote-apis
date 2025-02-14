@@ -205,6 +205,8 @@ message FetchBlobRequest {
   // The digest function the server must use to compute the digest.
   //
   // If unset, the server SHOULD default to SHA256.
+  // If set, the function MUST be the same with the digest function used in
+  // "checksum.sri", the subresource integrity qualifier.
   build.bazel.remote.execution.v2.DigestFunction.Value digest_function = 6;
 }
 
@@ -300,6 +302,8 @@ message FetchDirectoryRequest {
   // The digest function the server must use to compute the digest.
   //
   // If unset, the server SHOULD default to SHA256.
+  // If set, the function MUST be the same with the digest function used in
+  // "checksum.sri", the subresource integrity qualifier.
   build.bazel.remote.execution.v2.DigestFunction.Value digest_function = 6;
 }
 
@@ -438,6 +442,9 @@ message PushBlobRequest {
   // that case the server SHOULD infer the digest function using the
   // length of the action digest hash and the digest functions announced
   // in the server's capabilities.
+  //
+  // If set, the function MUST be the same with the digest function used in
+  // "checksum.sri", the subresource integrity qualifier.
   build.bazel.remote.execution.v2.DigestFunction.Value digest_function = 8;
 }
 
@@ -487,6 +494,9 @@ message PushDirectoryRequest {
   // that case the server SHOULD infer the digest function using the
   // length of the action digest hash and the digest functions announced
   // in the server's capabilities.
+  //
+  // If set, the function MUST be the same with the digest function used in
+  // "checksum.sri", the subresource integrity qualifier.
   build.bazel.remote.execution.v2.DigestFunction.Value digest_function = 8;
 }
 
