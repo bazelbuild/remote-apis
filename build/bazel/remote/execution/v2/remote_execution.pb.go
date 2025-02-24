@@ -4096,8 +4096,8 @@ type CacheCapabilities struct {
 	// [BatchUpdateBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs]
 	// requests.
 	SupportedBatchUpdateCompressors []Compressor_Value `protobuf:"varint,7,rep,packed,name=supported_batch_update_compressors,json=supportedBatchUpdateCompressors,proto3,enum=build.bazel.remote.execution.v2.Compressor_Value" json:"supported_batch_update_compressors,omitempty"`
-	// Maximum size a single CAS blob can have in the remote cache system.
-	//   - If it is 0, it means there is no limit is set. A client may assume
+	// The maximum blob size that the server will accept for CAS blob uploads.
+	//   - If it is 0, it means there is no limit set. A client may assume
 	//     arbitrarily large blobs may be uploaded to and downloaded from the cache.
 	//   - If it is larger than 0, implementations SHOULD NOT attempt to upload
 	//     blobs with size larger than the limit. Servers SHOULD reject blob
