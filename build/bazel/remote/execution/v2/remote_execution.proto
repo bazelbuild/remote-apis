@@ -325,12 +325,12 @@ service ActionCache {
 // each of the compression formats that the server supports, as well as in
 // uncompressed form.
 //
-// Additionally, ByteStream RPCs MAY come with an additional plain text header
+// Additionally, ByteStream requests MAY come with an additional plain text header
 // that indicates the `resource_name` of the blob being sent.  The header, if
 // present, MUST follow the following convention:
 // * name: `build.bazel.remote.execution.v2.resource-name`.
 // * contents: the plain text resource_name of the request message.
-// The contents of the header MUST match the `resource_name` of the request
+// If set, the contents of the header MUST match the `resource_name` of the request
 // message.  Servers MAY use this header to assist in routing requests to the
 // appropriate backend.
 //
