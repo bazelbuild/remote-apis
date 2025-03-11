@@ -28,7 +28,9 @@ The following standard qualifier `name`s are defined:
   ```   
 
 * `checksum.sri`: The value represents a [Subresource Integrity](https://www.w3.org/TR/SRI/)
-  checksum of the content.
+  checksum of the content. Multiple checksums may be specified, separated by
+  whitespace. The Qualifier is satisfied if the server validates at least one of the
+  provided checksums, although it may choose to validate more than one.
 
   Example:
   ```json
