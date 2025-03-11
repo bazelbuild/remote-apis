@@ -2150,4 +2150,18 @@ message RequestMetadata {
   // There is no expectation that this value will have any particular structure,
   // or equality across invocations, though some client tools may offer these guarantees.
   string configuration_id = 7;
+
+  // The details of other tools involved in handling the request, eg. client-side proxies.
+  // This field MUST NOT include the details of the tool which initially invoked the gRPC
+  // request (i.e., it MUST NOT duplicate `RequestMetadata.tool_details`). The order of
+  // tool information in this field has no guarantees or meaning.
+  //
+  // In the case of a request which goes through the following steps:
+  //
+  //    client -> proxy1 -> proxy2 -> server
+  //
+  // `RequestMetadata.tool_details` SHOULD contain a ToolDetails message about `client`,
+  // and `RequestMetadata.additional_handlers` SHOULD contain two ToolDetails messages,
+  // one for `proxy1` and another for `proxy2`.
+  repeated ToolDetails additional_handlers = 8;
 }
