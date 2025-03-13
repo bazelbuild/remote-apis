@@ -1,6 +1,7 @@
 module github.com/bazelbuild/remote-apis
 
 go 1.21
+toolchain go1.23.7
 
 require (
 	cloud.google.com/go/longrunning v0.5.12
@@ -11,7 +12,7 @@ require (
 )
 
 require (
-	golang.org/x/net v0.28.0 // indirect
-	golang.org/x/sys v0.24.0 // indirect
-	golang.org/x/text v0.17.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 )
