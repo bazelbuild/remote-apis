@@ -4103,7 +4103,7 @@ type CacheCapabilities struct {
 	//     blobs with size larger than the limit. Servers SHOULD reject blob
 	//     uploads over the `max_cas_blob_size_bytes` limit with response code
 	//     `INVALID_ARGUMENT`
-	//     If the cache implementation returns a given limit, it MAY still serve
+	//   - If the cache implementation returns a given limit, it MAY still serve
 	//     blobs larger than this limit.
 	MaxCasBlobSizeBytes int64 `protobuf:"varint,8,opt,name=max_cas_blob_size_bytes,json=maxCasBlobSizeBytes,proto3" json:"max_cas_blob_size_bytes,omitempty"`
 }
