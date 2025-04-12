@@ -439,6 +439,13 @@ service ContentAddressableStorage {
   rpc GetTree(GetTreeRequest) returns (stream GetTreeResponse) {
     option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{root_digest.hash}/{root_digest.size_bytes}:getTree" };
   }
+
+  // Fetch the list of dictionaries use in Zstd compression.
+  //
+  // Servers MUST implement this RPC method iff the `ZSTD_DICT` compressor is supported.
+  rpc GetZstdDictionaries(GetZstdDictionariesRequest) returns (GetZstdDictionariesResponse) {
+    option (google.api.http) = { get: "/v2/{instance_name=**}/blobs:zstdDictionaries" };
+  }
 }
 
 // The Capabilities service may be used by remote execution clients to query
@@ -1846,6 +1853,40 @@ message GetTreeResponse {
   string next_page_token = 2;
 }
 
+message GetZstdDictionariesRequest {
+  // The instance of the execution system to operate against. A server may
+  // support multiple instances of the execution system (with their own workers,
+  // storage, caches, etc.). The server MAY require use of this field to select
+  // between them in an implementation-defined fashion, otherwise it can be
+  // omitted.
+  string instance_name = 1;
+
+  // The digest function in use by the client, which determines the
+  // digest function for all Digests in the response.
+  // Must be one of the server's supported digest functions listed in
+  // [CacheCapabilities.digest_functions][build.bazel.remote.execution.v2.CacheCapabilities.digest_functions].
+  DigestFunction.Value digest_function = 2;
+}
+
+message GetZstdDictionariesResponse {
+  message Dictionary {
+    uint32 id = 1;
+    Digest digest = 2;
+  }
+
+  // The dictionary ID that clients SHOULD use when uploading
+  // objects into the Content Addressable Storage. An entry for
+  // this dictionary ID MUST be present in `dictionaries`.
+  uint32 default_dictionary_id = 1;
+
+  // Dictionaries that may be used by the server when returning
+  // objects stored in the Content Addressable Storage. The key
+  // corresponds to a dictionary ID, as described in RFC 8878,
+  // section 5, while the value refers to a dictionary
+  // as described in RFC 8878, chapter 6.
+  repeated Dictionary dictionaries = 2;
+}
+
 // A request message for
 // [Capabilities.GetCapabilities][build.bazel.remote.execution.v2.Capabilities.GetCapabilities].
 message GetCapabilitiesRequest {
@@ -2016,7 +2057,7 @@ message Compressor {
     // not need to advertise it.
     IDENTITY = 0;
 
-    // Zstandard compression.
+    // Zstandard compression without dictionary.
     ZSTD = 1;
 
     // RFC 1951 Deflate. This format is identical to what is used by ZIP
@@ -2029,6 +2070,16 @@ message Compressor {
 
     // Brotli compression.
     BROTLI = 3;
+
+    // Zstandard compression with dictionary.
+    //
+    // Servers which support this compressor MUST implement
+    // [ContentAddressableStorage.GetZstdDictionaries][build.bazel.remote.execution.v2.ContentAddressableStorage.GetZstdDictionaries].
+    //
+    // Clients which support this compressor SHOULD call `GetZstdDictionaries`
+    // rpc to obtain the dictionaries from the server to be used for
+    // ZSTD compression/decompression.
+    ZSTD_DICT = 4;
   }
 }
 
