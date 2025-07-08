@@ -1976,6 +1976,12 @@ message SplitBlobRequest {
   // length of the blob digest hashes and the digest functions announced
   // in the server's capabilities.
   DigestFunction.Value digest_function = 3;
+
+  // The chunking function that the client prefers to use.
+  //
+  // The server MAY use a different chunking function. The client MUST check
+  // the chunking function used in the response.
+  ChunkingFunction.Value chunking_function = 4;
 }
 
 // A response message for
@@ -1988,6 +1994,9 @@ message SplitBlobResponse {
   // The server MUST use the same digest function as the one explicitly or
   // implicitly (through hash length) specified in the split request.
   repeated Digest chunk_digests = 1;
+
+  // The chunking function used to split the blob.
+  ChunkingFunction.Value chunking_function = 2;
 }
 
 // A request message for
@@ -2023,6 +2032,9 @@ message SpliceBlobRequest {
   // server SHOULD infer the digest function using the length of the blob digest
   // hashes and the digest functions announced in the server's capabilities.
   DigestFunction.Value digest_function = 4;
+
+  // The chunking function that the client used to split the blob.
+  ChunkingFunction.Value chunking_function = 5;
 }
 
 // A response message for
@@ -2158,6 +2170,49 @@ message DigestFunction {
   }
 }
 
+// The chunking function is used to split a blob into chunks.
+//
+// The server SHOULD advertise the chunking functions it supports via the
+// [CacheCapabilities.supported_chunking_algorithms][build.bazel.remote.execution.v2.CacheCapabilities.supported_chunking_algorithms]
+// field.
+//
+// The client SHOULD use one of the chunking functions advertised by the server.
+//
+// When blob splitting and splicing is used at the same time, the clients and
+// the server SHOULD agree out-of-band upon a chunking algorithm used by both
+// parties to benefit from each others chunk data and avoid unnecessary data
+// duplication.
+message ChunkingFunction {
+  enum Value {
+    // A generic chunking function. If a server supports blob splitting/splicing
+    // and advertises this value, it can be safely assumed that the original
+    // blob can be recreated by concatenating the chunks. No other assumptions
+    // about the chunking algorithm can be made.
+    UNKNOWN = 0;
+
+    // This is a variant of the FastCDC chunking algorithm as described in the
+    // 2020 paper by Wen Xia, et al.
+    // See https://ieeexplore.ieee.org/document/9055082 for details.
+    // Reference implementation could be found in the Rust library
+    // https://docs.rs/fastcdc/3.2.1/fastcdc/v2020/index.html
+    // with the gear tables available at
+    // https://github.com/nlfiedler/fastcdc-rs/blob/3.2.1/src/v2020/mod.rs
+    //
+    // Server which supports this chunking function MUST advertise the following
+    // configuration parameters through the CacheCapabilities message:
+    //   - normalization_level
+    //   - min_chunk_size_bytes
+    //   - avg_chunk_size_bytes
+    //   - max_chunk_size_bytes
+    //   - seed
+    //
+    // Client MUST use these advertised parameters to setup the FastCDC chunker.
+    // The remaining parameters, such as mask_s, mask_l can be derived from the
+    // average chunk size parameter.
+    FASTCDC_2020 = 1;
+  }
+}
+
 // Describes the server/instance capabilities for updating the action cache.
 message ActionCacheUpdateCapabilities {
   bool update_enabled = 1;
@@ -2279,6 +2334,50 @@ message CacheCapabilities {
   // [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob]
   // operation.
   bool blob_splice_support = 10;
+
+  // The chunking configuration of the server.
+  ChunkingConfiguration chunking_configuration = 11;
+}
+
+// The chunking configuration of the server.
+message ChunkingConfiguration {
+  // If any of the advertised parameters are not within the expected range,
+  // the client SHOULD ignore FastCDC chunking function support.
+  message FastCDCParams {
+    // The normalization level for the FastCDC chunking algorithm.
+    // The value MUST be between 0 and 3.
+    uint32 normalization_level = 1;
+
+    // The minimum chunk size for the FastCDC chunking algorithm.
+    // The value MUST be between 256 bytes and 64 KiB.
+    uint64 min_chunk_size_bytes = 2;
+
+    // The average chunk size for the FastCDC chunking algorithm.
+    // The value MUST be between 1 KiB and 256 KiB.
+    uint64 avg_chunk_size_bytes = 3;
+
+    // The maximum chunk size for the FastCDC chunking algorithm.
+    // The value MUST be between 4 KiB and 4 MiB.
+    uint64 max_chunk_size_bytes = 4;
+
+    // The seed for the FastCDC chunking algorithm.
+    uint32 seed = 5;
+  }
+
+  // A list of chunking algorithms that the server supports for splitting and
+  // splicing blobs.
+  repeated ChunkingFunction.Value supported_chunking_algorithms = 1;
+
+  // The minimum blob size that should be considered for chunking.
+  // Blobs smaller than this threshold SHOULD be sent as single blobs.
+  // If unset, clients SHOULD use max_cas_blob_size_bytes as the
+  // minimum blob size for chunking.
+  // If both this field and max_cas_blob_size_bytes are unset, clients
+  // MAY chunk blobs of any size.
+  uint64 min_blob_size_for_chunking_bytes = 2;
+
+  // The parameters for the FastCDC chunking algorithm.
+  FastCDCParams fastcdc_params = 3;
 }
 
 // Capabilities of the remote execution system.
