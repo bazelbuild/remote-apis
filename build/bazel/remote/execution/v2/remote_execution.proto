@@ -446,7 +446,7 @@ service ContentAddressableStorage {
   // returns a list of the chunk digests. Using this list, a client can check
   // which chunks are locally available and just fetch the missing ones. The
   // desired blob can be assembled by concatenating the fetched chunks in the
-  // order of the digests from the list.
+  // order of the digests in the list.
   //
   // This rpc can be used to reduce the required data to download a large blob
   // from CAS if chunks from earlier downloads of a different version of this
@@ -460,31 +460,29 @@ service ContentAddressableStorage {
   //  2. Concatenating the blob chunks in the order of the digest list returned
   //     by the server results in the original blob.
   //
-  // Servers MAY implement this functionality, but MUST declare whether they
-  // support it or not by setting the
+  // Servers which implement this functionality MUST declare that they support
+  // it by setting the
   // [CacheCapabilities.blob_split_support][build.bazel.remote.execution.v2.CacheCapabilities.blob_split_support]
   // field accordingly.
   //
-  // Clients MAY use this functionality, it is just an optimization to reduce
-  // download network traffic, when downloading large blobs from the CAS.
-  // However, clients MUST first check the server capabilities, whether blob
-  // splitting is supported by the server.
+  // Clients MUST check that the server supports this capability, before using
+  // it.
   //
-  // Clients SHOULD verify whether the digest of the blob assembled by the
-  // fetched chunks results in the requested blob digest.
+  // Clients SHOULD verify that the digest of the blob assembled by the fetched
+  // chunks is equal to the requested blob digest.
   //
-  // Since the generated chunks are stored as blobs, they underlie the same
-  // lifetimes as other blobs. In particular, the chunk lifetimes are
-  // independent from the lifetime of the original blob:
-  //  * A blob and any chunk derived from it may be evicted from the CAS at
+  // The lifetimes of the generated chunk blobs MAY be independent of the
+  // lifetime of the original blob. In particular:
+  //  * A blob and any chunk derived from it MAY be evicted from the CAS at
   //    different times.
-  //  * A call to Split extends the lifetime of the original blob, and sets
-  //    the lifetimes of the resulting chunks (or extends the lifetimes of
-  //    already-existing chunks).
-  //  * Touching a chunk extends its lifetime, but does not extend the
-  //    lifetime of the original blob.
-  //  * Touching the original blob extends its lifetime, but does not extend
-  //    the lifetimes of chunks derived from it.
+  //  * A call to [SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob]
+  //    extends the lifetime of the original blob, and sets the lifetimes of
+  //    the resulting chunks (or extends the lifetimes of already-existing
+  //    chunks).
+  //  * Touching a chunk extends its lifetime, but the server MAY choose not
+  //    to extend the lifetime of the original blob.
+  //  * Touching the original blob extends its lifetime, but the server MAY
+  //    choose not to extend the lifetimes of chunks derived from it.
   //
   // When blob splitting and splicing is used at the same time, the clients and
   // the server SHOULD agree out-of-band upon a chunking algorithm used by both
@@ -514,24 +512,21 @@ service ContentAddressableStorage {
   // then use this API to instruct the server to splice the original blob from
   // the remotely available blob chunks.
   //
-  // Servers MAY implement this functionality, but MUST declare whether they
-  // support it or not by setting the
+  // Servers which implement this functionality MUST declare that they support
+  // it by setting the
   // [CacheCapabilities.blob_splice_support][build.bazel.remote.execution.v2.CacheCapabilities.blob_splice_support]
   // field accordingly.
   //
-  // Clients MAY use this functionality, it is just an optimization to reduce
-  // upload traffic, when uploading large blobs to the CAS. However, clients
-  // MUST first check the server capabilities, whether blob splicing is
-  // supported by the server.
+  // Clients MUST check that the server supports this capability, before using
+  // it.
   //
   // In order to ensure data consistency of the CAS, the server MUST only add
-  // entries to the CAS under a hash the server verified itself. In particular,
-  // it MUST NOT trust the result hash provided by the client. The server MAY
-  // accept a request as no-op if the client-provided result hash is already in
-  // CAS; the life time of that blob is then extended as usual. If the
-  // client-provided result is not in CAS, the server SHOULD verify the result
-  // hash sent by the client and reject requests where a different splice result
-  // is obtained.
+  // blobs to the CAS after verifying their digests. In particular, servers MUST NOT
+  // trust digests provided by the client. The server MAY accept a request as no-op
+  // if the client-specified blob is already in CAS; the lifetime of that blob SHOULD
+  // be extended as usual. If the client-specified blob is not already in the CAS,
+  // the server SHOULD verify that the digest of the newly created blob matches the
+  // digest specified by the client, and reject the request if they differ.
   //
   // When blob splitting and splicing is used at the same time, the clients and
   // the server SHOULD agree out-of-band upon a chunking algorithm used by both
