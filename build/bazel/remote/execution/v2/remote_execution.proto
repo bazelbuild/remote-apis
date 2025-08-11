@@ -462,7 +462,7 @@ service ContentAddressableStorage {
   //
   // Servers which implement this functionality MUST declare that they support
   // it by setting the
-  // [CacheCapabilities.blob_split_support][build.bazel.remote.execution.v2.CacheCapabilities.blob_split_support]
+  // [CacheCapabilities.split_blob_support][build.bazel.remote.execution.v2.CacheCapabilities.split_blob_support]
   // field accordingly.
   //
   // Clients MUST check that the server supports this capability, before using
@@ -514,7 +514,7 @@ service ContentAddressableStorage {
   //
   // Servers which implement this functionality MUST declare that they support
   // it by setting the
-  // [CacheCapabilities.blob_splice_support][build.bazel.remote.execution.v2.CacheCapabilities.blob_splice_support]
+  // [CacheCapabilities.splice_blob_support][build.bazel.remote.execution.v2.CacheCapabilities.splice_blob_support]
   // field accordingly.
   //
   // Clients MUST check that the server supports this capability, before using
@@ -2266,14 +2266,14 @@ message CacheCapabilities {
   // splitting and a meaningful result can be expected from the
   // [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob]
   // operation.
-  bool blob_split_support = 9;
+  bool split_blob_support = 9;
 
   // Whether blob splicing is supported for the particular server/instance. If
   // yes, the server/instance implements the specified behavior for blob
   // splicing and a meaningful result can be expected from the
   // [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob]
   // operation.
-  bool blob_splice_support = 10;
+  bool splice_blob_support = 10;
 }
 
 // Capabilities of the remote execution system.
