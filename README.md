@@ -48,7 +48,7 @@ These tools use the Remote Execution API to distribute builds to workers.
 * [Please](https://please.build)
 * [Recc](https://gitlab.com/bloomberg/recc)
 * [Reclient](https://github.com/bazelbuild/reclient)
-* [Siso](https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/build/siso/)
+* [Siso](https://chromium.googlesource.com/build/+/refs/heads/main/siso/)
 
 ### Servers
 These applications implement the Remote Execution API to serve build requests
