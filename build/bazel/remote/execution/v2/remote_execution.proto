@@ -363,8 +363,8 @@ service ContentAddressableStorage {
 
   // Upload many blobs at once.
   //
-  // The server may enforce a limit of the combined total size of blobs
-  // to be uploaded using this API. This limit may be obtained using the
+  // The server may enforce an upper limit on the size of the serialized
+  // request message for this API. This limit may be obtained using the
   // [Capabilities][build.bazel.remote.execution.v2.Capabilities] API.
   // Requests exceeding the limit should either be split into smaller
   // chunks or uploaded using the
@@ -381,7 +381,9 @@ service ContentAddressableStorage {
   //
   // Individual requests may return the following errors, additionally:
   //
-  // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob.
+  // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob,
+  //   or if the size of the serialized BatchUpdateBlobsResponse message exceeds
+  //   [CacheCapabilities.max_batch_total_size_bytes][build.bazel.remote.execution.v2.CacheCapabilities.max_batch_total_size_bytes].
   // * `INVALID_ARGUMENT`: The
   // [Digest][build.bazel.remote.execution.v2.Digest] does not match the
   // provided data.
@@ -1883,14 +1885,23 @@ message BatchReadBlobsResponse {
     // The digest to which this response corresponds.
     Digest digest = 1;
 
-    // The raw binary data.
+    // The raw binary data, assuming that the status is `OK`.
     bytes data = 2;
 
     // The format the data is encoded in. MUST be `IDENTITY`/unspecified,
     // or one of the acceptable compressors specified in the `BatchReadBlobsRequest`.
     Compressor.Value compressor = 4;
 
-    // The result of attempting to download that blob.
+    // The result of attempting to download the blob.
+    //
+    // If the blob could not be included in the response because doing so
+    // would cause the serialized BatchReadBlobsResponse message to exceed
+    // [CacheCapabilities.max_batch_total_size_bytes][build.bazel.remote.execution.v2.CacheCapabilities.max_batch_total_size_bytes]
+    // then the server MUST NOT include the data and MUST set this field
+    // to `RESOURCE_EXHAUSTED`. Clients can retry the request with fewer or
+    // smaller blobs in the
+    // [ContentAddressableStorage.BatchReadBlobsRequest][build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobsRequest]
+    // or download individual blobs with the [ByteStream API][google.bytestream.ByteStream].
     google.rpc.Status status = 3;
   }
 
@@ -2228,8 +2239,9 @@ message CacheCapabilities {
   // Supported cache priority range for both CAS and ActionCache.
   PriorityCapabilities cache_priority_capabilities = 3;
 
-  // Maximum total size of blobs to be uploaded/downloaded using
-  // batch methods. A value of 0 means no limit is set, although
+  // Maximum size of serialized request and response messages that
+  // this server supports when using the BatchUpdateBlobs and
+  // BatchReadBlobs APIs. A value of 0 means no limit is set, although
   // in practice there will always be a message size limitation
   // of the protocol in use, e.g. GRPC.
   int64 max_batch_total_size_bytes = 4;
