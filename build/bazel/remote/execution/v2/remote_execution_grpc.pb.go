@@ -688,7 +688,7 @@ type ContentAddressableStorageClient interface {
 	//
 	// Servers which implement this functionality MUST declare that they support
 	// it by setting the
-	// [CacheCapabilities.blob_split_support][build.bazel.remote.execution.v2.CacheCapabilities.blob_split_support]
+	// [CacheCapabilities.split_blob_support][build.bazel.remote.execution.v2.CacheCapabilities.split_blob_support]
 	// field accordingly.
 	//
 	// Clients MUST check that the server supports this capability, before using
@@ -737,7 +737,7 @@ type ContentAddressableStorageClient interface {
 	//
 	// Servers which implement this functionality MUST declare that they support
 	// it by setting the
-	// [CacheCapabilities.blob_splice_support][build.bazel.remote.execution.v2.CacheCapabilities.blob_splice_support]
+	// [CacheCapabilities.splice_blob_support][build.bazel.remote.execution.v2.CacheCapabilities.splice_blob_support]
 	// field accordingly.
 	//
 	// Clients MUST check that the server supports this capability, before using
@@ -957,7 +957,7 @@ type ContentAddressableStorageServer interface {
 	//
 	// Servers which implement this functionality MUST declare that they support
 	// it by setting the
-	// [CacheCapabilities.blob_split_support][build.bazel.remote.execution.v2.CacheCapabilities.blob_split_support]
+	// [CacheCapabilities.split_blob_support][build.bazel.remote.execution.v2.CacheCapabilities.split_blob_support]
 	// field accordingly.
 	//
 	// Clients MUST check that the server supports this capability, before using
@@ -1006,7 +1006,7 @@ type ContentAddressableStorageServer interface {
 	//
 	// Servers which implement this functionality MUST declare that they support
 	// it by setting the
-	// [CacheCapabilities.blob_splice_support][build.bazel.remote.execution.v2.CacheCapabilities.blob_splice_support]
+	// [CacheCapabilities.splice_blob_support][build.bazel.remote.execution.v2.CacheCapabilities.splice_blob_support]
 	// field accordingly.
 	//
 	// Clients MUST check that the server supports this capability, before using
