@@ -180,6 +180,11 @@ service ActionCache {
   // [Command][build.bazel.remote.execution.v2.Command], into the
   // `ContentAddressableStorage`.
   //
+  // The client SHOULD also upload other blobs transitively referenced by the
+  // [Action][build.bazel.remote.execution.v2.Action] message into the
+  // `ContentAddressableStorage`. The server MAY return `FAILED_PRECONDITION`
+  // if this condition has not been met.
+  //
   // Server implementations MAY modify the
   // `UpdateActionResultRequest.action_result` and return an equivalent value.
   //
