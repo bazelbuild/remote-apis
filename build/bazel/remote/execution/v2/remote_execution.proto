@@ -440,13 +440,21 @@ service ContentAddressableStorage {
     option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{root_digest.hash}/{root_digest.size_bytes}:getTree" };
   }
 
-  // Split a blob into chunks.
+  // Split retrieves information about how a blob is split into chunks.
   //
-  // This call splits a blob into chunks, stores the chunks in the CAS, and
-  // returns a list of the chunk digests. Using this list, a client can check
-  // which chunks are locally available and just fetch the missing ones. The
-  // desired blob can be assembled by concatenating the fetched chunks in the
-  // order of the digests in the list.
+  // This call returns information about how a blob is split into chunks, and
+  // returns a list of the chunk digests. The server returns a known manifest
+  // if one exists for the requested blob digest. If no manifest exists, the
+  // server MAY compute a new one by performing chunking on-demand if the blob
+  // exists in the CAS, though this should be rare as manifests are typically
+  // created when blobs are written. The original blob digest does not need to
+  // be present in the CAS for this call to succeed if a manifest already exists.
+  //
+  // Using the returned list of chunk digests, a client can check which chunks
+  // are locally available and just fetch the missing ones. The desired blob can
+  // be assembled by concatenating the fetched chunks in the order of the
+  // digests in the list. ZSTD-compressed chunks can be concatenated without
+  // decompression.
   //
   // This rpc can be used to reduce the required data to download a large blob
   // from CAS if chunks from earlier downloads of a different version of this
@@ -459,6 +467,8 @@ service ContentAddressableStorage {
   //  1. The blob chunks are stored in CAS.
   //  2. Concatenating the blob chunks in the order of the digest list returned
   //     by the server results in the original blob.
+  //  
+  // A client should NOT expect that the original blob is available.
   //
   // Servers which implement this functionality MUST declare that they support
   // it by setting the
@@ -491,26 +501,35 @@ service ContentAddressableStorage {
   //
   // Errors:
   //
-  // * `NOT_FOUND`: The requested blob is not present in the CAS.
+  // * `NOT_FOUND`: No manifest exists for the blob and the blob is not present
+  //   in the CAS.
   // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob
   //   chunks.
   rpc SplitBlob(SplitBlobRequest) returns (SplitBlobResponse) {
     option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{blob_digest.hash}/{blob_digest.size_bytes}:splitBlob" };
   }
 
-  // Splice a blob from chunks.
+  // Splice tells the CAS how chunks compose a blob.
   //
   // This is the complementary operation to the
   // [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob]
   // function to handle the chunked upload of large blobs to save upload
   // traffic.
   //
+  // When uploading a large blob using chunked upload, clients MUST first upload
+  // all chunks to the CAS, then call this RPC to store a manifest that describes
+  // how those chunks compose the original blob. The chunks referenced in the
+  // manifest must be available in the CAS before calling this RPC. The original
+  // blob does not need to be available: the correctness of the manifest can be
+  // validated from manifest correctness and by verifying that the chunks match
+  // their specified digests.
+  //
   // If a client needs to upload a large blob and is able to split a blob into
   // chunks in such a way that reusable chunks are obtained, e.g., by means of
   // content-defined chunking, it can first determine which parts of the blob
   // are already available in the remote CAS and upload the missing chunks, and
-  // then use this API to instruct the server to splice the original blob from
-  // the remotely available blob chunks.
+  // then use this API to store the manifest describing how the chunks compose
+  // the original blob.
   //
   // Servers which implement this functionality MUST declare that they support
   // it by setting the
@@ -522,16 +541,21 @@ service ContentAddressableStorage {
   //
   // In order to ensure data consistency of the CAS, the server MUST only add
   // blobs to the CAS after verifying their digests. In particular, servers MUST NOT
-  // trust digests provided by the client. The server MAY accept a request as no-op
-  // if the client-specified blob is already in CAS; the lifetime of that blob SHOULD
-  // be extended as usual. If the client-specified blob is not already in the CAS,
-  // the server SHOULD verify that the digest of the newly created blob matches the
-  // digest specified by the client, and reject the request if they differ.
+  // trust digests provided by the client. The server MUST validate the manifest
+  // and verify that all referenced chunks exist in the CAS and match their
+  // specified digests. The server MAY optionally verify that concatenating the
+  // chunks results in a blob matching the original blob digest, particularly if
+  // the client is not trusted. The server MAY accept a request as no-op if a
+  // manifest for the client-specified blob already exists; the lifetime of that
+  // manifest and its chunks SHOULD be extended as usual.
   //
   // When blob splitting and splicing is used at the same time, the clients and
   // the server SHOULD agree out-of-band upon a chunking algorithm used by both
   // parties to benefit from each others chunk data and avoid unnecessary data
   // duplication.
+  //
+  // After a successful Splice call, a subsequent Split call for the same blob digest
+  // SHOULD retrieve the manifest information that was stored.
   //
   // Errors:
   //
