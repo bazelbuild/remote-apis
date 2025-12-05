@@ -510,11 +510,8 @@ service ContentAddressableStorage {
   //
   // When uploading a large blob using chunked upload, clients MUST first upload
   // all chunks to the CAS, then call this RPC to store how those chunks compose
-  // the original blob. The chunks referenced in the manifest SHOULD be available
-  // in the CAS before calling this RPC. The original blob does not need to be
-  // available: the correctness of the manifest can be validated from manifest
-  // correctness and by verifying that the chunks assembled match the original
-  // digest.
+  // the original blob. The chunks referenced in Splice call SHOULD be available
+  // in the CAS before calling this RPC.
   //
   // If a client needs to upload a large blob and is able to split a blob into
   // chunks in such a way that reusable chunks are obtained, e.g., by means of
