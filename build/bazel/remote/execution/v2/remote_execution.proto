@@ -2005,7 +2005,8 @@ message SpliceBlobRequest {
   //     request to the correct storage backend based on the size and/or the
   //     hash of the blob.
   //  3. If chunking information already exists for the blob, it allows
-  //     the server to keep the existing chunking information or replace it with new chunking information.
+  //     the server to keep the existing chunking information or replace it with
+  //     new chunking information.
   Digest blob_digest = 2;
 
   // The ordered list of digests of the chunks which need to be concatenated to
