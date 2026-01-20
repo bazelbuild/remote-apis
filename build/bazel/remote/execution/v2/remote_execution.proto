@@ -2153,6 +2153,13 @@ message DigestFunction {
     // The BLAKE3 hash function.
     // See https://github.com/BLAKE3-team/BLAKE3.
     BLAKE3 = 9;
+
+    // Identical to SHA1, except that "blob ${sizeBytes}\0" is prepended to
+    // the blob's contents before hashing, where ${sizeBytes} corresponds to
+    // the decimal size of the original blob. This allows hashes of files to
+    // be converted from and to the ones used by the Git version control
+    // system.
+    GITSHA1 = 10;
   }
 }
 
