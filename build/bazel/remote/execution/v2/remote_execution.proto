@@ -494,6 +494,10 @@ service ContentAddressableStorage {
   // * `NOT_FOUND`: The requested blob is not present in the CAS.
   // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob
   //   chunks.
+  // * `FAILED_PRECONDITION`: The requested blob is present in the CAS, but
+  //   either cannot be split into multiple chunks or is not available in
+  //   chunked format. Clients receiving this error MAY fall back to
+  //   downloading the blob using [Read][google.bytestream.ByteStream.Read].
   rpc SplitBlob(SplitBlobRequest) returns (SplitBlobResponse) {
     option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{blob_digest.hash}/{blob_digest.size_bytes}:splitBlob" };
   }
@@ -539,7 +543,8 @@ service ContentAddressableStorage {
   // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the
   //   spliced blob.
   // * `INVALID_ARGUMENT`: The digest of the spliced blob is different from the
-  //   provided expected digest.
+  //   provided expected digest, or the chunk list contains fewer than two
+  //   entries.
   rpc SpliceBlob(SpliceBlobRequest) returns (SpliceBlobResponse) {
     option (google.api.http) = { post: "/v2/{instance_name=**}/blobs:spliceBlob" body: "*" };
   }
@@ -2010,7 +2015,8 @@ message SpliceBlobRequest {
   Digest blob_digest = 2;
 
   // The ordered list of digests of the chunks which need to be concatenated to
-  // assemble the original blob.
+  // assemble the original blob. This list MUST contain at least two entries;
+  // a single-entry list provides no benefit over a direct upload.
   repeated Digest chunk_digests = 3;
 
   // The digest function of all chunks to be concatenated and of the blob to be
