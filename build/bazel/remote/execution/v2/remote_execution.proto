@@ -486,7 +486,7 @@ service ContentAddressableStorage {
   //
   // When blob splitting and splicing is used at the same time, the clients and
   // the server SHOULD agree out-of-band upon a chunking algorithm used by both
-  // parties to benefit from each others chunk data and avoid unnecessary data
+  // parties to benefit from each other's chunk data and avoid unnecessary data
   // duplication.
   //
   // Errors:
@@ -1804,7 +1804,7 @@ message BatchUpdateBlobsRequest {
     bytes data = 2;
 
     // The format of `data`. Must be `IDENTITY`/unspecified, or one of the
-    // compressors advertised by the 
+    // compressors advertised by the
     // [CacheCapabilities.supported_batch_compressors][build.bazel.remote.execution.v2.CacheCapabilities.supported_batch_compressors]
     // field.
     Compressor.Value compressor = 3;
@@ -1971,6 +1971,12 @@ message SplitBlobRequest {
   // length of the blob digest hashes and the digest functions announced
   // in the server's capabilities.
   DigestFunction.Value digest_function = 3;
+
+  // The chunking function that the client prefers to use.
+  //
+  // The server MAY use a different chunking function. The client MUST check
+  // the chunking function used in the response.
+  ChunkingFunction.Value chunking_function = 4;
 }
 
 // A response message for
@@ -1983,6 +1989,9 @@ message SplitBlobResponse {
   // The server MUST use the same digest function as the one explicitly or
   // implicitly (through hash length) specified in the split request.
   repeated Digest chunk_digests = 1;
+
+  // The chunking function used to split the blob.
+  ChunkingFunction.Value chunking_function = 2;
 }
 
 // A request message for
@@ -2021,6 +2030,9 @@ message SpliceBlobRequest {
   // server SHOULD infer the digest function using the length of the blob digest
   // hashes and the digest functions announced in the server's capabilities.
   DigestFunction.Value digest_function = 4;
+
+  // The chunking function that the client used to split the blob.
+  ChunkingFunction.Value chunking_function = 5;
 }
 
 // A response message for
@@ -2163,6 +2175,53 @@ message DigestFunction {
   }
 }
 
+// The chunking function is used to split a blob into chunks.
+//
+// The server SHOULD advertise the chunking functions it supports via the
+// [CacheCapabilities.supported_chunking_algorithms][build.bazel.remote.execution.v2.CacheCapabilities.supported_chunking_algorithms]
+// field.
+//
+// The client SHOULD use one of the chunking functions advertised by the server.
+//
+// When blob splitting and splicing is used at the same time, the clients and
+// the server SHOULD agree out-of-band upon a chunking algorithm used by both
+// parties to benefit from each others chunk data and avoid unnecessary data
+// duplication.
+message ChunkingFunction {
+  enum Value {
+    // A generic chunking function. If a server supports blob splitting/splicing
+    // and advertises this value, it can be safely assumed that the original
+    // blob can be recreated by concatenating the chunks. No other assumptions
+    // about the chunking algorithm can be made.
+    UNKNOWN = 0;
+
+    // The FastCDC chunking algorithm as described in the 2020 paper by
+    // Wen Xia, et al. See https://ieeexplore.ieee.org/document/9055082
+    // for details.
+    //
+    // Supported implementations:
+    //   - Rust: https://docs.rs/fastcdc/3.2.1/fastcdc/v2020/index.html
+    //   - Go: https://github.com/buildbuddy-io/fastcdc2020
+    //
+    // Servers which support this chunking function SHOULD advertise the following
+    // configuration parameters through the CacheCapabilities message:
+    //   - avg_chunk_size_bytes
+    //   - normalization_level
+    //   - seed
+    //
+    // If these parameters are not set, the client SHOULD use the following
+    // defaults:
+    //   - avg_chunk_size_bytes = 524288 (512 KiB)
+    //   - normalization_level = 2
+    //   - seed = 0.
+    //
+    // min_chunk_size and max_chunk_size are derived from avg_chunk_size (1/4x
+    // and 4x respectively). The remaining parameters can be derived from the
+    // average chunk size and normalization level.
+    FASTCDC_2020 = 1;
+  }
+}
+
 // Describes the server/instance capabilities for updating the action cache.
 message ActionCacheUpdateCapabilities {
   bool update_enabled = 1;
@@ -2284,6 +2343,110 @@ message CacheCapabilities {
   // [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob]
   // operation.
   bool splice_blob_support = 10;
+
+  // The chunking configuration of the server.
+  ChunkingConfiguration chunking_configuration = 11;
+}
+
+// The chunking configuration of the server.
+//
+// This configuration describes how the server will chunk blobs. When calling
+// SpliceBlob, the client SHOULD use these configurations if able, but the
+// server is not expected to verify that it can reliably reproduce the chunking.
+// The server only needs to verify that the chunks concatenate together to form
+// the complete blob.
+//
+// This is primarily the server telling the client how it intends to chunk
+// blobs. The client SHOULD try to match this configuration for optimal
+// deduplication, but is not required to do so.
+//
+// Content-defined chunking is most beneficial for larger blobs where
+// deduplication opportunities are greater, so smaller blobs SHOULD be
+// uploaded without chunking.
+message ChunkingConfiguration {
+  // Parameters for the FastCDC content-defined chunking algorithm.
+  //
+  // Implementations MUST follow the FastCDC 2020 paper by Wen Xia, et al.:
+  // https://ieeexplore.ieee.org/document/9055082
+  //
+  // The fastcdc-rs library (https://docs.rs/fastcdc/3.2.1/fastcdc/v2020/)
+  // is a reference implementation that follows the paper specification.
+  //
+  // Key algorithm components from the paper:
+  //
+  // GEAR table: 256 64-bit integers for the rolling hash, computed as:
+  //   GEAR[i] = high_64_bits(MD5(byte(i))) for i in 0..255
+  //
+  // MASKS table: Bit patterns for chunk boundary detection from Table II
+  // of the paper. Mask selection uses two masks based on avg_chunk_size
+  // and normalization_level:
+  //   bits = log2(avg_chunk_size)
+  //   mask_small = MASKS[bits + normalization_level]  // harder to match
+  //   mask_large = MASKS[bits - normalization_level]  // easier to match
+  //
+  // The algorithm uses mask_small until avg_chunk_size bytes are processed,
+  // then switches to mask_large. This "normalized chunking" approach biases
+  // chunk sizes toward the average.
+  //
+  // For the complete MASKS table and GEAR table values, see the reference
+  // implementations linked above.
+  //
+  // The minimum and maximum chunk sizes are derived from the average:
+  //   - min_chunk_size = avg_chunk_size_bytes / 4
+  //   - max_chunk_size = avg_chunk_size_bytes * 4
+  //
+  // If any of the advertised parameters are not within the expected range,
+  // the client SHOULD ignore FastCDC chunking function support.
+  message FastCDCParams {
+    // The average (expected) chunk size for the FastCDC chunking algorithm.
+    // The value MUST be between 256B and 4 MiB.
+    // If unset, clients SHOULD use 524288 (512 KiB) as the default.
+    //
+    // The minimum chunk size will be avg_chunk_size_bytes / 4.
+    // The maximum chunk size will be avg_chunk_size_bytes * 4.
+    uint64 avg_chunk_size_bytes = 1;
+
+    // The normalization level for the FastCDC chunking algorithm.
+    // The value MUST be between 0 and 3.
+    //
+    // Higher normalization levels produce chunks closer to the average size
+    // but may reduce deduplication effectiveness:
+    //   - Level 0: No normalization, widest size distribution
+    //   - Level 1: Fewer chunks outside desired range
+    //   - Level 2: Most chunks match desired size (recommended)
+    //   - Level 3: Nearly all chunks are the desired size
+    //
+    // If unset, clients SHOULD use 2 as the default.
+    uint32 normalization_level = 2;
+
+    // The seed to XOR with the GEAR table values.
+    // If unset, clients SHOULD use 0 as the default.
+    //
+    // Using a consistent seed ensures deterministic chunking across
+    // different clients, which improves deduplication. A non-zero seed
+    // can also prevent fingerprinting attacks that infer content from
+    // chunk sizes.
+    uint64 seed = 3;
+  }
+
+  // The size threshold for chunking blobs.
+  // Blobs with size less than or equal to this threshold SHOULD be uploaded
+  // as single blobs without chunking. Blobs with size greater than this
+  // threshold SHOULD be chunked.
+  //
+  // This threshold SHOULD be greater than or equal to the maximum chunk size
+  // produced by the chunking function to avoid re-chunking blobs that would
+  // result in a single chunk.
+  //
+  // If unset, clients SHOULD use 2097152 (2 MiB) as the default.
+  uint64 chunking_threshold_bytes = 1;
+
+  // A list of chunking algorithms that the server supports for splitting and
+  // splicing blobs.
+  repeated ChunkingFunction.Value supported_chunking_algorithms = 2;
+
+  // The parameters for the FastCDC chunking algorithm.
+  FastCDCParams fastcdc_params = 3;
 }
 
 // Capabilities of the remote execution system.
