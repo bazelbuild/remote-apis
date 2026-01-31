@@ -54,18 +54,19 @@ These tools use the Remote Execution API to distribute builds to workers.
 These applications implement the Remote Execution API to serve build requests
 from the clients above.
 
-* [Aspect Build](https://www.aspect.build/) (commercial)
-* [bazel-remote](https://github.com/buchgr/bazel-remote) (open source, cache only)
-* [Buildbarn](https://github.com/buildbarn) (open source)
-* [BuildBuddy](https://www.buildbuddy.io/) (commercial & open source)
-* [Buildfarm](https://github.com/bazelbuild/bazel-buildfarm) (open source)
-* [BuildGrid](https://buildgrid.build/) (open source)
-* [EngFlow](https://www.engflow.com/) (commercial)
-* [Flare Build Execution](https://flare.build/products/flare-build-execution) (commercial)
-* [Justbuild](https://github.com/just-buildsystem/justbuild/blob/master/doc/tutorial/just-execute.org) (via `--compatible`, open source)
-* [Kajiya](https://chromium.googlesource.com/infra/infra/+/refs/heads/main/go/src/infra/build/kajiya/) (open source)
-* [NativeLink](https://github.com/TraceMachina/nativelink) (commercial and open source)
-* [Scoot](https://github.com/twitter/scoot) (open source)
+| Name                                                                                                                       | License                   | Remote execution | Low API version | High API version |
+| -------------------------------------------------------------------------------------------------------------------------- | ------------------------- | :--------------: | :-------------: | :--------------: |
+| [Aspect Build](https://www.aspect.build/)                                                                                  | Commercial                | ✅               | ❓              | ❓               |
+| [bazel-remote](https://github.com/buchgr/bazel-remote)                                                                     | Apache-2.0                | ❌               | 2.0.0           | 2.3.0            |
+| [Buildbarn](https://github.com/buildbarn)                                                                                  | Apache-2.0                | ✅               | 2.3.0           | 2.11.0           |
+| [BuildBuddy](https://www.buildbuddy.io/)                                                                                   | Commercial & MIT          | ✅               | 2.0.0           | 2.11.0           |
+| [Buildfarm](https://github.com/bazelbuild/bazel-buildfarm)                                                                 | Apache-2.0                | ✅               | 2.3.0           | 2.11.0           |
+| [BuildGrid](https://buildgrid.build/)                                                                                      | Apache-2.0                | ✅               | 2.0.0           | 2.2.0            |
+| [EngFlow](https://www.engflow.com/)                                                                                        | Commercial                | ✅               | ❓              | ❓               |
+| [Flare Build Execution](https://flare.build/products/flare-build-execution)                                                | Commercial                | ✅               | ❓              | ❓               |
+| [Justbuild](https://github.com/just-buildsystem/justbuild/blob/master/doc/tutorial/just-execute.org), using `--compatible` | Apache-2.0                | ✅               | 2.0.0           | 2.1.0            |
+| [Kajiya](https://chromium.googlesource.com/build/+/refs/heads/main/kajiya/)                                                | BSD-3-Clause              | ✅               | 2.0.0           | 2.0.0            |
+| [NativeLink](https://github.com/TraceMachina/nativelink)                                                                   | Commercial & FSL-1.1-ALv2 | ✅               | 2.0.0           | 2.3.0            |
 
 ### Workers
 Servers generally distribute work to a fleet of workers.
