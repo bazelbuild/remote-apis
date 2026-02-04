@@ -32,8 +32,66 @@ option java_outer_classname = "RemoteExecutionProto";
 option java_package = "build.bazel.remote.execution.v2";
 option objc_class_prefix = "REX";
 
+// The Remote Execution API allows clients to request the execution of binaries
+// on a remote system. Practically, the remote system is usually a pool of
+// worker machines, although other implementations are possible. The API
+// comprises three services:
+//
+// - ContentAddressableStorage service, which enables clients to transfer and
+//   address arbitrary data based on the hash of the contents of that data.
+// - Execution service, which enables clients to trigger the execution
+//   of a binary on the remote system, using data from the
+//   ContentAddressableStorage service as input.
+// - ActionCache service, which caches the results of calling the Execution
+//   service for future retrieval.
+//
+// Versions
+// - v2.0
+//   - Initial spec
+// - v2.1
+//   - Add Command.output_paths and ActionResult.output_symlinks, and
+//     deprecate Command.output_files, Command.output_directories,
+//     ActionResult.output_file_symlinks, and
+//     ActionResult.output_directory_symlinks
+// - v2.2
+//   - Move output_node_properties from Action to Command.
+//   - Define field-based NodeProperties.
+//   - Add Action.salt to allow users to bypass corrupt cache entries.
+//   - Add Action.properties and deprecate Command.properties.
+// - v2.3
+//   - Add ExecutedActionMetadata.auxiliary_metadata.
+//   - Add RequestMetadata.action_mnemonic, RequestMetadata.target_id, and
+//     RequestMetadata.configuration_id.
+//   - Add support for compressed Bytestream transfers.
+//   - Fix the names of CacheCapabilities.digest_functions and
+//     CacheCapabilities.supported_compressors.
+//   - Add support for inlined compressed data in CAS batch operations.
+// - v2.4
+//   - Add OutputDirectory.is_topologically_sorted.
+// - v2.5
+//   - Add support for explicitly specifying the digest function across
+//     various APIs.
+//   - Add the SHA256TREE digest function.
+//   - Add ExecuteOperationMetadata.partial_execution_metadata.
+//   - Add ExecutionCapabilities.digest_functions as an extension of
+//     ExecutionCapabilities.digest_function.
+//   - v2.6
+//     - Do not use. This was rolled together with v2.8.
+//   - v2.7
+//     - Do not use. This was rolled together with v2.8.
+//   - v2.8
+//     - Add Command.output_directory_format and
+//       OutputDirectory.root_directory_digest to enable emitting output
+//       directories as plain Directory messages.
+//   - v2.9
+//     - Add ExecuteRequest.inline_stdout, ExecuteRequest.inline_stderr, and
+//       ExecuteRequest.inline_output_files.
+//   - v2.10
+//     - This was a Remote Asset API bump only.
+//   - v2.11
+//     - Add ExecutedOperationMetadata.digest_function.
 
-// The Remote Execution API is used to execute an
+// The Execution service is used to execute an
 // [Action][build.bazel.remote.execution.v2.Action] on the remote
 // workers.
 //

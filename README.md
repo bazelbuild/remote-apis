@@ -113,8 +113,6 @@ The repository contains `BUILD` files to build the protobuf library with
 Bazel, you will possibly want to declare `cc_proto_library`,
 `java_proto_library`, etc. rules that depend on them.
 
-Other build systems will have to run protoc on the protobuf files, and link in
-the googleapis and well-known proto types, manually.
 
 ### Go (for non-Bazel build systems)
 
