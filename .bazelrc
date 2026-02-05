@@ -3,3 +3,6 @@ common --enable_bzlmod=true
 
 # Include comments in generated code for godoc.
 build --experimental_proto_descriptor_sets_include_source_info
+
+# Abseil requires C++17 or higher.
+build --host_cxxopt=-std=c++17 --cxxopt=-std=c++17
