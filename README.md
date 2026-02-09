@@ -62,7 +62,7 @@ from the clients above.
 | [BuildBuddy](https://www.buildbuddy.io/)                                                                                   | Commercial & MIT          | ✅               | 2.0.0           | 2.11.0           |
 | [Buildfarm](https://github.com/bazelbuild/bazel-buildfarm)                                                                 | Apache-2.0                | ✅               | 2.3.0           | 2.11.0           |
 | [BuildGrid](https://buildgrid.build/)                                                                                      | Apache-2.0                | ✅               | 2.0.0           | 2.2.0            |
-| [EngFlow](https://www.engflow.com/)                                                                                        | Commercial                | ✅               | ❓              | ❓               |
+| [EngFlow](https://www.engflow.com/)                                                                                        | Commercial                | ✅               | 2.0.0           | 2.11.0           |
 | [Flare Build Execution](https://flare.build/products/flare-build-execution)                                                | Commercial                | ✅               | ❓              | ❓               |
 | [Justbuild](https://github.com/just-buildsystem/justbuild/blob/master/doc/tutorial/just-execute.org), using `--compatible` | Apache-2.0                | ✅               | 2.0.0           | 2.1.0            |
 | [Kajiya](https://chromium.googlesource.com/build/+/refs/heads/main/kajiya/)                                                | BSD-3-Clause              | ✅               | 2.0.0           | 2.0.0            |
