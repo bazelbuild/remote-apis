@@ -2,16 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Install bazelisk
       run: |
@@ -20,7 +20,12 @@ jobs:
         mv bazelisk-linux-amd64 "${HOME}/bin/bazel"
         chmod +x "${HOME}/bin/bazel"
 
-    - name: Check bindings generation
+    - name: Check generated code is up to date
       run: |
         set -e
         PATH=${HOME}/bin:$PATH ./hooks/pre-commit
+        if ! git diff --quiet HEAD; then
+          echo "Generated code is out of date. Please run ./hooks/pre-commit and commit the result."
+          git diff --stat HEAD
+          exit 1
+        fi
