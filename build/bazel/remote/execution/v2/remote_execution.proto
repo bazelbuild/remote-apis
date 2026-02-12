@@ -496,6 +496,21 @@ service ContentAddressableStorage {
   //   reconstruct the blob is missing from the CAS.
   // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob
   //   chunks.
+  // * `INVALID_ARGUMENT`: The requested blob is present in the CAS, but
+  //   the server will not perform the chunking operation. This may occur when
+  //   the server stores the blob in non-chunked format and does not support
+  //   on-demand chunking. Clients receiving this error MAY fall back to
+  //   downloading the blob using [Read][google.bytestream.ByteStream.Read].
+  //
+  // Note: A response containing a single chunk digest is a valid result, not
+  // an error. This occurs when the content-defined chunking algorithm finds
+  // no split points within the blob (e.g., for blobs smaller than the maximum
+  // chunk size). Clients SHOULD handle single-chunk responses the same as
+  // multi-chunk responses.
+  //
+  // Servers MUST NOT return the original blob digest as a single "chunk" if
+  // the chunking algorithm was not actually executed. If the server has the
+  // blob but will not perform chunking, it MUST return INVALID_ARGUMENT.
   rpc SplitBlob(SplitBlobRequest) returns (SplitBlobResponse) {
     option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{blob_digest.hash}/{blob_digest.size_bytes}:splitBlob" };
   }
