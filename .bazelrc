@@ -1,5 +1,2 @@
-# We have migrated to bzlmod, so ensure that it is enabled.
-common --enable_bzlmod=true
-
 # Include comments in generated code for godoc.
 build --experimental_proto_descriptor_sets_include_source_info
