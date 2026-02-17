@@ -124,3 +124,12 @@ The following standard property `name`s are defined:
     ]
   }
   ```
+
+* `RemoteApisSocketPath`: This requests Remote APIs to be made available in
+  the execution environment via a UNIX socket at the specified path. The
+  path is relative to the input root.
+
+  The APIs and capabilities offered is implementation-specific and servers
+  MAY impose additional restrictions and/or resource limits on nested remote
+  execution clients. The Capabilities API may be used by remote commands to
+  query server properties.
