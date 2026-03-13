@@ -1,2 +1,25 @@
 # Include comments in generated code for godoc.
 build --experimental_proto_descriptor_sets_include_source_info
+
+# Ensure that the `MODULE.bazel.lock` files don't change silently.
+# - Set to `refresh` to actually update the lockfiles.
+# - Set to `update` when testing a Bazel version different from .bazelversion
+#   (or comment it out, since `update` is the default).
+common --lockfile_mode=error
+
+# - cc_binary, java_library required for protobuf v30.0 + Bazel 8 compatibility
+# - cc_library required for Bazel 9 until grpc v1.80.0 becomes the default
+#   https://github.com/grpc/grpc/commit/a1e64a2ed6a81c2f51b65c4d28b265db5892dfec
+# - rolling` and `last_green` builds no longer support this flag, so those
+#   builds are broken until grpc v1.80.0 becomes the default.
+common --incompatible_autoload_externally=+cc_binary,+cc_library,+java_library
+
+common --enable_platform_specific_config
+
+# Required for Bazel 7 to compile protobuf v30.0 (actually, for abseil-cpp)
+common:linux --cxxopt=-std=c++17
+common:linux --host_cxxopt=-std=c++17
+common:macos --cxxopt=-std=c++17
+common:macos --host_cxxopt=-std=c++17
+common:windows --cxxopt=/std=c++17
+common:windows --host_cxxopt=/std=c++17

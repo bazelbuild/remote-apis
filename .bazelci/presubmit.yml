@@ -1,0 +1,36 @@
+---
+validate_config: 1
+
+# rolling` and `last_green` builds are broken until grpc v1.80.0 includes:
+# - https://github.com/grpc/grpc/commit/a1e64a2ed6a81c2f51b65c4d28b265db5892dfec
+matrix:
+  platform: ["ubuntu2204", "macos", "macos_arm64", "windows"]
+  bazel: [7.x, 8.x, 9.x]
+
+tasks:
+  ubuntu2204:
+    build_targets:
+      - "//..."
+  macos:
+    build_targets:
+      - "//..."
+  macos_arm64:
+    build_targets:
+      - "//..."
+  windows:
+    build_targets:
+      - "//..."
+  bcr_presubmit:
+    # Keep in sync with .bcr/presubmit.yml.
+    name: "BCR {bcr_bazel}"
+    working_directory: "test/bcr"
+    platform: ${{ bcr_platform }}
+    bazel: ${{ bcr_bazel }}
+    build_targets:
+      # Matches hooks/pre-commit
+      - "@bazel_remote_apis//build/bazel/remote/asset/v1:remote_asset_proto"
+      - "@bazel_remote_apis//build/bazel/remote/execution/v2:remote_execution_proto"
+      - "@bazel_remote_apis//build/bazel/remote/logstream/v1:remote_logstream_proto"
+      - "@bazel_remote_apis//build/bazel/semver:semver_proto"
+    soft_fail:
+      - exit_status: "*"

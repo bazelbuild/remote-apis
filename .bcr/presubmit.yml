@@ -1,0 +1,19 @@
+# Keep in sync with the bcr_presubmit job from .bazelci/presubmit.yml.
+bcr_test_module:
+  module_path: "test/bcr"
+  matrix:
+    platform: ["ubuntu2204", "macos", "macos_arm64", "windows"]
+    # rolling` and `last_green` builds are broken until grpc v1.80.0 includes:
+    # - https://github.com/grpc/grpc/commit/a1e64a2ed6a81c2f51b65c4d28b265db5892dfec
+    bazel: [7.x, 8.x, 9.x]
+  tasks:
+    run_tests:
+      name: "Build @bazel_remote_apis targets from the test/bcr module"
+      platform: ${{ platform }}
+      bazel: ${{ bazel }}
+      build_targets:
+        # Matches hooks/pre-commit
+        - "@bazel_remote_apis//build/bazel/remote/asset/v1:remote_asset_proto"
+        - "@bazel_remote_apis//build/bazel/remote/execution/v2:remote_execution_proto"
+        - "@bazel_remote_apis//build/bazel/remote/logstream/v1:remote_logstream_proto"
+        - "@bazel_remote_apis//build/bazel/semver:semver_proto"

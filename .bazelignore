@@ -1,0 +1,5 @@
+# Remove once the following is fixed:
+# - bazelbuild/bazel: Loading top-level targets in local_path_override modules
+#   in child directory breaks the build #22208
+#   https://github.com/bazelbuild/bazel/issues/22208
+test/bcr
