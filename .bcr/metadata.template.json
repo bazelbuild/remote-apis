@@ -2,14 +2,9 @@
   "homepage": "https://github.com/bazelbuild/remote-apis",
   "maintainers": [
     {
-      "name": "Xudong Yang",
-      "email": "wyverald@gmail.com",
-      "github": "Wyverald"
-    },
-    {
-      "name": "Steven Bergsieker",
-      "email": "bergsieker@google.com",
-      "github": "bergsieker"
+      "name": "Tiago Quelhas",
+      "email": "tjgq@google.com",
+      "github": "tjgq"
     }
   ],
   "versions": [],
