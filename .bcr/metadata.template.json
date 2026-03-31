@@ -1,0 +1,20 @@
+{
+  "homepage": "https://github.com/bazelbuild/remote-apis",
+  "maintainers": [
+    {
+      "name": "Tiago Quelhas",
+      "email": "tjgq@google.com",
+      "github": "tjgq"
+    },
+    {
+      "name": "Fabian Meumertzheim",
+      "email": "fabian@meumertzhe.im",
+      "github": "fmeum"
+    }
+  ],
+  "versions": [],
+  "yanked_versions": {},
+  "repository": [
+    "github:bazelbuild/remote-apis"
+  ]
+}

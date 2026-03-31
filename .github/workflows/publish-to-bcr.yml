@@ -1,0 +1,40 @@
+# Publishes to the Bazel Central Registry.
+#
+# Based on .github/workflows/publish-to-bcr.yml from
+# bazel-contrib/rules_scala v7.2.4.
+name: Publish to the Bazel Central Registry
+
+on:
+  # Run from release.yml.
+  workflow_call:
+    inputs:
+      tag_name:
+        required: true
+        type: string
+    secrets:
+      bcr_publish_token:
+        required: true
+
+  # In case of problems, enable manual dispatch from the GitHub UI.
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        required: true
+        type: string
+
+jobs:
+  publish-to-bcr:
+    uses: bazel-contrib/publish-to-bcr/.github/workflows/publish.yaml@v1.1.0
+    with:
+      tag_name: ${{ inputs.tag_name }}
+      # bazelbuild/bazel-central-registry fork used to open a pull request.
+      registry_fork: bazel-io/bazel-central-registry
+      # No need to create a draft since PRs are opened by a machine account
+      draft: false
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+    secrets:
+      # Necessary to push to the BCR fork and open a pull request.
+      publish_token: ${{ secrets.bcr_publish_token }}
