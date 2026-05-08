@@ -78,7 +78,8 @@ type FetchClient interface {
 	// correctly, without validation.
 	//
 	// Servers not implementing the complementary [Push][build.bazel.remote.asset.v1.Push]
-	// API *MUST* reject requests containing qualifiers it does not support.
+	// API *MAY* reject requests containing qualifiers it does not support, if the
+	// supported qualifiers specified in the request were insufficient by themselves.
 	//
 	// Servers *MAY* transform assets as part of the fetch. For example a
 	// tarball fetched by [FetchDirectory][build.bazel.remote.asset.v1.Fetch.FetchDirectory]
@@ -180,7 +181,8 @@ type FetchServer interface {
 	// correctly, without validation.
 	//
 	// Servers not implementing the complementary [Push][build.bazel.remote.asset.v1.Push]
-	// API *MUST* reject requests containing qualifiers it does not support.
+	// API *MAY* reject requests containing qualifiers it does not support, if the
+	// supported qualifiers specified in the request were insufficient by themselves.
 	//
 	// Servers *MAY* transform assets as part of the fetch. For example a
 	// tarball fetched by [FetchDirectory][build.bazel.remote.asset.v1.Fetch.FetchDirectory]
