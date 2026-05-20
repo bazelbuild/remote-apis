@@ -609,7 +609,9 @@ const (
 	ContentAddressableStorage_BatchReadBlobs_FullMethodName   = "/build.bazel.remote.execution.v2.ContentAddressableStorage/BatchReadBlobs"
 	ContentAddressableStorage_GetTree_FullMethodName          = "/build.bazel.remote.execution.v2.ContentAddressableStorage/GetTree"
 	ContentAddressableStorage_SplitBlob_FullMethodName        = "/build.bazel.remote.execution.v2.ContentAddressableStorage/SplitBlob"
+	ContentAddressableStorage_SplitChunks_FullMethodName      = "/build.bazel.remote.execution.v2.ContentAddressableStorage/SplitChunks"
 	ContentAddressableStorage_SpliceBlob_FullMethodName       = "/build.bazel.remote.execution.v2.ContentAddressableStorage/SpliceBlob"
+	ContentAddressableStorage_SpliceChunks_FullMethodName     = "/build.bazel.remote.execution.v2.ContentAddressableStorage/SpliceChunks"
 )
 
 // ContentAddressableStorageClient is the client API for ContentAddressableStorage service.
@@ -880,6 +882,11 @@ type ContentAddressableStorageClient interface {
 	// Clients SHOULD verify that the digest of the blob assembled by the fetched
 	// chunks is equal to the requested blob digest.
 	//
+	// The unary response size is limited by the maximum message size of the
+	// protocol in use, e.g. gRPC. Clients that expect the list of chunks to
+	// exceed that limit SHOULD use
+	// [SplitChunks][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitChunks].
+	//
 	// The lifetimes of the generated chunk blobs MAY be independent of the
 	// lifetime of the original blob. In particular:
 	//   - A blob and any chunk derived from it MAY be evicted from the CAS at
@@ -906,6 +913,36 @@ type ContentAddressableStorageClient interface {
 	//   - `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob
 	//     chunks.
 	SplitBlob(ctx context.Context, in *SplitBlobRequest, opts ...grpc.CallOption) (*SplitBlobResponse, error)
+	// SplitChunks is a streaming variant of SplitBlob.
+	//
+	// This RPC is equivalent to
+	// [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob],
+	// except that the list of chunk digests is streamed across response messages
+	// to avoid exceeding protocol message size limits. The complete list of
+	// chunks is the concatenation of `chunk_digests` across all responses in
+	// stream order. The server indicates that there are no more chunks by setting
+	// `finish_split` on the final response.
+	//
+	// The maximum message size is not negotiated by this API. Servers SHOULD limit
+	// the number of chunk digests in each response to remain below the maximum
+	// message size accepted by the client/server pair.
+	//
+	// Servers which implement this functionality MUST declare that they support
+	// it by setting the
+	// [CacheCapabilities.split_chunks_support][build.bazel.remote.execution.v2.CacheCapabilities.split_chunks_support]
+	// field accordingly.
+	//
+	// Clients MUST check that the server supports this capability before using
+	// it.
+	//
+	// Errors:
+	//
+	//   - `NOT_FOUND`: The requested blob is not present in the CAS, OR there is no
+	//     split information available for the blob, OR at least one chunk needed to
+	//     reconstruct the blob is missing from the CAS.
+	//   - `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob
+	//     chunks.
+	SplitChunks(ctx context.Context, in *SplitBlobRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SplitChunksResponse], error)
 	// SpliceBlob tells the CAS how chunks can compose a blob.
 	//
 	// This is the complementary operation to the
@@ -917,6 +954,11 @@ type ContentAddressableStorageClient interface {
 	// all chunks to the CAS, then call this RPC to tell the server how those chunks
 	// compose the original blob. The chunks referenced in the SpliceBlob call SHOULD be
 	// available in the CAS before calling this RPC.
+	//
+	// The unary request size is limited by the maximum message size of the
+	// protocol in use, e.g. gRPC. Clients that expect the list of chunks to
+	// exceed that limit SHOULD use
+	// [SpliceChunks][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceChunks].
 	//
 	// If a client needs to upload a large blob and is able to split a blob into
 	// chunks in such a way that reusable chunks are obtained, e.g., by means of
@@ -962,6 +1004,44 @@ type ContentAddressableStorageClient interface {
 	//     call [SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob]
 	//     to check what chunk mapping the server is using.
 	SpliceBlob(ctx context.Context, in *SpliceBlobRequest, opts ...grpc.CallOption) (*SpliceBlobResponse, error)
+	// SpliceChunks is a streaming variant of SpliceBlob.
+	//
+	// This RPC is equivalent to
+	// [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob],
+	// except that the list of chunk digests is streamed across request messages
+	// to avoid exceeding protocol message size limits. Clients MUST set the
+	// expected blob digest on every request, stream chunk digests as they become
+	// available, then commit the splice by setting `finish_splice` on the final
+	// request. Providing the blob digest on every request allows servers to route,
+	// cache, deduplicate, or skip completed splice operations before receiving the
+	// complete chunk list.
+	//
+	// The maximum message size is not negotiated by this API. Clients SHOULD limit
+	// the number of chunk digests in each request to remain below the maximum
+	// message size accepted by the client/server pair.
+	//
+	// Servers which implement this functionality MUST declare that they support
+	// it by setting the
+	// [CacheCapabilities.splice_chunks_support][build.bazel.remote.execution.v2.CacheCapabilities.splice_chunks_support]
+	// field accordingly.
+	//
+	// Clients MUST check that the server supports this capability before using
+	// it.
+	//
+	// Errors:
+	//
+	//   - `NOT_FOUND`: At least one of the blob chunks is not present in the CAS.
+	//   - `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the
+	//     spliced blob.
+	//   - `INVALID_ARGUMENT`: The digest of the spliced blob is different from the
+	//     provided expected digest, OR the stream contains an invalid sequence of
+	//     splice requests.
+	//   - `ALREADY_EXISTS`: The blob already exists in CAS and the server did not
+	//     extend the lifetime of the chunks specified in the request, e.g. because
+	//     it prefers a different chunking and extended those instead. Clients can
+	//     call [SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob]
+	//     to check what chunk mapping the server is using.
+	SpliceChunks(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SpliceChunksRequest, SpliceBlobResponse], error)
 }
 
 type contentAddressableStorageClient struct {
@@ -1031,6 +1111,25 @@ func (c *contentAddressableStorageClient) SplitBlob(ctx context.Context, in *Spl
 	return out, nil
 }
 
+func (c *contentAddressableStorageClient) SplitChunks(ctx context.Context, in *SplitBlobRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SplitChunksResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ContentAddressableStorage_ServiceDesc.Streams[1], ContentAddressableStorage_SplitChunks_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[SplitBlobRequest, SplitChunksResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ContentAddressableStorage_SplitChunksClient = grpc.ServerStreamingClient[SplitChunksResponse]
+
 func (c *contentAddressableStorageClient) SpliceBlob(ctx context.Context, in *SpliceBlobRequest, opts ...grpc.CallOption) (*SpliceBlobResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SpliceBlobResponse)
@@ -1040,6 +1139,19 @@ func (c *contentAddressableStorageClient) SpliceBlob(ctx context.Context, in *Sp
 	}
 	return out, nil
 }
+
+func (c *contentAddressableStorageClient) SpliceChunks(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SpliceChunksRequest, SpliceBlobResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ContentAddressableStorage_ServiceDesc.Streams[2], ContentAddressableStorage_SpliceChunks_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[SpliceChunksRequest, SpliceBlobResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ContentAddressableStorage_SpliceChunksClient = grpc.ClientStreamingClient[SpliceChunksRequest, SpliceBlobResponse]
 
 // ContentAddressableStorageServer is the server API for ContentAddressableStorage service.
 // All implementations should embed UnimplementedContentAddressableStorageServer
@@ -1309,6 +1421,11 @@ type ContentAddressableStorageServer interface {
 	// Clients SHOULD verify that the digest of the blob assembled by the fetched
 	// chunks is equal to the requested blob digest.
 	//
+	// The unary response size is limited by the maximum message size of the
+	// protocol in use, e.g. gRPC. Clients that expect the list of chunks to
+	// exceed that limit SHOULD use
+	// [SplitChunks][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitChunks].
+	//
 	// The lifetimes of the generated chunk blobs MAY be independent of the
 	// lifetime of the original blob. In particular:
 	//   - A blob and any chunk derived from it MAY be evicted from the CAS at
@@ -1335,6 +1452,36 @@ type ContentAddressableStorageServer interface {
 	//   - `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob
 	//     chunks.
 	SplitBlob(context.Context, *SplitBlobRequest) (*SplitBlobResponse, error)
+	// SplitChunks is a streaming variant of SplitBlob.
+	//
+	// This RPC is equivalent to
+	// [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob],
+	// except that the list of chunk digests is streamed across response messages
+	// to avoid exceeding protocol message size limits. The complete list of
+	// chunks is the concatenation of `chunk_digests` across all responses in
+	// stream order. The server indicates that there are no more chunks by setting
+	// `finish_split` on the final response.
+	//
+	// The maximum message size is not negotiated by this API. Servers SHOULD limit
+	// the number of chunk digests in each response to remain below the maximum
+	// message size accepted by the client/server pair.
+	//
+	// Servers which implement this functionality MUST declare that they support
+	// it by setting the
+	// [CacheCapabilities.split_chunks_support][build.bazel.remote.execution.v2.CacheCapabilities.split_chunks_support]
+	// field accordingly.
+	//
+	// Clients MUST check that the server supports this capability before using
+	// it.
+	//
+	// Errors:
+	//
+	//   - `NOT_FOUND`: The requested blob is not present in the CAS, OR there is no
+	//     split information available for the blob, OR at least one chunk needed to
+	//     reconstruct the blob is missing from the CAS.
+	//   - `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob
+	//     chunks.
+	SplitChunks(*SplitBlobRequest, grpc.ServerStreamingServer[SplitChunksResponse]) error
 	// SpliceBlob tells the CAS how chunks can compose a blob.
 	//
 	// This is the complementary operation to the
@@ -1346,6 +1493,11 @@ type ContentAddressableStorageServer interface {
 	// all chunks to the CAS, then call this RPC to tell the server how those chunks
 	// compose the original blob. The chunks referenced in the SpliceBlob call SHOULD be
 	// available in the CAS before calling this RPC.
+	//
+	// The unary request size is limited by the maximum message size of the
+	// protocol in use, e.g. gRPC. Clients that expect the list of chunks to
+	// exceed that limit SHOULD use
+	// [SpliceChunks][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceChunks].
 	//
 	// If a client needs to upload a large blob and is able to split a blob into
 	// chunks in such a way that reusable chunks are obtained, e.g., by means of
@@ -1391,6 +1543,44 @@ type ContentAddressableStorageServer interface {
 	//     call [SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob]
 	//     to check what chunk mapping the server is using.
 	SpliceBlob(context.Context, *SpliceBlobRequest) (*SpliceBlobResponse, error)
+	// SpliceChunks is a streaming variant of SpliceBlob.
+	//
+	// This RPC is equivalent to
+	// [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob],
+	// except that the list of chunk digests is streamed across request messages
+	// to avoid exceeding protocol message size limits. Clients MUST set the
+	// expected blob digest on every request, stream chunk digests as they become
+	// available, then commit the splice by setting `finish_splice` on the final
+	// request. Providing the blob digest on every request allows servers to route,
+	// cache, deduplicate, or skip completed splice operations before receiving the
+	// complete chunk list.
+	//
+	// The maximum message size is not negotiated by this API. Clients SHOULD limit
+	// the number of chunk digests in each request to remain below the maximum
+	// message size accepted by the client/server pair.
+	//
+	// Servers which implement this functionality MUST declare that they support
+	// it by setting the
+	// [CacheCapabilities.splice_chunks_support][build.bazel.remote.execution.v2.CacheCapabilities.splice_chunks_support]
+	// field accordingly.
+	//
+	// Clients MUST check that the server supports this capability before using
+	// it.
+	//
+	// Errors:
+	//
+	//   - `NOT_FOUND`: At least one of the blob chunks is not present in the CAS.
+	//   - `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the
+	//     spliced blob.
+	//   - `INVALID_ARGUMENT`: The digest of the spliced blob is different from the
+	//     provided expected digest, OR the stream contains an invalid sequence of
+	//     splice requests.
+	//   - `ALREADY_EXISTS`: The blob already exists in CAS and the server did not
+	//     extend the lifetime of the chunks specified in the request, e.g. because
+	//     it prefers a different chunking and extended those instead. Clients can
+	//     call [SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob]
+	//     to check what chunk mapping the server is using.
+	SpliceChunks(grpc.ClientStreamingServer[SpliceChunksRequest, SpliceBlobResponse]) error
 }
 
 // UnimplementedContentAddressableStorageServer should be embedded to have
@@ -1415,8 +1605,14 @@ func (UnimplementedContentAddressableStorageServer) GetTree(*GetTreeRequest, grp
 func (UnimplementedContentAddressableStorageServer) SplitBlob(context.Context, *SplitBlobRequest) (*SplitBlobResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SplitBlob not implemented")
 }
+func (UnimplementedContentAddressableStorageServer) SplitChunks(*SplitBlobRequest, grpc.ServerStreamingServer[SplitChunksResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method SplitChunks not implemented")
+}
 func (UnimplementedContentAddressableStorageServer) SpliceBlob(context.Context, *SpliceBlobRequest) (*SpliceBlobResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SpliceBlob not implemented")
+}
+func (UnimplementedContentAddressableStorageServer) SpliceChunks(grpc.ClientStreamingServer[SpliceChunksRequest, SpliceBlobResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method SpliceChunks not implemented")
 }
 func (UnimplementedContentAddressableStorageServer) testEmbeddedByValue() {}
 
@@ -1521,6 +1717,17 @@ func _ContentAddressableStorage_SplitBlob_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContentAddressableStorage_SplitChunks_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(SplitBlobRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ContentAddressableStorageServer).SplitChunks(m, &grpc.GenericServerStream[SplitBlobRequest, SplitChunksResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ContentAddressableStorage_SplitChunksServer = grpc.ServerStreamingServer[SplitChunksResponse]
+
 func _ContentAddressableStorage_SpliceBlob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SpliceBlobRequest)
 	if err := dec(in); err != nil {
@@ -1538,6 +1745,13 @@ func _ContentAddressableStorage_SpliceBlob_Handler(srv interface{}, ctx context.
 	}
 	return interceptor(ctx, in, info, handler)
 }
+
+func _ContentAddressableStorage_SpliceChunks_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ContentAddressableStorageServer).SpliceChunks(&grpc.GenericServerStream[SpliceChunksRequest, SpliceBlobResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ContentAddressableStorage_SpliceChunksServer = grpc.ClientStreamingServer[SpliceChunksRequest, SpliceBlobResponse]
 
 // ContentAddressableStorage_ServiceDesc is the grpc.ServiceDesc for ContentAddressableStorage service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -1572,6 +1786,16 @@ var ContentAddressableStorage_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "GetTree",
 			Handler:       _ContentAddressableStorage_GetTree_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "SplitChunks",
+			Handler:       _ContentAddressableStorage_SplitChunks_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "SpliceChunks",
+			Handler:       _ContentAddressableStorage_SpliceChunks_Handler,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "build/bazel/remote/execution/v2/remote_execution.proto",
