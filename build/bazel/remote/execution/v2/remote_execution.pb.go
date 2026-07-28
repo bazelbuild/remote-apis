@@ -4570,7 +4570,7 @@ func (x *CacheCapabilities) GetRepMaxCdcParams() *RepMaxCdcParams {
 type FastCdc2020Params struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The average (expected) chunk size for the FastCDC chunking algorithm.
-	// The value MUST be between 1 KiB and 1 MiB. The recommended value is
+	// The value MUST be between 1 KiB and 8 MiB. The recommended value is
 	// 524288 (512 KiB).
 	AvgChunkSizeBytes uint64 `protobuf:"varint,1,opt,name=avg_chunk_size_bytes,json=avgChunkSizeBytes,proto3" json:"avg_chunk_size_bytes,omitempty"`
 	// The seed for the FastCDC mask generation.
