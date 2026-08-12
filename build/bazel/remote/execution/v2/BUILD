@@ -4,6 +4,7 @@ load("@protobuf//bazel:java_proto_library.bzl", "java_proto_library")
 load("@rules_go//go:def.bzl", "go_library")
 load("@rules_go//proto:def.bzl", "go_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@protobuf//bazel:py_proto_library.bzl", "py_proto_library"
 
 package(default_visibility = ["//visibility:public"])
 
@@ -34,6 +35,13 @@ java_proto_library(
 cc_proto_library(
     name = "remote_execution_cc_proto",
     deps = ["//build/bazel/remote/execution/v2:remote_execution_proto"],
+)
+
+# Python
+py_proto_library(
+    name = "remote_execution_py_proto",
+    deps = ["//build/bazel/remote/execution/v2:remote_execution_proto"],
+    visibility = ["//visibility:public"],
 )
 
 cc_grpc_library(
