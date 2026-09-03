@@ -545,11 +545,14 @@ service ContentAddressableStorage {
   //
   // Errors:
   //
-  // * `NOT_FOUND`: At least one of the blob chunks is not present in the CAS.
+  // * `NOT_FOUND`: At least one of the blob chunks is not present in the CAS,
+  //   OR the request has an indirect_chunk_list which is not present in the
+  //   CAS.
   // * `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the
   //   spliced blob.
   // * `INVALID_ARGUMENT`: The digest of the spliced blob is different from the
-  //   provided expected digest.
+  //   provided expected digest, OR the request has an indirect_chunk_list to
+  //   which the chunks digests do not form a valid prefix.
   // * `ALREADY_EXISTS`: The blob already exists in CAS and the server did not
   //   extend the lifetime of the chunks specified in the request, e.g. because
   //   it prefers a different chunking and extended those instead. Clients can
@@ -1965,6 +1968,13 @@ message GetTreeResponse {
   string next_page_token = 2;
 }
 
+// A ChunkList is a list of chunks stored in the CAS. The Digest of a ChunkList
+// is computed over its protobuf wire format serialization.
+message ChunkList {
+  // An ordered list of chunk digests.
+  repeated Digest chunk_digests = 1;
+}
+
 // A request message for
 // [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob].
 message SplitBlobRequest {
@@ -1998,7 +2008,10 @@ message SplitBlobRequest {
 message SplitBlobResponse {
   // The ordered list of digests of the chunks into which the blob was split.
   // The original blob is assembled by concatenating the chunk data according to
-  // the order of the digests given by this list.
+  // the order of the digests given by this list. If the indirect_chunk_list is
+  // set this is instead a prefix of the indirect_chunk_list and the original
+  // blob is assembled by concatenating the chunk data expressed by the
+  // indirect_chunk_list.
   //
   // The server MUST use the same digest function as the one explicitly or
   // implicitly (through hash length) specified in the split request.
@@ -2006,6 +2019,13 @@ message SplitBlobResponse {
 
   // The chunking function used to split the blob.
   ChunkingFunction.Value chunking_function = 2;
+
+  // The digest of the indirect chunk list which MUST be present in the
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage].
+  // The server MAY set this field in addition to the chunk_digests field. If
+  // set the chunk_digests field MUST be a prefix of the indirect_chunk_list and
+  // the indirect_chunk_list represents the full list of chunks for the blob.
+  Digest indirect_chunk_list = 6;
 }
 
 // A request message for
@@ -2033,7 +2053,10 @@ message SpliceBlobRequest {
   Digest blob_digest = 2;
 
   // The ordered list of digests of the chunks which need to be concatenated to
-  // assemble the original blob.
+  // assemble the original blob. If the indirect_chunk_list is set this is
+  // instead a prefix of the indirect_chunk_list and the original blob is
+  // assembled by concatenating the chunk data expressed by the
+  // indirect_chunk_list.
   repeated Digest chunk_digests = 3;
 
   // The digest function of all chunks to be concatenated and of the blob to be
@@ -2047,6 +2070,12 @@ message SpliceBlobRequest {
 
   // The chunking function that the client used to split the blob.
   ChunkingFunction.Value chunking_function = 5;
+
+  // The digest of the indirect chunk list stored in the CAS. The client MAY set
+  // this field in addition to the chunk_digests field. If set the chunk_digests
+  // field MUST be a prefix of the indirect_chunk_list and the
+  // indirect_chunk_list represents the full list of chunks for the blob.
+  Digest indirect_chunk_list = 6;
 }
 
 // A response message for

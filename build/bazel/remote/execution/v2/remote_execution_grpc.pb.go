@@ -951,11 +951,14 @@ type ContentAddressableStorageClient interface {
 	//
 	// Errors:
 	//
-	//   - `NOT_FOUND`: At least one of the blob chunks is not present in the CAS.
+	//   - `NOT_FOUND`: At least one of the blob chunks is not present in the CAS,
+	//     OR the request has an indirect_chunk_list which is not present in the
+	//     CAS.
 	//   - `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the
 	//     spliced blob.
 	//   - `INVALID_ARGUMENT`: The digest of the spliced blob is different from the
-	//     provided expected digest.
+	//     provided expected digest, OR the request has an indirect_chunk_list to
+	//     which the chunks digests do not form a valid prefix.
 	//   - `ALREADY_EXISTS`: The blob already exists in CAS and the server did not
 	//     extend the lifetime of the chunks specified in the request, e.g. because
 	//     it prefers a different chunking and extended those instead. Clients can
@@ -1380,11 +1383,14 @@ type ContentAddressableStorageServer interface {
 	//
 	// Errors:
 	//
-	//   - `NOT_FOUND`: At least one of the blob chunks is not present in the CAS.
+	//   - `NOT_FOUND`: At least one of the blob chunks is not present in the CAS,
+	//     OR the request has an indirect_chunk_list which is not present in the
+	//     CAS.
 	//   - `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the
 	//     spliced blob.
 	//   - `INVALID_ARGUMENT`: The digest of the spliced blob is different from the
-	//     provided expected digest.
+	//     provided expected digest, OR the request has an indirect_chunk_list to
+	//     which the chunks digests do not form a valid prefix.
 	//   - `ALREADY_EXISTS`: The blob already exists in CAS and the server did not
 	//     extend the lifetime of the chunks specified in the request, e.g. because
 	//     it prefers a different chunking and extended those instead. Clients can
