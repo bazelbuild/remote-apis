@@ -66,6 +66,7 @@ from the clients above.
 | [Flare Build Execution](https://flare.build/products/flare-build-execution)                                                | Commercial                | ✅               | ❓              | ❓               |
 | [Justbuild](https://github.com/just-buildsystem/justbuild/blob/master/doc/tutorial/just-execute.org), using `--compatible` | Apache-2.0                | ✅               | 2.0.0           | 2.1.0            |
 | [Kajiya](https://chromium.googlesource.com/build/+/refs/heads/main/kajiya/)                                                | BSD-3-Clause              | ✅               | 2.0.0           | 2.0.0            |
+| [Namespace](https://namespace.so/docs/bazel)                                                                               | Commercial                | ✅               | 2.0.0           | 2.3.0            |
 | [NativeLink](https://github.com/TraceMachina/nativelink)                                                                   | Commercial & FSL-1.1-ALv2 | ✅               | 2.0.0           | 2.3.0            |
 
 ### Workers
