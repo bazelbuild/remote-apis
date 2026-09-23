@@ -60,7 +60,7 @@ from the clients above.
 | [bazel-remote](https://github.com/buchgr/bazel-remote)                                                                     | Apache-2.0                | ❌               | 2.0.0           | 2.3.0            |
 | [Buildbarn](https://github.com/buildbarn)                                                                                  | Apache-2.0                | ✅               | 2.3.0           | 2.11.0           |
 | [BuildBuddy](https://www.buildbuddy.io/)                                                                                   | Commercial & MIT          | ✅               | 2.0.0           | 2.11.0           |
-| [Buildfarm](https://github.com/bazelbuild/bazel-buildfarm)                                                                 | Apache-2.0                | ✅               | 2.3.0           | 2.11.0           |
+| [Buildfarm](https://github.com/buildfarm/buildfarm)                                                                        | Apache-2.0                | ✅               | 2.3.0           | 2.11.0           |
 | [BuildGrid](https://buildgrid.build/)                                                                                      | Apache-2.0                | ✅               | 2.0.0           | 2.2.0            |
 | [EngFlow](https://www.engflow.com/)                                                                                        | Commercial                | ✅               | 2.0.0           | 2.11.0           |
 | [Flare Build Execution](https://flare.build/products/flare-build-execution)                                                | Commercial                | ✅               | ❓              | ❓               |
@@ -78,7 +78,7 @@ many implementations have designed their own protocols. Links to these APIs
 are provided as a reference below.
 *Adhering to any one of these protocols is not a requirement.*
 
-* [Buildfarm Operation Queues](https://bazelbuild.github.io/bazel-buildfarm/docs/architecture/queues/)
+* [Buildfarm Operation Queues](https://buildfarm.github.io/buildfarm/docs/architecture/queues/)
   * Uses sets of queues for managing different payload requirements.
 * [Buildbarn Remote Worker](https://github.com/buildbarn/bb-remote-execution/blob/master/pkg/proto/remoteworker/remoteworker.proto)
   * Uses a custom protocol for workers to connect to a scheduler and receive instructions.
