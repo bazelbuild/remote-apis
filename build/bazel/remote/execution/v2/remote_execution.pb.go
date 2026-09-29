@@ -5078,8 +5078,19 @@ type RequestMetadata struct {
 	// There is no expectation that this value will have any particular structure,
 	// or equality across invocations, though some client tools may offer these guarantees.
 	ConfigurationId string `protobuf:"bytes,7,opt,name=configuration_id,json=configurationId,proto3" json:"configuration_id,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// The content-defined chunking function the tool uses for chunked uploads
+	// and downloads in this invocation. `UNKNOWN`, the default, means the tool
+	// does not use chunking.
+	//
+	// This describes the invocation as a whole and is set on every request. It
+	// differs from the `build.bazel.remote.execution.v2.chunking-function`
+	// header, which marks only the requests whose digests refer to chunks. A
+	// server can use it to attribute chunking to an invocation and to decide how
+	// to store whole blobs it receives from a chunking tool, for example by
+	// chunking them with the same function.
+	ChunkingFunction ChunkingFunction_Value `protobuf:"varint,8,opt,name=chunking_function,json=chunkingFunction,proto3,enum=build.bazel.remote.execution.v2.ChunkingFunction_Value" json:"chunking_function,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *RequestMetadata) Reset() {
@@ -5159,6 +5170,13 @@ func (x *RequestMetadata) GetConfigurationId() string {
 		return x.ConfigurationId
 	}
 	return ""
+}
+
+func (x *RequestMetadata) GetChunkingFunction() ChunkingFunction_Value {
+	if x != nil {
+		return x.ChunkingFunction
+	}
+	return ChunkingFunction_UNKNOWN
 }
 
 // A request message for
@@ -6011,7 +6029,7 @@ const file_build_bazel_remote_execution_v2_remote_execution_proto_rawDesc = "" +
 	"\x10digest_functions\x18\x05 \x03(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0fdigestFunctions\"M\n" +
 	"\vToolDetails\x12\x1b\n" +
 	"\ttool_name\x18\x01 \x01(\tR\btoolName\x12!\n" +
-	"\ftool_version\x18\x02 \x01(\tR\vtoolVersion\"\xda\x02\n" +
+	"\ftool_version\x18\x02 \x01(\tR\vtoolVersion\"\xc0\x03\n" +
 	"\x0fRequestMetadata\x12O\n" +
 	"\ftool_details\x18\x01 \x01(\v2,.build.bazel.remote.execution.v2.ToolDetailsR\vtoolDetails\x12\x1b\n" +
 	"\taction_id\x18\x02 \x01(\tR\bactionId\x12,\n" +
@@ -6019,7 +6037,8 @@ const file_build_bazel_remote_execution_v2_remote_execution_proto_rawDesc = "" +
 	"\x19correlated_invocations_id\x18\x04 \x01(\tR\x17correlatedInvocationsId\x12'\n" +
 	"\x0faction_mnemonic\x18\x05 \x01(\tR\x0eactionMnemonic\x12\x1b\n" +
 	"\ttarget_id\x18\x06 \x01(\tR\btargetId\x12)\n" +
-	"\x10configuration_id\x18\a \x01(\tR\x0fconfigurationId\"\xcd\x02\n" +
+	"\x10configuration_id\x18\a \x01(\tR\x0fconfigurationId\x12d\n" +
+	"\x11chunking_function\x18\b \x01(\x0e27.build.bazel.remote.execution.v2.ChunkingFunction.ValueR\x10chunkingFunction\"\xcd\x02\n" +
 	"\x16GetChunkMappingRequest\x12#\n" +
 	"\rinstance_name\x18\x01 \x01(\tR\finstanceName\x12H\n" +
 	"\vblob_digest\x18\x02 \x01(\v2'.build.bazel.remote.execution.v2.DigestR\n" +
@@ -6252,49 +6271,50 @@ var file_build_bazel_remote_execution_v2_remote_execution_proto_depIdxs = []int3
 	51,  // 107: build.bazel.remote.execution.v2.ExecutionCapabilities.execution_priority_capabilities:type_name -> build.bazel.remote.execution.v2.PriorityCapabilities
 	2,   // 108: build.bazel.remote.execution.v2.ExecutionCapabilities.digest_functions:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
 	58,  // 109: build.bazel.remote.execution.v2.RequestMetadata.tool_details:type_name -> build.bazel.remote.execution.v2.ToolDetails
-	15,  // 110: build.bazel.remote.execution.v2.GetChunkMappingRequest.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	2,   // 111: build.bazel.remote.execution.v2.GetChunkMappingRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	3,   // 112: build.bazel.remote.execution.v2.GetChunkMappingRequest.chunking_function:type_name -> build.bazel.remote.execution.v2.ChunkingFunction.Value
-	15,  // 113: build.bazel.remote.execution.v2.RegisterChunkMappingResponse.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	25,  // 114: build.bazel.remote.execution.v2.ExecuteResponse.ServerLogsEntry.value:type_name -> build.bazel.remote.execution.v2.LogFile
-	15,  // 115: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request.digest:type_name -> build.bazel.remote.execution.v2.Digest
-	5,   // 116: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request.compressor:type_name -> build.bazel.remote.execution.v2.Compressor.Value
-	15,  // 117: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response.digest:type_name -> build.bazel.remote.execution.v2.Digest
-	73,  // 118: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response.status:type_name -> google.rpc.Status
-	15,  // 119: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.digest:type_name -> build.bazel.remote.execution.v2.Digest
-	5,   // 120: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.compressor:type_name -> build.bazel.remote.execution.v2.Compressor.Value
-	73,  // 121: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.status:type_name -> google.rpc.Status
-	24,  // 122: build.bazel.remote.execution.v2.Execution.Execute:input_type -> build.bazel.remote.execution.v2.ExecuteRequest
-	29,  // 123: build.bazel.remote.execution.v2.Execution.WaitExecution:input_type -> build.bazel.remote.execution.v2.WaitExecutionRequest
-	30,  // 124: build.bazel.remote.execution.v2.ActionCache.GetActionResult:input_type -> build.bazel.remote.execution.v2.GetActionResultRequest
-	31,  // 125: build.bazel.remote.execution.v2.ActionCache.UpdateActionResult:input_type -> build.bazel.remote.execution.v2.UpdateActionResultRequest
-	32,  // 126: build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs:input_type -> build.bazel.remote.execution.v2.FindMissingBlobsRequest
-	34,  // 127: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs:input_type -> build.bazel.remote.execution.v2.BatchUpdateBlobsRequest
-	36,  // 128: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs:input_type -> build.bazel.remote.execution.v2.BatchReadBlobsRequest
-	38,  // 129: build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree:input_type -> build.bazel.remote.execution.v2.GetTreeRequest
-	40,  // 130: build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob:input_type -> build.bazel.remote.execution.v2.SplitBlobRequest
-	60,  // 131: build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping:input_type -> build.bazel.remote.execution.v2.GetChunkMappingRequest
-	43,  // 132: build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob:input_type -> build.bazel.remote.execution.v2.SpliceBlobRequest
-	44,  // 133: build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping:input_type -> build.bazel.remote.execution.v2.RegisterChunkMappingRequest
-	46,  // 134: build.bazel.remote.execution.v2.Capabilities.GetCapabilities:input_type -> build.bazel.remote.execution.v2.GetCapabilitiesRequest
-	75,  // 135: build.bazel.remote.execution.v2.Execution.Execute:output_type -> google.longrunning.Operation
-	75,  // 136: build.bazel.remote.execution.v2.Execution.WaitExecution:output_type -> google.longrunning.Operation
-	17,  // 137: build.bazel.remote.execution.v2.ActionCache.GetActionResult:output_type -> build.bazel.remote.execution.v2.ActionResult
-	17,  // 138: build.bazel.remote.execution.v2.ActionCache.UpdateActionResult:output_type -> build.bazel.remote.execution.v2.ActionResult
-	33,  // 139: build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs:output_type -> build.bazel.remote.execution.v2.FindMissingBlobsResponse
-	35,  // 140: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs:output_type -> build.bazel.remote.execution.v2.BatchUpdateBlobsResponse
-	37,  // 141: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs:output_type -> build.bazel.remote.execution.v2.BatchReadBlobsResponse
-	39,  // 142: build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree:output_type -> build.bazel.remote.execution.v2.GetTreeResponse
-	41,  // 143: build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob:output_type -> build.bazel.remote.execution.v2.SplitBlobResponse
-	42,  // 144: build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping:output_type -> build.bazel.remote.execution.v2.GetChunkMappingResponse
-	45,  // 145: build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob:output_type -> build.bazel.remote.execution.v2.SpliceBlobResponse
-	61,  // 146: build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping:output_type -> build.bazel.remote.execution.v2.RegisterChunkMappingResponse
-	47,  // 147: build.bazel.remote.execution.v2.Capabilities.GetCapabilities:output_type -> build.bazel.remote.execution.v2.ServerCapabilities
-	135, // [135:148] is the sub-list for method output_type
-	122, // [122:135] is the sub-list for method input_type
-	122, // [122:122] is the sub-list for extension type_name
-	122, // [122:122] is the sub-list for extension extendee
-	0,   // [0:122] is the sub-list for field type_name
+	3,   // 110: build.bazel.remote.execution.v2.RequestMetadata.chunking_function:type_name -> build.bazel.remote.execution.v2.ChunkingFunction.Value
+	15,  // 111: build.bazel.remote.execution.v2.GetChunkMappingRequest.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
+	2,   // 112: build.bazel.remote.execution.v2.GetChunkMappingRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	3,   // 113: build.bazel.remote.execution.v2.GetChunkMappingRequest.chunking_function:type_name -> build.bazel.remote.execution.v2.ChunkingFunction.Value
+	15,  // 114: build.bazel.remote.execution.v2.RegisterChunkMappingResponse.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
+	25,  // 115: build.bazel.remote.execution.v2.ExecuteResponse.ServerLogsEntry.value:type_name -> build.bazel.remote.execution.v2.LogFile
+	15,  // 116: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request.digest:type_name -> build.bazel.remote.execution.v2.Digest
+	5,   // 117: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request.compressor:type_name -> build.bazel.remote.execution.v2.Compressor.Value
+	15,  // 118: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response.digest:type_name -> build.bazel.remote.execution.v2.Digest
+	73,  // 119: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response.status:type_name -> google.rpc.Status
+	15,  // 120: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.digest:type_name -> build.bazel.remote.execution.v2.Digest
+	5,   // 121: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.compressor:type_name -> build.bazel.remote.execution.v2.Compressor.Value
+	73,  // 122: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.status:type_name -> google.rpc.Status
+	24,  // 123: build.bazel.remote.execution.v2.Execution.Execute:input_type -> build.bazel.remote.execution.v2.ExecuteRequest
+	29,  // 124: build.bazel.remote.execution.v2.Execution.WaitExecution:input_type -> build.bazel.remote.execution.v2.WaitExecutionRequest
+	30,  // 125: build.bazel.remote.execution.v2.ActionCache.GetActionResult:input_type -> build.bazel.remote.execution.v2.GetActionResultRequest
+	31,  // 126: build.bazel.remote.execution.v2.ActionCache.UpdateActionResult:input_type -> build.bazel.remote.execution.v2.UpdateActionResultRequest
+	32,  // 127: build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs:input_type -> build.bazel.remote.execution.v2.FindMissingBlobsRequest
+	34,  // 128: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs:input_type -> build.bazel.remote.execution.v2.BatchUpdateBlobsRequest
+	36,  // 129: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs:input_type -> build.bazel.remote.execution.v2.BatchReadBlobsRequest
+	38,  // 130: build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree:input_type -> build.bazel.remote.execution.v2.GetTreeRequest
+	40,  // 131: build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob:input_type -> build.bazel.remote.execution.v2.SplitBlobRequest
+	60,  // 132: build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping:input_type -> build.bazel.remote.execution.v2.GetChunkMappingRequest
+	43,  // 133: build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob:input_type -> build.bazel.remote.execution.v2.SpliceBlobRequest
+	44,  // 134: build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping:input_type -> build.bazel.remote.execution.v2.RegisterChunkMappingRequest
+	46,  // 135: build.bazel.remote.execution.v2.Capabilities.GetCapabilities:input_type -> build.bazel.remote.execution.v2.GetCapabilitiesRequest
+	75,  // 136: build.bazel.remote.execution.v2.Execution.Execute:output_type -> google.longrunning.Operation
+	75,  // 137: build.bazel.remote.execution.v2.Execution.WaitExecution:output_type -> google.longrunning.Operation
+	17,  // 138: build.bazel.remote.execution.v2.ActionCache.GetActionResult:output_type -> build.bazel.remote.execution.v2.ActionResult
+	17,  // 139: build.bazel.remote.execution.v2.ActionCache.UpdateActionResult:output_type -> build.bazel.remote.execution.v2.ActionResult
+	33,  // 140: build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs:output_type -> build.bazel.remote.execution.v2.FindMissingBlobsResponse
+	35,  // 141: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs:output_type -> build.bazel.remote.execution.v2.BatchUpdateBlobsResponse
+	37,  // 142: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs:output_type -> build.bazel.remote.execution.v2.BatchReadBlobsResponse
+	39,  // 143: build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree:output_type -> build.bazel.remote.execution.v2.GetTreeResponse
+	41,  // 144: build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob:output_type -> build.bazel.remote.execution.v2.SplitBlobResponse
+	42,  // 145: build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping:output_type -> build.bazel.remote.execution.v2.GetChunkMappingResponse
+	45,  // 146: build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob:output_type -> build.bazel.remote.execution.v2.SpliceBlobResponse
+	61,  // 147: build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping:output_type -> build.bazel.remote.execution.v2.RegisterChunkMappingResponse
+	47,  // 148: build.bazel.remote.execution.v2.Capabilities.GetCapabilities:output_type -> build.bazel.remote.execution.v2.ServerCapabilities
+	136, // [136:149] is the sub-list for method output_type
+	123, // [123:136] is the sub-list for method input_type
+	123, // [123:123] is the sub-list for extension type_name
+	123, // [123:123] is the sub-list for extension extendee
+	0,   // [0:123] is the sub-list for field type_name
 }
 
 func init() { file_build_bazel_remote_execution_v2_remote_execution_proto_init() }

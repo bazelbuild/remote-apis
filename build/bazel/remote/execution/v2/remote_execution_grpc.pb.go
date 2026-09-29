@@ -757,6 +757,28 @@ const (
 // message.  Servers MAY use this header to assist in routing requests to the
 // appropriate backend.
 //
+// Requests whose digests refer to chunks produced by a content-defined chunking
+// function, rather than to whole blobs, MAY come with an additional plain text
+// header that names that function. The header, if present, MUST follow the
+// following convention:
+//   - name: `build.bazel.remote.execution.v2.chunking-function`.
+//   - contents: the name of a `ChunkingFunction.Value` other than `UNKNOWN`,
+//     for example `FAST_CDC_2020`.
+//
+// Clients SHOULD set it on
+// [FindMissingBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs]
+// requests for chunk digests and on ByteStream `Write` and `Read` requests for
+// individual chunks, and MUST NOT set it on requests that refer to whole blobs.
+// [GetChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping]
+// and
+// [RegisterChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping]
+// name the chunking function in their request messages and do not use the
+// header. A server cannot tell a chunk from a whole blob by size alone, since
+// the sizes of chunks and of blobs small enough to be stored whole overlap.
+// Servers MAY use this header to tell chunk traffic apart from whole blob
+// traffic, for example to avoid chunking data that is already a chunk, and MAY
+// ignore it.
+//
 // The lifetime of entries in the CAS is implementation specific, but it SHOULD
 // be long enough to allow for newly-added and recently looked-up entries to be
 // used in subsequent calls (e.g. to
@@ -1277,6 +1299,28 @@ type ContentAddressableStorage_RegisterChunkMappingClient = grpc.ClientStreaming
 // If set, the contents of the header MUST match the `resource_name` of the request
 // message.  Servers MAY use this header to assist in routing requests to the
 // appropriate backend.
+//
+// Requests whose digests refer to chunks produced by a content-defined chunking
+// function, rather than to whole blobs, MAY come with an additional plain text
+// header that names that function. The header, if present, MUST follow the
+// following convention:
+//   - name: `build.bazel.remote.execution.v2.chunking-function`.
+//   - contents: the name of a `ChunkingFunction.Value` other than `UNKNOWN`,
+//     for example `FAST_CDC_2020`.
+//
+// Clients SHOULD set it on
+// [FindMissingBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs]
+// requests for chunk digests and on ByteStream `Write` and `Read` requests for
+// individual chunks, and MUST NOT set it on requests that refer to whole blobs.
+// [GetChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping]
+// and
+// [RegisterChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping]
+// name the chunking function in their request messages and do not use the
+// header. A server cannot tell a chunk from a whole blob by size alone, since
+// the sizes of chunks and of blobs small enough to be stored whole overlap.
+// Servers MAY use this header to tell chunk traffic apart from whole blob
+// traffic, for example to avoid chunking data that is already a chunk, and MAY
+// ignore it.
 //
 // The lifetime of entries in the CAS is implementation specific, but it SHOULD
 // be long enough to allow for newly-added and recently looked-up entries to be
