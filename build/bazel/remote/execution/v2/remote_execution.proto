@@ -68,6 +68,15 @@ service Execution {
   // `metadata` on the operation is of type
   // [ExecuteOperationMetadata][build.bazel.remote.execution.v2.ExecuteOperationMetadata].
   //
+  // Implementations SHOULD ensure that any blobs referenced from the
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
+  // by the [ActionResult][build.bazel.remote.execution.v2.ActionResult] in the
+  // `response` are available at the time of returning it and will be for some
+  // period of time afterwards. Implementations MAY advertise that they perform
+  // this check via the
+  // [ExecutionCapabilities.verifies_action_results][build.bazel.remote.execution.v2.ExecutionCapabilities.verifies_action_results]
+  // field.
+  //
   // If the client remains connected after the first response is returned after
   // the server, then updates are streamed as if the client had called
   // [WaitExecution][build.bazel.remote.execution.v2.Execution.WaitExecution]
@@ -161,7 +170,10 @@ service ActionCache {
   // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
   // are available at the time of returning the
   // [ActionResult][build.bazel.remote.execution.v2.ActionResult] and will be
-  // for some period of time afterwards. The lifetimes of the referenced blobs SHOULD be increased
+  // for some period of time afterwards. Implementations MAY advertise that they
+  // perform this check via the
+  // [CacheCapabilities.verifies_action_results][build.bazel.remote.execution.v2.CacheCapabilities.verifies_action_results]
+  // field. The lifetimes of the referenced blobs SHOULD be increased
   // if necessary and applicable.
   //
   // Errors:
@@ -2482,6 +2494,23 @@ message CacheCapabilities {
   // The parameters for the RepMaxCDC chunking algorithm.
   // If set, the server supports the RepMaxCDC chunking algorithm.
   RepMaxCdcParams rep_max_cdc_params = 12;
+
+  // Whether the server verifies that all blobs referenced by an
+  // [ActionResult][build.bazel.remote.execution.v2.ActionResult] are
+  // present in the
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
+  // before returning it from
+  // [ActionCache.GetActionResult][build.bazel.remote.execution.v2.ActionCache.GetActionResult].
+  //
+  // If true, clients MAY assume that all referenced blobs are available at
+  // the time the result is returned and for some period of time afterwards,
+  // and thus skip checking for their presence themselves, e.g. via
+  // [FindMissingBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs].
+  // If false, the server MAY still perform such a check, but clients SHOULD
+  // NOT rely on it.
+  //
+  // New in v2.13.
+  bool verifies_action_results = 13;
 }
 
 // Parameters for the FastCDC content-defined chunking algorithm.
@@ -2596,6 +2625,24 @@ message ExecutionCapabilities {
   // remote execution system MUST use the same digest function as the
   // one used to construct the action.
   repeated DigestFunction.Value digest_functions = 5;
+
+  // Whether the remote execution system verifies that all blobs referenced by
+  // the [ActionResult][build.bazel.remote.execution.v2.ActionResult] in an
+  // [ExecuteResponse][build.bazel.remote.execution.v2.ExecuteResponse] are
+  // present in the
+  // [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
+  // before returning it, regardless of whether the result was served from the
+  // action cache or produced by a fresh execution.
+  //
+  // If true, clients MAY assume that all referenced blobs are available at
+  // the time the result is returned and for some period of time afterwards,
+  // and thus skip checking for their presence themselves, e.g. via
+  // [FindMissingBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs].
+  // If false, the server MAY still perform such a check, but clients SHOULD
+  // NOT rely on it.
+  //
+  // New in v2.13.
+  bool verifies_action_results = 6;
 }
 
 // Details for the tool used to call the API.
