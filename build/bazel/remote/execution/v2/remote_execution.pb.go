@@ -4016,6 +4016,9 @@ type RegisterChunkMappingRequest struct {
 	// stream requests. The original blob is assembled by concatenating chunks in
 	// the order of these digests across all requests in stream order.
 	//
+	// A chunk MUST be in the CAS before a request referencing it is sent.
+	// Chunks referenced by later requests need not be in the CAS yet.
+	//
 	// Clients SHOULD limit the number of digests in each request to remain below
 	// the maximum message size accepted by the client/server pair.
 	//
