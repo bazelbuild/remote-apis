@@ -4596,8 +4596,24 @@ type CacheCapabilities struct {
 	// The parameters for the RepMaxCDC chunking algorithm.
 	// If set, the server supports the RepMaxCDC chunking algorithm.
 	RepMaxCdcParams *RepMaxCdcParams `protobuf:"bytes,12,opt,name=rep_max_cdc_params,json=repMaxCdcParams,proto3" json:"rep_max_cdc_params,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Whether the server verifies that all blobs referenced by an
+	// [ActionResult][build.bazel.remote.execution.v2.ActionResult] are
+	// present in the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
+	// before returning it from
+	// [ActionCache.GetActionResult][build.bazel.remote.execution.v2.ActionCache.GetActionResult].
+	//
+	// If true, clients MAY assume that all referenced blobs are available at
+	// the time the result is returned and for some period of time afterwards,
+	// and thus skip checking for their presence themselves, e.g. via
+	// [FindMissingBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs].
+	// If false, the server MAY still perform such a check, but clients SHOULD
+	// NOT rely on it.
+	//
+	// New in v2.13.
+	VerifiesActionResults bool `protobuf:"varint,13,opt,name=verifies_action_results,json=verifiesActionResults,proto3" json:"verifies_action_results,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *CacheCapabilities) Reset() {
@@ -4712,6 +4728,13 @@ func (x *CacheCapabilities) GetRepMaxCdcParams() *RepMaxCdcParams {
 		return x.RepMaxCdcParams
 	}
 	return nil
+}
+
+func (x *CacheCapabilities) GetVerifiesActionResults() bool {
+	if x != nil {
+		return x.VerifiesActionResults
+	}
+	return false
 }
 
 // Parameters for the FastCDC content-defined chunking algorithm.
@@ -4917,8 +4940,25 @@ type ExecutionCapabilities struct {
 	// remote execution system MUST use the same digest function as the
 	// one used to construct the action.
 	DigestFunctions []DigestFunction_Value `protobuf:"varint,5,rep,packed,name=digest_functions,json=digestFunctions,proto3,enum=build.bazel.remote.execution.v2.DigestFunction_Value" json:"digest_functions,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Whether the remote execution system verifies that all blobs referenced by
+	// the [ActionResult][build.bazel.remote.execution.v2.ActionResult] in an
+	// [ExecuteResponse][build.bazel.remote.execution.v2.ExecuteResponse] are
+	// present in the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
+	// before returning it, regardless of whether the result was served from the
+	// action cache or produced by a fresh execution.
+	//
+	// If true, clients MAY assume that all referenced blobs are available at
+	// the time the result is returned and for some period of time afterwards,
+	// and thus skip checking for their presence themselves, e.g. via
+	// [FindMissingBlobs][build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs].
+	// If false, the server MAY still perform such a check, but clients SHOULD
+	// NOT rely on it.
+	//
+	// New in v2.13.
+	VerifiesActionResults bool `protobuf:"varint,6,opt,name=verifies_action_results,json=verifiesActionResults,proto3" json:"verifies_action_results,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *ExecutionCapabilities) Reset() {
@@ -4984,6 +5024,13 @@ func (x *ExecutionCapabilities) GetDigestFunctions() []DigestFunction_Value {
 		return x.DigestFunctions
 	}
 	return nil
+}
+
+func (x *ExecutionCapabilities) GetVerifiesActionResults() bool {
+	if x != nil {
+		return x.VerifiesActionResults
+	}
+	return false
 }
 
 // Details for the tool used to call the API.
@@ -5982,7 +6029,7 @@ const file_build_bazel_remote_execution_v2_remote_execution_proto_rawDesc = "" +
 	"\x04ZSTD\x10\x01\x12\v\n" +
 	"\aDEFLATE\x10\x02\x12\n" +
 	"\n" +
-	"\x06BROTLI\x10\x03\"\xfc\b\n" +
+	"\x06BROTLI\x10\x03\"\xb4\t\n" +
 	"\x11CacheCapabilities\x12`\n" +
 	"\x10digest_functions\x18\x01 \x03(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0fdigestFunctions\x12\x87\x01\n" +
 	" action_cache_update_capabilities\x18\x02 \x01(\v2>.build.bazel.remote.execution.v2.ActionCacheUpdateCapabilitiesR\x1dactionCacheUpdateCapabilities\x12u\n" +
@@ -5996,19 +6043,21 @@ const file_build_bazel_remote_execution_v2_remote_execution_proto_rawDesc = "" +
 	"\x13splice_blob_support\x18\n" +
 	" \x01(\bR\x11spliceBlobSupport\x12c\n" +
 	"\x14fast_cdc_2020_params\x18\v \x01(\v22.build.bazel.remote.execution.v2.FastCdc2020ParamsR\x11fastCdc2020Params\x12]\n" +
-	"\x12rep_max_cdc_params\x18\f \x01(\v20.build.bazel.remote.execution.v2.RepMaxCdcParamsR\x0frepMaxCdcParams\"X\n" +
+	"\x12rep_max_cdc_params\x18\f \x01(\v20.build.bazel.remote.execution.v2.RepMaxCdcParamsR\x0frepMaxCdcParams\x126\n" +
+	"\x17verifies_action_results\x18\r \x01(\bR\x15verifiesActionResults\"X\n" +
 	"\x11FastCdc2020Params\x12/\n" +
 	"\x14avg_chunk_size_bytes\x18\x01 \x01(\x04R\x11avgChunkSizeBytes\x12\x12\n" +
 	"\x04seed\x18\x02 \x01(\rR\x04seed\"p\n" +
 	"\x0fRepMaxCdcParams\x12/\n" +
 	"\x14min_chunk_size_bytes\x18\x01 \x01(\x04R\x11minChunkSizeBytes\x12,\n" +
-	"\x12horizon_size_bytes\x18\x02 \x01(\x04R\x10horizonSizeBytes\"\xb7\x03\n" +
+	"\x12horizon_size_bytes\x18\x02 \x01(\x04R\x10horizonSizeBytes\"\xef\x03\n" +
 	"\x15ExecutionCapabilities\x12^\n" +
 	"\x0fdigest_function\x18\x01 \x01(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0edigestFunction\x12!\n" +
 	"\fexec_enabled\x18\x02 \x01(\bR\vexecEnabled\x12}\n" +
 	"\x1fexecution_priority_capabilities\x18\x03 \x01(\v25.build.bazel.remote.execution.v2.PriorityCapabilitiesR\x1dexecutionPriorityCapabilities\x12:\n" +
 	"\x19supported_node_properties\x18\x04 \x03(\tR\x17supportedNodeProperties\x12`\n" +
-	"\x10digest_functions\x18\x05 \x03(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0fdigestFunctions\"M\n" +
+	"\x10digest_functions\x18\x05 \x03(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0fdigestFunctions\x126\n" +
+	"\x17verifies_action_results\x18\x06 \x01(\bR\x15verifiesActionResults\"M\n" +
 	"\vToolDetails\x12\x1b\n" +
 	"\ttool_name\x18\x01 \x01(\tR\btoolName\x12!\n" +
 	"\ftool_version\x18\x02 \x01(\tR\vtoolVersion\"\xda\x02\n" +
