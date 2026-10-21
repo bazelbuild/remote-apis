@@ -49,6 +49,12 @@ option objc_class_prefix = "RA";
 // Service implementations may choose to support only URLs, only URNs for
 // Push'd content, only other URIs for which the server and client agree upon
 // semantics of, or any mixture of the above.
+//
+// Versions
+// - v1.0
+//   - Initial spec
+// - v1.1
+//   - Adds digest function field to requests
 
 // Qualifiers are used to disambiguate or sub-select content that shares a URI.
 // This may include specifying a particular commit or branch, in the case of

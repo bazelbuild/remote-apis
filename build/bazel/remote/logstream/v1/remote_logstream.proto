@@ -43,6 +43,11 @@ option objc_class_prefix = "RL";
 // https://cloud.google.com/dataproc/docs/reference/rpc/google.bytestream
 // https://github.com/googleapis/googleapis/blob/master/google/bytestream/bytestream.proto
 //
+// #### Versions
+//
+// - v1.0
+//   - Initial spec
+//
 // #### Writing LogStreams
 //
 // LogStreams are written to via the Byte Stream API's `Write` RPC. Bytes
