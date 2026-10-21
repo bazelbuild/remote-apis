@@ -1621,7 +1621,8 @@ message ExecuteRequest {
 
   // The digest function that was used to compute the action digest.
   //
-  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+  // if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
   // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
   // that case the server SHOULD infer the digest function using the
   // length of the action digest hash and the digest functions announced
@@ -1754,7 +1755,8 @@ message ExecuteOperationMetadata {
 
   // The digest function that was used to compute the action digest.
   //
-  // If the digest function used is one of BLAKE3, MD5, MURMUR3, SHA1,
+  // MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+  // if the digest function used is one of BLAKE3, MD5, MURMUR3, SHA1,
   // SHA256, SHA256TREE, SHA384, SHA512, or VSO, the server MAY leave
   // this field unset. In that case the client SHOULD infer the digest
   // function using the length of the action digest hash and the digest
@@ -1800,7 +1802,8 @@ message GetActionResultRequest {
 
   // The digest function that was used to compute the action digest.
   //
-  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+  // if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
   // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
   // that case the server SHOULD infer the digest function using the
   // length of the action digest hash and the digest functions announced
@@ -1833,7 +1836,8 @@ message UpdateActionResultRequest {
 
   // The digest function that was used to compute the action digest.
   //
-  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+  // if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
   // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
   // that case the server SHOULD infer the digest function using the
   // length of the action digest hash and the digest functions announced
@@ -1857,7 +1861,8 @@ message FindMissingBlobsRequest {
 
   // The digest function of the blobs whose existence is checked.
   //
-  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+  // if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
   // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
   // that case the server SHOULD infer the digest function using the
   // length of the blob digest hashes and the digest functions announced
@@ -1904,7 +1909,8 @@ message BatchUpdateBlobsRequest {
   // The digest function that was used to compute the digests of the
   // blobs being uploaded.
   //
-  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+  // if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
   // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
   // that case the server SHOULD infer the digest function using the
   // length of the blob digest hashes and the digest functions announced
@@ -1948,7 +1954,8 @@ message BatchReadBlobsRequest {
 
   // The digest function of the blobs being requested.
   //
-  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+  // if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
   // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
   // that case the server SHOULD infer the digest function using the
   // length of the blob digest hashes and the digest functions announced
@@ -2010,7 +2017,8 @@ message GetTreeRequest {
   // The digest function that was used to compute the digest of the root
   // directory.
   //
-  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+  // if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
   // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
   // that case the server SHOULD infer the digest function using the
   // length of the root digest hash and the digest functions announced
@@ -2046,7 +2054,8 @@ message SplitBlobRequest {
 
   // The digest function of the blob to be split.
   //
-  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+  // MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+  // if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
   // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
   // that case the server SHOULD infer the digest function using the
   // length of the blob digest hashes and the digest functions announced
@@ -2129,7 +2138,8 @@ message SpliceBlobRequest {
   // The digest function of all chunks to be concatenated and of the blob to be
   // spliced. The server MUST use the same digest function for both cases.
   //
-  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256, SHA384,
+  // MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+  // if the digest function used is one of MD5, MURMUR3, SHA1, SHA256, SHA384,
   // SHA512, or VSO, the client MAY leave this field unset. In that case the
   // server SHOULD infer the digest function using the length of the blob digest
   // hashes and the digest functions announced in the server's capabilities.
