@@ -303,7 +303,7 @@ func (x DigestFunction_Value) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DigestFunction_Value.Descriptor instead.
 func (DigestFunction_Value) EnumDescriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{42, 0}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{38, 0}
 }
 
 type ChunkingFunction_Value int32
@@ -361,7 +361,7 @@ func (x ChunkingFunction_Value) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ChunkingFunction_Value.Descriptor instead.
 func (ChunkingFunction_Value) EnumDescriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{43, 0}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{39, 0}
 }
 
 type SymlinkAbsolutePathStrategy_Value int32
@@ -417,7 +417,7 @@ func (x SymlinkAbsolutePathStrategy_Value) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use SymlinkAbsolutePathStrategy_Value.Descriptor instead.
 func (SymlinkAbsolutePathStrategy_Value) EnumDescriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{46, 0}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{42, 0}
 }
 
 type Compressor_Value int32
@@ -479,7 +479,7 @@ func (x Compressor_Value) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Compressor_Value.Descriptor instead.
 func (Compressor_Value) EnumDescriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{47, 0}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{43, 0}
 }
 
 // An `Action` captures all the information about an execution which is required
@@ -3674,153 +3674,6 @@ func (x *GetTreeResponse) GetNextPageToken() string {
 	return ""
 }
 
-// A request message for
-// [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob].
-type SplitBlobRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The instance of the execution system to operate against. A server may
-	// support multiple instances of the execution system (with their own workers,
-	// storage, caches, etc.). The server MAY require use of this field to select
-	// between them in an implementation-defined fashion, otherwise it can be
-	// omitted.
-	InstanceName string `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
-	// The digest of the blob to be split.
-	BlobDigest *Digest `protobuf:"bytes,2,opt,name=blob_digest,json=blobDigest,proto3" json:"blob_digest,omitempty"`
-	// The digest function of the blob to be split.
-	//
-	// If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
-	// SHA384, SHA512, or VSO, the client MAY leave this field unset. In
-	// that case the server SHOULD infer the digest function using the
-	// length of the blob digest hashes and the digest functions announced
-	// in the server's capabilities.
-	DigestFunction DigestFunction_Value `protobuf:"varint,3,opt,name=digest_function,json=digestFunction,proto3,enum=build.bazel.remote.execution.v2.DigestFunction_Value" json:"digest_function,omitempty"`
-	// The chunking function that the client prefers to use.
-	//
-	// The server MAY use a different chunking function.
-	ChunkingFunction ChunkingFunction_Value `protobuf:"varint,4,opt,name=chunking_function,json=chunkingFunction,proto3,enum=build.bazel.remote.execution.v2.ChunkingFunction_Value" json:"chunking_function,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *SplitBlobRequest) Reset() {
-	*x = SplitBlobRequest{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[34]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SplitBlobRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SplitBlobRequest) ProtoMessage() {}
-
-func (x *SplitBlobRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[34]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SplitBlobRequest.ProtoReflect.Descriptor instead.
-func (*SplitBlobRequest) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{34}
-}
-
-func (x *SplitBlobRequest) GetInstanceName() string {
-	if x != nil {
-		return x.InstanceName
-	}
-	return ""
-}
-
-func (x *SplitBlobRequest) GetBlobDigest() *Digest {
-	if x != nil {
-		return x.BlobDigest
-	}
-	return nil
-}
-
-func (x *SplitBlobRequest) GetDigestFunction() DigestFunction_Value {
-	if x != nil {
-		return x.DigestFunction
-	}
-	return DigestFunction_UNKNOWN
-}
-
-func (x *SplitBlobRequest) GetChunkingFunction() ChunkingFunction_Value {
-	if x != nil {
-		return x.ChunkingFunction
-	}
-	return ChunkingFunction_UNKNOWN
-}
-
-// A response message for
-// [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob].
-type SplitBlobResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The ordered list of digests of the chunks into which the blob was split.
-	// The original blob is assembled by concatenating the chunk data according to
-	// the order of the digests given by this list.
-	//
-	// The server MUST use the same digest function as the one explicitly or
-	// implicitly (through hash length) specified in the split request.
-	ChunkDigests []*Digest `protobuf:"bytes,1,rep,name=chunk_digests,json=chunkDigests,proto3" json:"chunk_digests,omitempty"`
-	// The chunking function used to split the blob.
-	ChunkingFunction ChunkingFunction_Value `protobuf:"varint,2,opt,name=chunking_function,json=chunkingFunction,proto3,enum=build.bazel.remote.execution.v2.ChunkingFunction_Value" json:"chunking_function,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *SplitBlobResponse) Reset() {
-	*x = SplitBlobResponse{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[35]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SplitBlobResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SplitBlobResponse) ProtoMessage() {}
-
-func (x *SplitBlobResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[35]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SplitBlobResponse.ProtoReflect.Descriptor instead.
-func (*SplitBlobResponse) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{35}
-}
-
-func (x *SplitBlobResponse) GetChunkDigests() []*Digest {
-	if x != nil {
-		return x.ChunkDigests
-	}
-	return nil
-}
-
-func (x *SplitBlobResponse) GetChunkingFunction() ChunkingFunction_Value {
-	if x != nil {
-		return x.ChunkingFunction
-	}
-	return ChunkingFunction_UNKNOWN
-}
-
 // A response message for
 // [ContentAddressableStorage.GetChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping].
 type GetChunkMappingResponse struct {
@@ -3849,7 +3702,7 @@ type GetChunkMappingResponse struct {
 
 func (x *GetChunkMappingResponse) Reset() {
 	*x = GetChunkMappingResponse{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[36]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3861,7 +3714,7 @@ func (x *GetChunkMappingResponse) String() string {
 func (*GetChunkMappingResponse) ProtoMessage() {}
 
 func (x *GetChunkMappingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[36]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3874,7 +3727,7 @@ func (x *GetChunkMappingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetChunkMappingResponse.ProtoReflect.Descriptor instead.
 func (*GetChunkMappingResponse) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{36}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *GetChunkMappingResponse) GetChunkDigests() []*Digest {
@@ -3885,111 +3738,6 @@ func (x *GetChunkMappingResponse) GetChunkDigests() []*Digest {
 }
 
 func (x *GetChunkMappingResponse) GetChunkingFunction() ChunkingFunction_Value {
-	if x != nil {
-		return x.ChunkingFunction
-	}
-	return ChunkingFunction_UNKNOWN
-}
-
-// A request message for
-// [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob].
-type SpliceBlobRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// The instance of the execution system to operate against. A server may
-	// support multiple instances of the execution system (with their own workers,
-	// storage, caches, etc.). The server MAY require use of this field to select
-	// between them in an implementation-defined fashion, otherwise it can be
-	// omitted.
-	InstanceName string `protobuf:"bytes,1,opt,name=instance_name,json=instanceName,proto3" json:"instance_name,omitempty"`
-	// Expected digest of the spliced blob. The client MUST set this field due
-	// to the following reasons:
-	//  1. It allows the server to perform an early existence check of the blob
-	//     or existing chunks that assemble the blob before spending the splicing
-	//     effort, as described in the [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob]
-	//     documentation.
-	//  2. It allows servers with different storage backends to dispatch the
-	//     request to the correct storage backend based on the size and/or the
-	//     hash of the blob.
-	//  3. If chunking information already exists for the blob, it allows
-	//     the server to keep the existing chunking information or replace it with
-	//     new chunking information.
-	BlobDigest *Digest `protobuf:"bytes,2,opt,name=blob_digest,json=blobDigest,proto3" json:"blob_digest,omitempty"`
-	// The ordered list of digests of the chunks which need to be concatenated to
-	// assemble the original blob.
-	ChunkDigests []*Digest `protobuf:"bytes,3,rep,name=chunk_digests,json=chunkDigests,proto3" json:"chunk_digests,omitempty"`
-	// The digest function of all chunks to be concatenated and of the blob to be
-	// spliced. The server MUST use the same digest function for both cases.
-	//
-	// If the digest function used is one of MD5, MURMUR3, SHA1, SHA256, SHA384,
-	// SHA512, or VSO, the client MAY leave this field unset. In that case the
-	// server SHOULD infer the digest function using the length of the blob digest
-	// hashes and the digest functions announced in the server's capabilities.
-	DigestFunction DigestFunction_Value `protobuf:"varint,4,opt,name=digest_function,json=digestFunction,proto3,enum=build.bazel.remote.execution.v2.DigestFunction_Value" json:"digest_function,omitempty"`
-	// The chunking function that the client used to split the blob.
-	ChunkingFunction ChunkingFunction_Value `protobuf:"varint,5,opt,name=chunking_function,json=chunkingFunction,proto3,enum=build.bazel.remote.execution.v2.ChunkingFunction_Value" json:"chunking_function,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *SpliceBlobRequest) Reset() {
-	*x = SpliceBlobRequest{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[37]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SpliceBlobRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SpliceBlobRequest) ProtoMessage() {}
-
-func (x *SpliceBlobRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[37]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SpliceBlobRequest.ProtoReflect.Descriptor instead.
-func (*SpliceBlobRequest) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{37}
-}
-
-func (x *SpliceBlobRequest) GetInstanceName() string {
-	if x != nil {
-		return x.InstanceName
-	}
-	return ""
-}
-
-func (x *SpliceBlobRequest) GetBlobDigest() *Digest {
-	if x != nil {
-		return x.BlobDigest
-	}
-	return nil
-}
-
-func (x *SpliceBlobRequest) GetChunkDigests() []*Digest {
-	if x != nil {
-		return x.ChunkDigests
-	}
-	return nil
-}
-
-func (x *SpliceBlobRequest) GetDigestFunction() DigestFunction_Value {
-	if x != nil {
-		return x.DigestFunction
-	}
-	return DigestFunction_UNKNOWN
-}
-
-func (x *SpliceBlobRequest) GetChunkingFunction() ChunkingFunction_Value {
 	if x != nil {
 		return x.ChunkingFunction
 	}
@@ -4038,7 +3786,7 @@ type RegisterChunkMappingRequest struct {
 
 func (x *RegisterChunkMappingRequest) Reset() {
 	*x = RegisterChunkMappingRequest{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[38]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4050,7 +3798,7 @@ func (x *RegisterChunkMappingRequest) String() string {
 func (*RegisterChunkMappingRequest) ProtoMessage() {}
 
 func (x *RegisterChunkMappingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[38]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4063,7 +3811,7 @@ func (x *RegisterChunkMappingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterChunkMappingRequest.ProtoReflect.Descriptor instead.
 func (*RegisterChunkMappingRequest) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{38}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *RegisterChunkMappingRequest) GetInstanceName() string {
@@ -4101,56 +3849,6 @@ func (x *RegisterChunkMappingRequest) GetChunkingFunction() ChunkingFunction_Val
 	return ChunkingFunction_UNKNOWN
 }
 
-// A response message for
-// [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob].
-type SpliceBlobResponse struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Computed digest of the spliced blob.
-	//
-	// The server MUST use the same digest function as the one explicitly or
-	// implicitly (through hash length) specified in the splice request.
-	BlobDigest    *Digest `protobuf:"bytes,1,opt,name=blob_digest,json=blobDigest,proto3" json:"blob_digest,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SpliceBlobResponse) Reset() {
-	*x = SpliceBlobResponse{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[39]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SpliceBlobResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SpliceBlobResponse) ProtoMessage() {}
-
-func (x *SpliceBlobResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[39]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SpliceBlobResponse.ProtoReflect.Descriptor instead.
-func (*SpliceBlobResponse) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{39}
-}
-
-func (x *SpliceBlobResponse) GetBlobDigest() *Digest {
-	if x != nil {
-		return x.BlobDigest
-	}
-	return nil
-}
-
 // A request message for
 // [Capabilities.GetCapabilities][build.bazel.remote.execution.v2.Capabilities.GetCapabilities].
 type GetCapabilitiesRequest struct {
@@ -4167,7 +3865,7 @@ type GetCapabilitiesRequest struct {
 
 func (x *GetCapabilitiesRequest) Reset() {
 	*x = GetCapabilitiesRequest{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[40]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4179,7 +3877,7 @@ func (x *GetCapabilitiesRequest) String() string {
 func (*GetCapabilitiesRequest) ProtoMessage() {}
 
 func (x *GetCapabilitiesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[40]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4192,7 +3890,7 @@ func (x *GetCapabilitiesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCapabilitiesRequest.ProtoReflect.Descriptor instead.
 func (*GetCapabilitiesRequest) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{40}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *GetCapabilitiesRequest) GetInstanceName() string {
@@ -4222,7 +3920,7 @@ type ServerCapabilities struct {
 
 func (x *ServerCapabilities) Reset() {
 	*x = ServerCapabilities{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[41]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4234,7 +3932,7 @@ func (x *ServerCapabilities) String() string {
 func (*ServerCapabilities) ProtoMessage() {}
 
 func (x *ServerCapabilities) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[41]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4247,7 +3945,7 @@ func (x *ServerCapabilities) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerCapabilities.ProtoReflect.Descriptor instead.
 func (*ServerCapabilities) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{41}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ServerCapabilities) GetCacheCapabilities() *CacheCapabilities {
@@ -4295,7 +3993,7 @@ type DigestFunction struct {
 
 func (x *DigestFunction) Reset() {
 	*x = DigestFunction{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[42]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4307,7 +4005,7 @@ func (x *DigestFunction) String() string {
 func (*DigestFunction) ProtoMessage() {}
 
 func (x *DigestFunction) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[42]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4320,7 +4018,7 @@ func (x *DigestFunction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DigestFunction.ProtoReflect.Descriptor instead.
 func (*DigestFunction) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{42}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{38}
 }
 
 // The chunking function is used to split a blob into chunks.
@@ -4341,7 +4039,7 @@ type ChunkingFunction struct {
 
 func (x *ChunkingFunction) Reset() {
 	*x = ChunkingFunction{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[43]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4353,7 +4051,7 @@ func (x *ChunkingFunction) String() string {
 func (*ChunkingFunction) ProtoMessage() {}
 
 func (x *ChunkingFunction) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[43]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4366,7 +4064,7 @@ func (x *ChunkingFunction) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChunkingFunction.ProtoReflect.Descriptor instead.
 func (*ChunkingFunction) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{43}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{39}
 }
 
 // Describes the server/instance capabilities for updating the action cache.
@@ -4379,7 +4077,7 @@ type ActionCacheUpdateCapabilities struct {
 
 func (x *ActionCacheUpdateCapabilities) Reset() {
 	*x = ActionCacheUpdateCapabilities{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[44]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4391,7 +4089,7 @@ func (x *ActionCacheUpdateCapabilities) String() string {
 func (*ActionCacheUpdateCapabilities) ProtoMessage() {}
 
 func (x *ActionCacheUpdateCapabilities) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[44]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4404,7 +4102,7 @@ func (x *ActionCacheUpdateCapabilities) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActionCacheUpdateCapabilities.ProtoReflect.Descriptor instead.
 func (*ActionCacheUpdateCapabilities) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{44}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *ActionCacheUpdateCapabilities) GetUpdateEnabled() bool {
@@ -4427,7 +4125,7 @@ type PriorityCapabilities struct {
 
 func (x *PriorityCapabilities) Reset() {
 	*x = PriorityCapabilities{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[45]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4439,7 +4137,7 @@ func (x *PriorityCapabilities) String() string {
 func (*PriorityCapabilities) ProtoMessage() {}
 
 func (x *PriorityCapabilities) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[45]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4452,7 +4150,7 @@ func (x *PriorityCapabilities) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PriorityCapabilities.ProtoReflect.Descriptor instead.
 func (*PriorityCapabilities) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{45}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *PriorityCapabilities) GetPriorities() []*PriorityCapabilities_PriorityRange {
@@ -4471,7 +4169,7 @@ type SymlinkAbsolutePathStrategy struct {
 
 func (x *SymlinkAbsolutePathStrategy) Reset() {
 	*x = SymlinkAbsolutePathStrategy{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[46]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4483,7 +4181,7 @@ func (x *SymlinkAbsolutePathStrategy) String() string {
 func (*SymlinkAbsolutePathStrategy) ProtoMessage() {}
 
 func (x *SymlinkAbsolutePathStrategy) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[46]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4496,7 +4194,7 @@ func (x *SymlinkAbsolutePathStrategy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SymlinkAbsolutePathStrategy.ProtoReflect.Descriptor instead.
 func (*SymlinkAbsolutePathStrategy) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{46}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{42}
 }
 
 // Compression formats which may be supported.
@@ -4508,7 +4206,7 @@ type Compressor struct {
 
 func (x *Compressor) Reset() {
 	*x = Compressor{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[47]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4520,7 +4218,7 @@ func (x *Compressor) String() string {
 func (*Compressor) ProtoMessage() {}
 
 func (x *Compressor) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[47]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4533,7 +4231,7 @@ func (x *Compressor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Compressor.ProtoReflect.Descriptor instead.
 func (*Compressor) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{47}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{43}
 }
 
 // Capabilities of the remote cache system.
@@ -4577,16 +4275,12 @@ type CacheCapabilities struct {
 	// Whether blob splitting is supported for the particular server/instance. If
 	// yes, the server/instance implements the specified behavior for blob
 	// splitting and a meaningful result can be expected from the
-	// [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob]
-	// operation for RE API v2.12 and from the
 	// [ContentAddressableStorage.GetChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping]
 	// operation for RE API v2.13 or higher.
 	SplitBlobSupport bool `protobuf:"varint,9,opt,name=split_blob_support,json=splitBlobSupport,proto3" json:"split_blob_support,omitempty"`
 	// Whether blob splicing is supported for the particular server/instance. If
 	// yes, the server/instance implements the specified behavior for blob
 	// splicing and a meaningful result can be expected from the
-	// [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob]
-	// operation for RE API v2.12 and from the
 	// [ContentAddressableStorage.RegisterChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping]
 	// operation for RE API v2.13 or higher.
 	SpliceBlobSupport bool `protobuf:"varint,10,opt,name=splice_blob_support,json=spliceBlobSupport,proto3" json:"splice_blob_support,omitempty"`
@@ -4602,7 +4296,7 @@ type CacheCapabilities struct {
 
 func (x *CacheCapabilities) Reset() {
 	*x = CacheCapabilities{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[48]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4614,7 +4308,7 @@ func (x *CacheCapabilities) String() string {
 func (*CacheCapabilities) ProtoMessage() {}
 
 func (x *CacheCapabilities) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[48]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4627,7 +4321,7 @@ func (x *CacheCapabilities) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CacheCapabilities.ProtoReflect.Descriptor instead.
 func (*CacheCapabilities) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{48}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *CacheCapabilities) GetDigestFunctions() []DigestFunction_Value {
@@ -4765,7 +4459,7 @@ type FastCdc2020Params struct {
 
 func (x *FastCdc2020Params) Reset() {
 	*x = FastCdc2020Params{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[49]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4777,7 +4471,7 @@ func (x *FastCdc2020Params) String() string {
 func (*FastCdc2020Params) ProtoMessage() {}
 
 func (x *FastCdc2020Params) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[49]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4790,7 +4484,7 @@ func (x *FastCdc2020Params) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FastCdc2020Params.ProtoReflect.Descriptor instead.
 func (*FastCdc2020Params) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{49}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *FastCdc2020Params) GetAvgChunkSizeBytes() uint64 {
@@ -4848,7 +4542,7 @@ type RepMaxCdcParams struct {
 
 func (x *RepMaxCdcParams) Reset() {
 	*x = RepMaxCdcParams{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[50]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4860,7 +4554,7 @@ func (x *RepMaxCdcParams) String() string {
 func (*RepMaxCdcParams) ProtoMessage() {}
 
 func (x *RepMaxCdcParams) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[50]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4873,7 +4567,7 @@ func (x *RepMaxCdcParams) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RepMaxCdcParams.ProtoReflect.Descriptor instead.
 func (*RepMaxCdcParams) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{50}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *RepMaxCdcParams) GetMinChunkSizeBytes() uint64 {
@@ -4923,7 +4617,7 @@ type ExecutionCapabilities struct {
 
 func (x *ExecutionCapabilities) Reset() {
 	*x = ExecutionCapabilities{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[51]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4935,7 +4629,7 @@ func (x *ExecutionCapabilities) String() string {
 func (*ExecutionCapabilities) ProtoMessage() {}
 
 func (x *ExecutionCapabilities) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[51]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4948,7 +4642,7 @@ func (x *ExecutionCapabilities) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecutionCapabilities.ProtoReflect.Descriptor instead.
 func (*ExecutionCapabilities) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{51}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *ExecutionCapabilities) GetDigestFunction() DigestFunction_Value {
@@ -4999,7 +4693,7 @@ type ToolDetails struct {
 
 func (x *ToolDetails) Reset() {
 	*x = ToolDetails{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[52]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5011,7 +4705,7 @@ func (x *ToolDetails) String() string {
 func (*ToolDetails) ProtoMessage() {}
 
 func (x *ToolDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[52]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5024,7 +4718,7 @@ func (x *ToolDetails) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToolDetails.ProtoReflect.Descriptor instead.
 func (*ToolDetails) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{52}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *ToolDetails) GetToolName() string {
@@ -5084,7 +4778,7 @@ type RequestMetadata struct {
 
 func (x *RequestMetadata) Reset() {
 	*x = RequestMetadata{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[53]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5096,7 +4790,7 @@ func (x *RequestMetadata) String() string {
 func (*RequestMetadata) ProtoMessage() {}
 
 func (x *RequestMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[53]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5109,7 +4803,7 @@ func (x *RequestMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RequestMetadata.ProtoReflect.Descriptor instead.
 func (*RequestMetadata) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{53}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *RequestMetadata) GetToolDetails() *ToolDetails {
@@ -5186,7 +4880,7 @@ type GetChunkMappingRequest struct {
 
 func (x *GetChunkMappingRequest) Reset() {
 	*x = GetChunkMappingRequest{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[54]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5198,7 +4892,7 @@ func (x *GetChunkMappingRequest) String() string {
 func (*GetChunkMappingRequest) ProtoMessage() {}
 
 func (x *GetChunkMappingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[54]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5211,7 +4905,7 @@ func (x *GetChunkMappingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetChunkMappingRequest.ProtoReflect.Descriptor instead.
 func (*GetChunkMappingRequest) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{54}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *GetChunkMappingRequest) GetInstanceName() string {
@@ -5257,7 +4951,7 @@ type RegisterChunkMappingResponse struct {
 
 func (x *RegisterChunkMappingResponse) Reset() {
 	*x = RegisterChunkMappingResponse{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[55]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5269,7 +4963,7 @@ func (x *RegisterChunkMappingResponse) String() string {
 func (*RegisterChunkMappingResponse) ProtoMessage() {}
 
 func (x *RegisterChunkMappingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[55]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5282,7 +4976,7 @@ func (x *RegisterChunkMappingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterChunkMappingResponse.ProtoReflect.Descriptor instead.
 func (*RegisterChunkMappingResponse) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{55}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *RegisterChunkMappingResponse) GetBlobDigest() *Digest {
@@ -5306,7 +5000,7 @@ type Command_EnvironmentVariable struct {
 
 func (x *Command_EnvironmentVariable) Reset() {
 	*x = Command_EnvironmentVariable{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[56]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5318,7 +5012,7 @@ func (x *Command_EnvironmentVariable) String() string {
 func (*Command_EnvironmentVariable) ProtoMessage() {}
 
 func (x *Command_EnvironmentVariable) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[56]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5382,7 +5076,7 @@ type Platform_Property struct {
 
 func (x *Platform_Property) Reset() {
 	*x = Platform_Property{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[57]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5394,7 +5088,7 @@ func (x *Platform_Property) String() string {
 func (*Platform_Property) ProtoMessage() {}
 
 func (x *Platform_Property) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[57]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5443,7 +5137,7 @@ type BatchUpdateBlobsRequest_Request struct {
 
 func (x *BatchUpdateBlobsRequest_Request) Reset() {
 	*x = BatchUpdateBlobsRequest_Request{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[59]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5455,7 +5149,7 @@ func (x *BatchUpdateBlobsRequest_Request) String() string {
 func (*BatchUpdateBlobsRequest_Request) ProtoMessage() {}
 
 func (x *BatchUpdateBlobsRequest_Request) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[59]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5505,7 +5199,7 @@ type BatchUpdateBlobsResponse_Response struct {
 
 func (x *BatchUpdateBlobsResponse_Response) Reset() {
 	*x = BatchUpdateBlobsResponse_Response{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[60]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5517,7 +5211,7 @@ func (x *BatchUpdateBlobsResponse_Response) String() string {
 func (*BatchUpdateBlobsResponse_Response) ProtoMessage() {}
 
 func (x *BatchUpdateBlobsResponse_Response) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[60]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5565,7 +5259,7 @@ type BatchReadBlobsResponse_Response struct {
 
 func (x *BatchReadBlobsResponse_Response) Reset() {
 	*x = BatchReadBlobsResponse_Response{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[61]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5577,7 +5271,7 @@ func (x *BatchReadBlobsResponse_Response) String() string {
 func (*BatchReadBlobsResponse_Response) ProtoMessage() {}
 
 func (x *BatchReadBlobsResponse_Response) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[61]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5636,7 +5330,7 @@ type PriorityCapabilities_PriorityRange struct {
 
 func (x *PriorityCapabilities_PriorityRange) Reset() {
 	*x = PriorityCapabilities_PriorityRange{}
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[62]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5648,7 +5342,7 @@ func (x *PriorityCapabilities_PriorityRange) String() string {
 func (*PriorityCapabilities_PriorityRange) ProtoMessage() {}
 
 func (x *PriorityCapabilities_PriorityRange) ProtoReflect() protoreflect.Message {
-	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[62]
+	mi := &file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5661,7 +5355,7 @@ func (x *PriorityCapabilities_PriorityRange) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use PriorityCapabilities_PriorityRange.ProtoReflect.Descriptor instead.
 func (*PriorityCapabilities_PriorityRange) Descriptor() ([]byte, []int) {
-	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{45, 0}
+	return file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP(), []int{41, 0}
 }
 
 func (x *PriorityCapabilities_PriorityRange) GetMinPriority() int32 {
@@ -5898,36 +5592,17 @@ const file_build_bazel_remote_execution_v2_remote_execution_proto_rawDesc = "" +
 	"\x0fdigest_function\x18\x05 \x01(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0edigestFunction\"\x87\x01\n" +
 	"\x0fGetTreeResponse\x12L\n" +
 	"\vdirectories\x18\x01 \x03(\v2*.build.bazel.remote.execution.v2.DirectoryR\vdirectories\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xc7\x02\n" +
-	"\x10SplitBlobRequest\x12#\n" +
-	"\rinstance_name\x18\x01 \x01(\tR\finstanceName\x12H\n" +
-	"\vblob_digest\x18\x02 \x01(\v2'.build.bazel.remote.execution.v2.DigestR\n" +
-	"blobDigest\x12^\n" +
-	"\x0fdigest_function\x18\x03 \x01(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0edigestFunction\x12d\n" +
-	"\x11chunking_function\x18\x04 \x01(\x0e27.build.bazel.remote.execution.v2.ChunkingFunction.ValueR\x10chunkingFunction\"\xc7\x01\n" +
-	"\x11SplitBlobResponse\x12L\n" +
-	"\rchunk_digests\x18\x01 \x03(\v2'.build.bazel.remote.execution.v2.DigestR\fchunkDigests\x12d\n" +
-	"\x11chunking_function\x18\x02 \x01(\x0e27.build.bazel.remote.execution.v2.ChunkingFunction.ValueR\x10chunkingFunction\"\xcd\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xcd\x01\n" +
 	"\x17GetChunkMappingResponse\x12L\n" +
 	"\rchunk_digests\x18\x01 \x03(\v2'.build.bazel.remote.execution.v2.DigestR\fchunkDigests\x12d\n" +
-	"\x11chunking_function\x18\x02 \x01(\x0e27.build.bazel.remote.execution.v2.ChunkingFunction.ValueR\x10chunkingFunction\"\x96\x03\n" +
-	"\x11SpliceBlobRequest\x12#\n" +
-	"\rinstance_name\x18\x01 \x01(\tR\finstanceName\x12H\n" +
-	"\vblob_digest\x18\x02 \x01(\v2'.build.bazel.remote.execution.v2.DigestR\n" +
-	"blobDigest\x12L\n" +
-	"\rchunk_digests\x18\x03 \x03(\v2'.build.bazel.remote.execution.v2.DigestR\fchunkDigests\x12^\n" +
-	"\x0fdigest_function\x18\x04 \x01(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0edigestFunction\x12d\n" +
-	"\x11chunking_function\x18\x05 \x01(\x0e27.build.bazel.remote.execution.v2.ChunkingFunction.ValueR\x10chunkingFunction\"\xa0\x03\n" +
+	"\x11chunking_function\x18\x02 \x01(\x0e27.build.bazel.remote.execution.v2.ChunkingFunction.ValueR\x10chunkingFunction\"\xa0\x03\n" +
 	"\x1bRegisterChunkMappingRequest\x12#\n" +
 	"\rinstance_name\x18\x01 \x01(\tR\finstanceName\x12H\n" +
 	"\vblob_digest\x18\x02 \x01(\v2'.build.bazel.remote.execution.v2.DigestR\n" +
 	"blobDigest\x12L\n" +
 	"\rchunk_digests\x18\x03 \x03(\v2'.build.bazel.remote.execution.v2.DigestR\fchunkDigests\x12^\n" +
 	"\x0fdigest_function\x18\x04 \x01(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0edigestFunction\x12d\n" +
-	"\x11chunking_function\x18\x05 \x01(\x0e27.build.bazel.remote.execution.v2.ChunkingFunction.ValueR\x10chunkingFunction\"^\n" +
-	"\x12SpliceBlobResponse\x12H\n" +
-	"\vblob_digest\x18\x01 \x01(\v2'.build.bazel.remote.execution.v2.DigestR\n" +
-	"blobDigest\"=\n" +
+	"\x11chunking_function\x18\x05 \x01(\x0e27.build.bazel.remote.execution.v2.ChunkingFunction.ValueR\x10chunkingFunction\"=\n" +
 	"\x16GetCapabilitiesRequest\x12#\n" +
 	"\rinstance_name\x18\x01 \x01(\tR\finstanceName\"\xc2\x03\n" +
 	"\x12ServerCapabilities\x12a\n" +
@@ -6034,16 +5709,13 @@ const file_build_bazel_remote_execution_v2_remote_execution_proto_rawDesc = "" +
 	"\rWaitExecution\x125.build.bazel.remote.execution.v2.WaitExecutionRequest\x1a\x1d.google.longrunning.Operation\"1\x82\xd3\xe4\x93\x02+:\x01*\"&/v2/{name=operations/**}:waitExecution0\x012\xd6\x03\n" +
 	"\vActionCache\x12\xd7\x01\n" +
 	"\x0fGetActionResult\x127.build.bazel.remote.execution.v2.GetActionResultRequest\x1a-.build.bazel.remote.execution.v2.ActionResult\"\\\x82\xd3\xe4\x93\x02V\x12T/v2/{instance_name=**}/actionResults/{action_digest.hash}/{action_digest.size_bytes}\x12\xec\x01\n" +
-	"\x12UpdateActionResult\x12:.build.bazel.remote.execution.v2.UpdateActionResultRequest\x1a-.build.bazel.remote.execution.v2.ActionResult\"k\x82\xd3\xe4\x93\x02e:\raction_result\x1aT/v2/{instance_name=**}/actionResults/{action_digest.hash}/{action_digest.size_bytes}2\xd9\f\n" +
+	"\x12UpdateActionResult\x12:.build.bazel.remote.execution.v2.UpdateActionResultRequest\x1a-.build.bazel.remote.execution.v2.ActionResult\"k\x82\xd3\xe4\x93\x02e:\raction_result\x1aT/v2/{instance_name=**}/actionResults/{action_digest.hash}/{action_digest.size_bytes}2\xdc\t\n" +
 	"\x19ContentAddressableStorage\x12\xbc\x01\n" +
 	"\x10FindMissingBlobs\x128.build.bazel.remote.execution.v2.FindMissingBlobsRequest\x1a9.build.bazel.remote.execution.v2.FindMissingBlobsResponse\"3\x82\xd3\xe4\x93\x02-:\x01*\"(/v2/{instance_name=**}/blobs:findMissing\x12\xbc\x01\n" +
 	"\x10BatchUpdateBlobs\x128.build.bazel.remote.execution.v2.BatchUpdateBlobsRequest\x1a9.build.bazel.remote.execution.v2.BatchUpdateBlobsResponse\"3\x82\xd3\xe4\x93\x02-:\x01*\"(/v2/{instance_name=**}/blobs:batchUpdate\x12\xb4\x01\n" +
 	"\x0eBatchReadBlobs\x126.build.bazel.remote.execution.v2.BatchReadBlobsRequest\x1a7.build.bazel.remote.execution.v2.BatchReadBlobsResponse\"1\x82\xd3\xe4\x93\x02+:\x01*\"&/v2/{instance_name=**}/blobs:batchRead\x12\xc8\x01\n" +
-	"\aGetTree\x12/.build.bazel.remote.execution.v2.GetTreeRequest\x1a0.build.bazel.remote.execution.v2.GetTreeResponse\"X\x82\xd3\xe4\x93\x02R\x12P/v2/{instance_name=**}/blobs/{root_digest.hash}/{root_digest.size_bytes}:getTree0\x01\x12\xce\x01\n" +
-	"\tSplitBlob\x121.build.bazel.remote.execution.v2.SplitBlobRequest\x1a2.build.bazel.remote.execution.v2.SplitBlobResponse\"Z\x82\xd3\xe4\x93\x02T\x12R/v2/{instance_name=**}/blobs/{blob_digest.hash}/{blob_digest.size_bytes}:splitBlob\x12\xe8\x01\n" +
-	"\x0fGetChunkMapping\x127.build.bazel.remote.execution.v2.GetChunkMappingRequest\x1a8.build.bazel.remote.execution.v2.GetChunkMappingResponse\"`\x82\xd3\xe4\x93\x02Z\x12X/v2/{instance_name=**}/blobs/{blob_digest.hash}/{blob_digest.size_bytes}:getChunkMapping0\x01\x12\xa9\x01\n" +
-	"\n" +
-	"SpliceBlob\x122.build.bazel.remote.execution.v2.SpliceBlobRequest\x1a3.build.bazel.remote.execution.v2.SpliceBlobResponse\"2\x82\xd3\xe4\x93\x02,:\x01*\"'/v2/{instance_name=**}/blobs:spliceBlob\x12\xd3\x01\n" +
+	"\aGetTree\x12/.build.bazel.remote.execution.v2.GetTreeRequest\x1a0.build.bazel.remote.execution.v2.GetTreeResponse\"X\x82\xd3\xe4\x93\x02R\x12P/v2/{instance_name=**}/blobs/{root_digest.hash}/{root_digest.size_bytes}:getTree0\x01\x12\xe8\x01\n" +
+	"\x0fGetChunkMapping\x127.build.bazel.remote.execution.v2.GetChunkMappingRequest\x1a8.build.bazel.remote.execution.v2.GetChunkMappingResponse\"`\x82\xd3\xe4\x93\x02Z\x12X/v2/{instance_name=**}/blobs/{blob_digest.hash}/{blob_digest.size_bytes}:getChunkMapping0\x01\x12\xd3\x01\n" +
 	"\x14RegisterChunkMapping\x12<.build.bazel.remote.execution.v2.RegisterChunkMappingRequest\x1a=.build.bazel.remote.execution.v2.RegisterChunkMappingResponse\"<\x82\xd3\xe4\x93\x026:\x01*\"1/v2/{instance_name=**}/blobs:registerChunkMapping(\x012\xbd\x01\n" +
 	"\fCapabilities\x12\xac\x01\n" +
 	"\x0fGetCapabilities\x127.build.bazel.remote.execution.v2.GetCapabilitiesRequest\x1a3.build.bazel.remote.execution.v2.ServerCapabilities\"+\x82\xd3\xe4\x93\x02%\x12#/v2/{instance_name=**}/capabilitiesB\xb4\x01\n" +
@@ -6062,7 +5734,7 @@ func file_build_bazel_remote_execution_v2_remote_execution_proto_rawDescGZIP() [
 }
 
 var file_build_bazel_remote_execution_v2_remote_execution_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
-var file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes = make([]protoimpl.MessageInfo, 63)
+var file_build_bazel_remote_execution_v2_remote_execution_proto_msgTypes = make([]protoimpl.MessageInfo, 59)
 var file_build_bazel_remote_execution_v2_remote_execution_proto_goTypes = []any{
 	(Command_OutputDirectoryFormat)(0),         // 0: build.bazel.remote.execution.v2.Command.OutputDirectoryFormat
 	(ExecutionStage_Value)(0),                  // 1: build.bazel.remote.execution.v2.ExecutionStage.Value
@@ -6104,74 +5776,70 @@ var file_build_bazel_remote_execution_v2_remote_execution_proto_goTypes = []any{
 	(*BatchReadBlobsResponse)(nil),             // 37: build.bazel.remote.execution.v2.BatchReadBlobsResponse
 	(*GetTreeRequest)(nil),                     // 38: build.bazel.remote.execution.v2.GetTreeRequest
 	(*GetTreeResponse)(nil),                    // 39: build.bazel.remote.execution.v2.GetTreeResponse
-	(*SplitBlobRequest)(nil),                   // 40: build.bazel.remote.execution.v2.SplitBlobRequest
-	(*SplitBlobResponse)(nil),                  // 41: build.bazel.remote.execution.v2.SplitBlobResponse
-	(*GetChunkMappingResponse)(nil),            // 42: build.bazel.remote.execution.v2.GetChunkMappingResponse
-	(*SpliceBlobRequest)(nil),                  // 43: build.bazel.remote.execution.v2.SpliceBlobRequest
-	(*RegisterChunkMappingRequest)(nil),        // 44: build.bazel.remote.execution.v2.RegisterChunkMappingRequest
-	(*SpliceBlobResponse)(nil),                 // 45: build.bazel.remote.execution.v2.SpliceBlobResponse
-	(*GetCapabilitiesRequest)(nil),             // 46: build.bazel.remote.execution.v2.GetCapabilitiesRequest
-	(*ServerCapabilities)(nil),                 // 47: build.bazel.remote.execution.v2.ServerCapabilities
-	(*DigestFunction)(nil),                     // 48: build.bazel.remote.execution.v2.DigestFunction
-	(*ChunkingFunction)(nil),                   // 49: build.bazel.remote.execution.v2.ChunkingFunction
-	(*ActionCacheUpdateCapabilities)(nil),      // 50: build.bazel.remote.execution.v2.ActionCacheUpdateCapabilities
-	(*PriorityCapabilities)(nil),               // 51: build.bazel.remote.execution.v2.PriorityCapabilities
-	(*SymlinkAbsolutePathStrategy)(nil),        // 52: build.bazel.remote.execution.v2.SymlinkAbsolutePathStrategy
-	(*Compressor)(nil),                         // 53: build.bazel.remote.execution.v2.Compressor
-	(*CacheCapabilities)(nil),                  // 54: build.bazel.remote.execution.v2.CacheCapabilities
-	(*FastCdc2020Params)(nil),                  // 55: build.bazel.remote.execution.v2.FastCdc2020Params
-	(*RepMaxCdcParams)(nil),                    // 56: build.bazel.remote.execution.v2.RepMaxCdcParams
-	(*ExecutionCapabilities)(nil),              // 57: build.bazel.remote.execution.v2.ExecutionCapabilities
-	(*ToolDetails)(nil),                        // 58: build.bazel.remote.execution.v2.ToolDetails
-	(*RequestMetadata)(nil),                    // 59: build.bazel.remote.execution.v2.RequestMetadata
-	(*GetChunkMappingRequest)(nil),             // 60: build.bazel.remote.execution.v2.GetChunkMappingRequest
-	(*RegisterChunkMappingResponse)(nil),       // 61: build.bazel.remote.execution.v2.RegisterChunkMappingResponse
-	(*Command_EnvironmentVariable)(nil),        // 62: build.bazel.remote.execution.v2.Command.EnvironmentVariable
-	(*Platform_Property)(nil),                  // 63: build.bazel.remote.execution.v2.Platform.Property
-	nil,                                        // 64: build.bazel.remote.execution.v2.ExecuteResponse.ServerLogsEntry
-	(*BatchUpdateBlobsRequest_Request)(nil),    // 65: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request
-	(*BatchUpdateBlobsResponse_Response)(nil),  // 66: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response
-	(*BatchReadBlobsResponse_Response)(nil),    // 67: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response
-	(*PriorityCapabilities_PriorityRange)(nil), // 68: build.bazel.remote.execution.v2.PriorityCapabilities.PriorityRange
-	(*durationpb.Duration)(nil),                // 69: google.protobuf.Duration
-	(*timestamppb.Timestamp)(nil),              // 70: google.protobuf.Timestamp
-	(*wrapperspb.UInt32Value)(nil),             // 71: google.protobuf.UInt32Value
-	(*anypb.Any)(nil),                          // 72: google.protobuf.Any
-	(*status.Status)(nil),                      // 73: google.rpc.Status
-	(*semver.SemVer)(nil),                      // 74: build.bazel.semver.SemVer
-	(*longrunningpb.Operation)(nil),            // 75: google.longrunning.Operation
+	(*GetChunkMappingResponse)(nil),            // 40: build.bazel.remote.execution.v2.GetChunkMappingResponse
+	(*RegisterChunkMappingRequest)(nil),        // 41: build.bazel.remote.execution.v2.RegisterChunkMappingRequest
+	(*GetCapabilitiesRequest)(nil),             // 42: build.bazel.remote.execution.v2.GetCapabilitiesRequest
+	(*ServerCapabilities)(nil),                 // 43: build.bazel.remote.execution.v2.ServerCapabilities
+	(*DigestFunction)(nil),                     // 44: build.bazel.remote.execution.v2.DigestFunction
+	(*ChunkingFunction)(nil),                   // 45: build.bazel.remote.execution.v2.ChunkingFunction
+	(*ActionCacheUpdateCapabilities)(nil),      // 46: build.bazel.remote.execution.v2.ActionCacheUpdateCapabilities
+	(*PriorityCapabilities)(nil),               // 47: build.bazel.remote.execution.v2.PriorityCapabilities
+	(*SymlinkAbsolutePathStrategy)(nil),        // 48: build.bazel.remote.execution.v2.SymlinkAbsolutePathStrategy
+	(*Compressor)(nil),                         // 49: build.bazel.remote.execution.v2.Compressor
+	(*CacheCapabilities)(nil),                  // 50: build.bazel.remote.execution.v2.CacheCapabilities
+	(*FastCdc2020Params)(nil),                  // 51: build.bazel.remote.execution.v2.FastCdc2020Params
+	(*RepMaxCdcParams)(nil),                    // 52: build.bazel.remote.execution.v2.RepMaxCdcParams
+	(*ExecutionCapabilities)(nil),              // 53: build.bazel.remote.execution.v2.ExecutionCapabilities
+	(*ToolDetails)(nil),                        // 54: build.bazel.remote.execution.v2.ToolDetails
+	(*RequestMetadata)(nil),                    // 55: build.bazel.remote.execution.v2.RequestMetadata
+	(*GetChunkMappingRequest)(nil),             // 56: build.bazel.remote.execution.v2.GetChunkMappingRequest
+	(*RegisterChunkMappingResponse)(nil),       // 57: build.bazel.remote.execution.v2.RegisterChunkMappingResponse
+	(*Command_EnvironmentVariable)(nil),        // 58: build.bazel.remote.execution.v2.Command.EnvironmentVariable
+	(*Platform_Property)(nil),                  // 59: build.bazel.remote.execution.v2.Platform.Property
+	nil,                                        // 60: build.bazel.remote.execution.v2.ExecuteResponse.ServerLogsEntry
+	(*BatchUpdateBlobsRequest_Request)(nil),    // 61: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request
+	(*BatchUpdateBlobsResponse_Response)(nil),  // 62: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response
+	(*BatchReadBlobsResponse_Response)(nil),    // 63: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response
+	(*PriorityCapabilities_PriorityRange)(nil), // 64: build.bazel.remote.execution.v2.PriorityCapabilities.PriorityRange
+	(*durationpb.Duration)(nil),                // 65: google.protobuf.Duration
+	(*timestamppb.Timestamp)(nil),              // 66: google.protobuf.Timestamp
+	(*wrapperspb.UInt32Value)(nil),             // 67: google.protobuf.UInt32Value
+	(*anypb.Any)(nil),                          // 68: google.protobuf.Any
+	(*status.Status)(nil),                      // 69: google.rpc.Status
+	(*semver.SemVer)(nil),                      // 70: build.bazel.semver.SemVer
+	(*longrunningpb.Operation)(nil),            // 71: google.longrunning.Operation
 }
 var file_build_bazel_remote_execution_v2_remote_execution_proto_depIdxs = []int32{
 	15,  // 0: build.bazel.remote.execution.v2.Action.command_digest:type_name -> build.bazel.remote.execution.v2.Digest
 	15,  // 1: build.bazel.remote.execution.v2.Action.input_root_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	69,  // 2: build.bazel.remote.execution.v2.Action.timeout:type_name -> google.protobuf.Duration
+	65,  // 2: build.bazel.remote.execution.v2.Action.timeout:type_name -> google.protobuf.Duration
 	8,   // 3: build.bazel.remote.execution.v2.Action.platform:type_name -> build.bazel.remote.execution.v2.Platform
-	62,  // 4: build.bazel.remote.execution.v2.Command.environment_variables:type_name -> build.bazel.remote.execution.v2.Command.EnvironmentVariable
+	58,  // 4: build.bazel.remote.execution.v2.Command.environment_variables:type_name -> build.bazel.remote.execution.v2.Command.EnvironmentVariable
 	8,   // 5: build.bazel.remote.execution.v2.Command.platform:type_name -> build.bazel.remote.execution.v2.Platform
 	0,   // 6: build.bazel.remote.execution.v2.Command.output_directory_format:type_name -> build.bazel.remote.execution.v2.Command.OutputDirectoryFormat
-	63,  // 7: build.bazel.remote.execution.v2.Platform.properties:type_name -> build.bazel.remote.execution.v2.Platform.Property
+	59,  // 7: build.bazel.remote.execution.v2.Platform.properties:type_name -> build.bazel.remote.execution.v2.Platform.Property
 	12,  // 8: build.bazel.remote.execution.v2.Directory.files:type_name -> build.bazel.remote.execution.v2.FileNode
 	13,  // 9: build.bazel.remote.execution.v2.Directory.directories:type_name -> build.bazel.remote.execution.v2.DirectoryNode
 	14,  // 10: build.bazel.remote.execution.v2.Directory.symlinks:type_name -> build.bazel.remote.execution.v2.SymlinkNode
 	11,  // 11: build.bazel.remote.execution.v2.Directory.node_properties:type_name -> build.bazel.remote.execution.v2.NodeProperties
 	10,  // 12: build.bazel.remote.execution.v2.NodeProperties.properties:type_name -> build.bazel.remote.execution.v2.NodeProperty
-	70,  // 13: build.bazel.remote.execution.v2.NodeProperties.mtime:type_name -> google.protobuf.Timestamp
-	71,  // 14: build.bazel.remote.execution.v2.NodeProperties.unix_mode:type_name -> google.protobuf.UInt32Value
+	66,  // 13: build.bazel.remote.execution.v2.NodeProperties.mtime:type_name -> google.protobuf.Timestamp
+	67,  // 14: build.bazel.remote.execution.v2.NodeProperties.unix_mode:type_name -> google.protobuf.UInt32Value
 	15,  // 15: build.bazel.remote.execution.v2.FileNode.digest:type_name -> build.bazel.remote.execution.v2.Digest
 	11,  // 16: build.bazel.remote.execution.v2.FileNode.node_properties:type_name -> build.bazel.remote.execution.v2.NodeProperties
 	15,  // 17: build.bazel.remote.execution.v2.DirectoryNode.digest:type_name -> build.bazel.remote.execution.v2.Digest
 	11,  // 18: build.bazel.remote.execution.v2.SymlinkNode.node_properties:type_name -> build.bazel.remote.execution.v2.NodeProperties
-	70,  // 19: build.bazel.remote.execution.v2.ExecutedActionMetadata.queued_timestamp:type_name -> google.protobuf.Timestamp
-	70,  // 20: build.bazel.remote.execution.v2.ExecutedActionMetadata.worker_start_timestamp:type_name -> google.protobuf.Timestamp
-	70,  // 21: build.bazel.remote.execution.v2.ExecutedActionMetadata.worker_completed_timestamp:type_name -> google.protobuf.Timestamp
-	70,  // 22: build.bazel.remote.execution.v2.ExecutedActionMetadata.input_fetch_start_timestamp:type_name -> google.protobuf.Timestamp
-	70,  // 23: build.bazel.remote.execution.v2.ExecutedActionMetadata.input_fetch_completed_timestamp:type_name -> google.protobuf.Timestamp
-	70,  // 24: build.bazel.remote.execution.v2.ExecutedActionMetadata.execution_start_timestamp:type_name -> google.protobuf.Timestamp
-	70,  // 25: build.bazel.remote.execution.v2.ExecutedActionMetadata.execution_completed_timestamp:type_name -> google.protobuf.Timestamp
-	69,  // 26: build.bazel.remote.execution.v2.ExecutedActionMetadata.virtual_execution_duration:type_name -> google.protobuf.Duration
-	70,  // 27: build.bazel.remote.execution.v2.ExecutedActionMetadata.output_upload_start_timestamp:type_name -> google.protobuf.Timestamp
-	70,  // 28: build.bazel.remote.execution.v2.ExecutedActionMetadata.output_upload_completed_timestamp:type_name -> google.protobuf.Timestamp
-	72,  // 29: build.bazel.remote.execution.v2.ExecutedActionMetadata.auxiliary_metadata:type_name -> google.protobuf.Any
+	66,  // 19: build.bazel.remote.execution.v2.ExecutedActionMetadata.queued_timestamp:type_name -> google.protobuf.Timestamp
+	66,  // 20: build.bazel.remote.execution.v2.ExecutedActionMetadata.worker_start_timestamp:type_name -> google.protobuf.Timestamp
+	66,  // 21: build.bazel.remote.execution.v2.ExecutedActionMetadata.worker_completed_timestamp:type_name -> google.protobuf.Timestamp
+	66,  // 22: build.bazel.remote.execution.v2.ExecutedActionMetadata.input_fetch_start_timestamp:type_name -> google.protobuf.Timestamp
+	66,  // 23: build.bazel.remote.execution.v2.ExecutedActionMetadata.input_fetch_completed_timestamp:type_name -> google.protobuf.Timestamp
+	66,  // 24: build.bazel.remote.execution.v2.ExecutedActionMetadata.execution_start_timestamp:type_name -> google.protobuf.Timestamp
+	66,  // 25: build.bazel.remote.execution.v2.ExecutedActionMetadata.execution_completed_timestamp:type_name -> google.protobuf.Timestamp
+	65,  // 26: build.bazel.remote.execution.v2.ExecutedActionMetadata.virtual_execution_duration:type_name -> google.protobuf.Duration
+	66,  // 27: build.bazel.remote.execution.v2.ExecutedActionMetadata.output_upload_start_timestamp:type_name -> google.protobuf.Timestamp
+	66,  // 28: build.bazel.remote.execution.v2.ExecutedActionMetadata.output_upload_completed_timestamp:type_name -> google.protobuf.Timestamp
+	68,  // 29: build.bazel.remote.execution.v2.ExecutedActionMetadata.auxiliary_metadata:type_name -> google.protobuf.Any
 	18,  // 30: build.bazel.remote.execution.v2.ActionResult.output_files:type_name -> build.bazel.remote.execution.v2.OutputFile
 	21,  // 31: build.bazel.remote.execution.v2.ActionResult.output_file_symlinks:type_name -> build.bazel.remote.execution.v2.OutputSymlink
 	21,  // 32: build.bazel.remote.execution.v2.ActionResult.output_symlinks:type_name -> build.bazel.remote.execution.v2.OutputSymlink
@@ -6193,8 +5861,8 @@ var file_build_bazel_remote_execution_v2_remote_execution_proto_depIdxs = []int3
 	2,   // 48: build.bazel.remote.execution.v2.ExecuteRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
 	15,  // 49: build.bazel.remote.execution.v2.LogFile.digest:type_name -> build.bazel.remote.execution.v2.Digest
 	17,  // 50: build.bazel.remote.execution.v2.ExecuteResponse.result:type_name -> build.bazel.remote.execution.v2.ActionResult
-	73,  // 51: build.bazel.remote.execution.v2.ExecuteResponse.status:type_name -> google.rpc.Status
-	64,  // 52: build.bazel.remote.execution.v2.ExecuteResponse.server_logs:type_name -> build.bazel.remote.execution.v2.ExecuteResponse.ServerLogsEntry
+	69,  // 51: build.bazel.remote.execution.v2.ExecuteResponse.status:type_name -> google.rpc.Status
+	60,  // 52: build.bazel.remote.execution.v2.ExecuteResponse.server_logs:type_name -> build.bazel.remote.execution.v2.ExecuteResponse.ServerLogsEntry
 	1,   // 53: build.bazel.remote.execution.v2.ExecuteOperationMetadata.stage:type_name -> build.bazel.remote.execution.v2.ExecutionStage.Value
 	15,  // 54: build.bazel.remote.execution.v2.ExecuteOperationMetadata.action_digest:type_name -> build.bazel.remote.execution.v2.Digest
 	16,  // 55: build.bazel.remote.execution.v2.ExecuteOperationMetadata.partial_execution_metadata:type_name -> build.bazel.remote.execution.v2.ExecutedActionMetadata
@@ -6208,93 +5876,79 @@ var file_build_bazel_remote_execution_v2_remote_execution_proto_depIdxs = []int3
 	15,  // 63: build.bazel.remote.execution.v2.FindMissingBlobsRequest.blob_digests:type_name -> build.bazel.remote.execution.v2.Digest
 	2,   // 64: build.bazel.remote.execution.v2.FindMissingBlobsRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
 	15,  // 65: build.bazel.remote.execution.v2.FindMissingBlobsResponse.missing_blob_digests:type_name -> build.bazel.remote.execution.v2.Digest
-	65,  // 66: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.requests:type_name -> build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request
+	61,  // 66: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.requests:type_name -> build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request
 	2,   // 67: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	66,  // 68: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.responses:type_name -> build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response
+	62,  // 68: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.responses:type_name -> build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response
 	15,  // 69: build.bazel.remote.execution.v2.BatchReadBlobsRequest.digests:type_name -> build.bazel.remote.execution.v2.Digest
 	5,   // 70: build.bazel.remote.execution.v2.BatchReadBlobsRequest.acceptable_compressors:type_name -> build.bazel.remote.execution.v2.Compressor.Value
 	2,   // 71: build.bazel.remote.execution.v2.BatchReadBlobsRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	67,  // 72: build.bazel.remote.execution.v2.BatchReadBlobsResponse.responses:type_name -> build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response
+	63,  // 72: build.bazel.remote.execution.v2.BatchReadBlobsResponse.responses:type_name -> build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response
 	15,  // 73: build.bazel.remote.execution.v2.GetTreeRequest.root_digest:type_name -> build.bazel.remote.execution.v2.Digest
 	2,   // 74: build.bazel.remote.execution.v2.GetTreeRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
 	9,   // 75: build.bazel.remote.execution.v2.GetTreeResponse.directories:type_name -> build.bazel.remote.execution.v2.Directory
-	15,  // 76: build.bazel.remote.execution.v2.SplitBlobRequest.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	2,   // 77: build.bazel.remote.execution.v2.SplitBlobRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	3,   // 78: build.bazel.remote.execution.v2.SplitBlobRequest.chunking_function:type_name -> build.bazel.remote.execution.v2.ChunkingFunction.Value
-	15,  // 79: build.bazel.remote.execution.v2.SplitBlobResponse.chunk_digests:type_name -> build.bazel.remote.execution.v2.Digest
-	3,   // 80: build.bazel.remote.execution.v2.SplitBlobResponse.chunking_function:type_name -> build.bazel.remote.execution.v2.ChunkingFunction.Value
-	15,  // 81: build.bazel.remote.execution.v2.GetChunkMappingResponse.chunk_digests:type_name -> build.bazel.remote.execution.v2.Digest
-	3,   // 82: build.bazel.remote.execution.v2.GetChunkMappingResponse.chunking_function:type_name -> build.bazel.remote.execution.v2.ChunkingFunction.Value
-	15,  // 83: build.bazel.remote.execution.v2.SpliceBlobRequest.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	15,  // 84: build.bazel.remote.execution.v2.SpliceBlobRequest.chunk_digests:type_name -> build.bazel.remote.execution.v2.Digest
-	2,   // 85: build.bazel.remote.execution.v2.SpliceBlobRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	3,   // 86: build.bazel.remote.execution.v2.SpliceBlobRequest.chunking_function:type_name -> build.bazel.remote.execution.v2.ChunkingFunction.Value
-	15,  // 87: build.bazel.remote.execution.v2.RegisterChunkMappingRequest.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	15,  // 88: build.bazel.remote.execution.v2.RegisterChunkMappingRequest.chunk_digests:type_name -> build.bazel.remote.execution.v2.Digest
-	2,   // 89: build.bazel.remote.execution.v2.RegisterChunkMappingRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	3,   // 90: build.bazel.remote.execution.v2.RegisterChunkMappingRequest.chunking_function:type_name -> build.bazel.remote.execution.v2.ChunkingFunction.Value
-	15,  // 91: build.bazel.remote.execution.v2.SpliceBlobResponse.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	54,  // 92: build.bazel.remote.execution.v2.ServerCapabilities.cache_capabilities:type_name -> build.bazel.remote.execution.v2.CacheCapabilities
-	57,  // 93: build.bazel.remote.execution.v2.ServerCapabilities.execution_capabilities:type_name -> build.bazel.remote.execution.v2.ExecutionCapabilities
-	74,  // 94: build.bazel.remote.execution.v2.ServerCapabilities.deprecated_api_version:type_name -> build.bazel.semver.SemVer
-	74,  // 95: build.bazel.remote.execution.v2.ServerCapabilities.low_api_version:type_name -> build.bazel.semver.SemVer
-	74,  // 96: build.bazel.remote.execution.v2.ServerCapabilities.high_api_version:type_name -> build.bazel.semver.SemVer
-	68,  // 97: build.bazel.remote.execution.v2.PriorityCapabilities.priorities:type_name -> build.bazel.remote.execution.v2.PriorityCapabilities.PriorityRange
-	2,   // 98: build.bazel.remote.execution.v2.CacheCapabilities.digest_functions:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	50,  // 99: build.bazel.remote.execution.v2.CacheCapabilities.action_cache_update_capabilities:type_name -> build.bazel.remote.execution.v2.ActionCacheUpdateCapabilities
-	51,  // 100: build.bazel.remote.execution.v2.CacheCapabilities.cache_priority_capabilities:type_name -> build.bazel.remote.execution.v2.PriorityCapabilities
-	4,   // 101: build.bazel.remote.execution.v2.CacheCapabilities.symlink_absolute_path_strategy:type_name -> build.bazel.remote.execution.v2.SymlinkAbsolutePathStrategy.Value
-	5,   // 102: build.bazel.remote.execution.v2.CacheCapabilities.supported_compressors:type_name -> build.bazel.remote.execution.v2.Compressor.Value
-	5,   // 103: build.bazel.remote.execution.v2.CacheCapabilities.supported_batch_update_compressors:type_name -> build.bazel.remote.execution.v2.Compressor.Value
-	55,  // 104: build.bazel.remote.execution.v2.CacheCapabilities.fast_cdc_2020_params:type_name -> build.bazel.remote.execution.v2.FastCdc2020Params
-	56,  // 105: build.bazel.remote.execution.v2.CacheCapabilities.rep_max_cdc_params:type_name -> build.bazel.remote.execution.v2.RepMaxCdcParams
-	2,   // 106: build.bazel.remote.execution.v2.ExecutionCapabilities.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	51,  // 107: build.bazel.remote.execution.v2.ExecutionCapabilities.execution_priority_capabilities:type_name -> build.bazel.remote.execution.v2.PriorityCapabilities
-	2,   // 108: build.bazel.remote.execution.v2.ExecutionCapabilities.digest_functions:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	58,  // 109: build.bazel.remote.execution.v2.RequestMetadata.tool_details:type_name -> build.bazel.remote.execution.v2.ToolDetails
-	15,  // 110: build.bazel.remote.execution.v2.GetChunkMappingRequest.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	2,   // 111: build.bazel.remote.execution.v2.GetChunkMappingRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	3,   // 112: build.bazel.remote.execution.v2.GetChunkMappingRequest.chunking_function:type_name -> build.bazel.remote.execution.v2.ChunkingFunction.Value
-	15,  // 113: build.bazel.remote.execution.v2.RegisterChunkMappingResponse.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	25,  // 114: build.bazel.remote.execution.v2.ExecuteResponse.ServerLogsEntry.value:type_name -> build.bazel.remote.execution.v2.LogFile
-	15,  // 115: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request.digest:type_name -> build.bazel.remote.execution.v2.Digest
-	5,   // 116: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request.compressor:type_name -> build.bazel.remote.execution.v2.Compressor.Value
-	15,  // 117: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response.digest:type_name -> build.bazel.remote.execution.v2.Digest
-	73,  // 118: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response.status:type_name -> google.rpc.Status
-	15,  // 119: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.digest:type_name -> build.bazel.remote.execution.v2.Digest
-	5,   // 120: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.compressor:type_name -> build.bazel.remote.execution.v2.Compressor.Value
-	73,  // 121: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.status:type_name -> google.rpc.Status
-	24,  // 122: build.bazel.remote.execution.v2.Execution.Execute:input_type -> build.bazel.remote.execution.v2.ExecuteRequest
-	29,  // 123: build.bazel.remote.execution.v2.Execution.WaitExecution:input_type -> build.bazel.remote.execution.v2.WaitExecutionRequest
-	30,  // 124: build.bazel.remote.execution.v2.ActionCache.GetActionResult:input_type -> build.bazel.remote.execution.v2.GetActionResultRequest
-	31,  // 125: build.bazel.remote.execution.v2.ActionCache.UpdateActionResult:input_type -> build.bazel.remote.execution.v2.UpdateActionResultRequest
-	32,  // 126: build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs:input_type -> build.bazel.remote.execution.v2.FindMissingBlobsRequest
-	34,  // 127: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs:input_type -> build.bazel.remote.execution.v2.BatchUpdateBlobsRequest
-	36,  // 128: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs:input_type -> build.bazel.remote.execution.v2.BatchReadBlobsRequest
-	38,  // 129: build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree:input_type -> build.bazel.remote.execution.v2.GetTreeRequest
-	40,  // 130: build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob:input_type -> build.bazel.remote.execution.v2.SplitBlobRequest
-	60,  // 131: build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping:input_type -> build.bazel.remote.execution.v2.GetChunkMappingRequest
-	43,  // 132: build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob:input_type -> build.bazel.remote.execution.v2.SpliceBlobRequest
-	44,  // 133: build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping:input_type -> build.bazel.remote.execution.v2.RegisterChunkMappingRequest
-	46,  // 134: build.bazel.remote.execution.v2.Capabilities.GetCapabilities:input_type -> build.bazel.remote.execution.v2.GetCapabilitiesRequest
-	75,  // 135: build.bazel.remote.execution.v2.Execution.Execute:output_type -> google.longrunning.Operation
-	75,  // 136: build.bazel.remote.execution.v2.Execution.WaitExecution:output_type -> google.longrunning.Operation
-	17,  // 137: build.bazel.remote.execution.v2.ActionCache.GetActionResult:output_type -> build.bazel.remote.execution.v2.ActionResult
-	17,  // 138: build.bazel.remote.execution.v2.ActionCache.UpdateActionResult:output_type -> build.bazel.remote.execution.v2.ActionResult
-	33,  // 139: build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs:output_type -> build.bazel.remote.execution.v2.FindMissingBlobsResponse
-	35,  // 140: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs:output_type -> build.bazel.remote.execution.v2.BatchUpdateBlobsResponse
-	37,  // 141: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs:output_type -> build.bazel.remote.execution.v2.BatchReadBlobsResponse
-	39,  // 142: build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree:output_type -> build.bazel.remote.execution.v2.GetTreeResponse
-	41,  // 143: build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob:output_type -> build.bazel.remote.execution.v2.SplitBlobResponse
-	42,  // 144: build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping:output_type -> build.bazel.remote.execution.v2.GetChunkMappingResponse
-	45,  // 145: build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob:output_type -> build.bazel.remote.execution.v2.SpliceBlobResponse
-	61,  // 146: build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping:output_type -> build.bazel.remote.execution.v2.RegisterChunkMappingResponse
-	47,  // 147: build.bazel.remote.execution.v2.Capabilities.GetCapabilities:output_type -> build.bazel.remote.execution.v2.ServerCapabilities
-	135, // [135:148] is the sub-list for method output_type
-	122, // [122:135] is the sub-list for method input_type
-	122, // [122:122] is the sub-list for extension type_name
-	122, // [122:122] is the sub-list for extension extendee
-	0,   // [0:122] is the sub-list for field type_name
+	15,  // 76: build.bazel.remote.execution.v2.GetChunkMappingResponse.chunk_digests:type_name -> build.bazel.remote.execution.v2.Digest
+	3,   // 77: build.bazel.remote.execution.v2.GetChunkMappingResponse.chunking_function:type_name -> build.bazel.remote.execution.v2.ChunkingFunction.Value
+	15,  // 78: build.bazel.remote.execution.v2.RegisterChunkMappingRequest.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
+	15,  // 79: build.bazel.remote.execution.v2.RegisterChunkMappingRequest.chunk_digests:type_name -> build.bazel.remote.execution.v2.Digest
+	2,   // 80: build.bazel.remote.execution.v2.RegisterChunkMappingRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	3,   // 81: build.bazel.remote.execution.v2.RegisterChunkMappingRequest.chunking_function:type_name -> build.bazel.remote.execution.v2.ChunkingFunction.Value
+	50,  // 82: build.bazel.remote.execution.v2.ServerCapabilities.cache_capabilities:type_name -> build.bazel.remote.execution.v2.CacheCapabilities
+	53,  // 83: build.bazel.remote.execution.v2.ServerCapabilities.execution_capabilities:type_name -> build.bazel.remote.execution.v2.ExecutionCapabilities
+	70,  // 84: build.bazel.remote.execution.v2.ServerCapabilities.deprecated_api_version:type_name -> build.bazel.semver.SemVer
+	70,  // 85: build.bazel.remote.execution.v2.ServerCapabilities.low_api_version:type_name -> build.bazel.semver.SemVer
+	70,  // 86: build.bazel.remote.execution.v2.ServerCapabilities.high_api_version:type_name -> build.bazel.semver.SemVer
+	64,  // 87: build.bazel.remote.execution.v2.PriorityCapabilities.priorities:type_name -> build.bazel.remote.execution.v2.PriorityCapabilities.PriorityRange
+	2,   // 88: build.bazel.remote.execution.v2.CacheCapabilities.digest_functions:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	46,  // 89: build.bazel.remote.execution.v2.CacheCapabilities.action_cache_update_capabilities:type_name -> build.bazel.remote.execution.v2.ActionCacheUpdateCapabilities
+	47,  // 90: build.bazel.remote.execution.v2.CacheCapabilities.cache_priority_capabilities:type_name -> build.bazel.remote.execution.v2.PriorityCapabilities
+	4,   // 91: build.bazel.remote.execution.v2.CacheCapabilities.symlink_absolute_path_strategy:type_name -> build.bazel.remote.execution.v2.SymlinkAbsolutePathStrategy.Value
+	5,   // 92: build.bazel.remote.execution.v2.CacheCapabilities.supported_compressors:type_name -> build.bazel.remote.execution.v2.Compressor.Value
+	5,   // 93: build.bazel.remote.execution.v2.CacheCapabilities.supported_batch_update_compressors:type_name -> build.bazel.remote.execution.v2.Compressor.Value
+	51,  // 94: build.bazel.remote.execution.v2.CacheCapabilities.fast_cdc_2020_params:type_name -> build.bazel.remote.execution.v2.FastCdc2020Params
+	52,  // 95: build.bazel.remote.execution.v2.CacheCapabilities.rep_max_cdc_params:type_name -> build.bazel.remote.execution.v2.RepMaxCdcParams
+	2,   // 96: build.bazel.remote.execution.v2.ExecutionCapabilities.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	47,  // 97: build.bazel.remote.execution.v2.ExecutionCapabilities.execution_priority_capabilities:type_name -> build.bazel.remote.execution.v2.PriorityCapabilities
+	2,   // 98: build.bazel.remote.execution.v2.ExecutionCapabilities.digest_functions:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	54,  // 99: build.bazel.remote.execution.v2.RequestMetadata.tool_details:type_name -> build.bazel.remote.execution.v2.ToolDetails
+	15,  // 100: build.bazel.remote.execution.v2.GetChunkMappingRequest.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
+	2,   // 101: build.bazel.remote.execution.v2.GetChunkMappingRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	3,   // 102: build.bazel.remote.execution.v2.GetChunkMappingRequest.chunking_function:type_name -> build.bazel.remote.execution.v2.ChunkingFunction.Value
+	15,  // 103: build.bazel.remote.execution.v2.RegisterChunkMappingResponse.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
+	25,  // 104: build.bazel.remote.execution.v2.ExecuteResponse.ServerLogsEntry.value:type_name -> build.bazel.remote.execution.v2.LogFile
+	15,  // 105: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request.digest:type_name -> build.bazel.remote.execution.v2.Digest
+	5,   // 106: build.bazel.remote.execution.v2.BatchUpdateBlobsRequest.Request.compressor:type_name -> build.bazel.remote.execution.v2.Compressor.Value
+	15,  // 107: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response.digest:type_name -> build.bazel.remote.execution.v2.Digest
+	69,  // 108: build.bazel.remote.execution.v2.BatchUpdateBlobsResponse.Response.status:type_name -> google.rpc.Status
+	15,  // 109: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.digest:type_name -> build.bazel.remote.execution.v2.Digest
+	5,   // 110: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.compressor:type_name -> build.bazel.remote.execution.v2.Compressor.Value
+	69,  // 111: build.bazel.remote.execution.v2.BatchReadBlobsResponse.Response.status:type_name -> google.rpc.Status
+	24,  // 112: build.bazel.remote.execution.v2.Execution.Execute:input_type -> build.bazel.remote.execution.v2.ExecuteRequest
+	29,  // 113: build.bazel.remote.execution.v2.Execution.WaitExecution:input_type -> build.bazel.remote.execution.v2.WaitExecutionRequest
+	30,  // 114: build.bazel.remote.execution.v2.ActionCache.GetActionResult:input_type -> build.bazel.remote.execution.v2.GetActionResultRequest
+	31,  // 115: build.bazel.remote.execution.v2.ActionCache.UpdateActionResult:input_type -> build.bazel.remote.execution.v2.UpdateActionResultRequest
+	32,  // 116: build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs:input_type -> build.bazel.remote.execution.v2.FindMissingBlobsRequest
+	34,  // 117: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs:input_type -> build.bazel.remote.execution.v2.BatchUpdateBlobsRequest
+	36,  // 118: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs:input_type -> build.bazel.remote.execution.v2.BatchReadBlobsRequest
+	38,  // 119: build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree:input_type -> build.bazel.remote.execution.v2.GetTreeRequest
+	56,  // 120: build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping:input_type -> build.bazel.remote.execution.v2.GetChunkMappingRequest
+	41,  // 121: build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping:input_type -> build.bazel.remote.execution.v2.RegisterChunkMappingRequest
+	42,  // 122: build.bazel.remote.execution.v2.Capabilities.GetCapabilities:input_type -> build.bazel.remote.execution.v2.GetCapabilitiesRequest
+	71,  // 123: build.bazel.remote.execution.v2.Execution.Execute:output_type -> google.longrunning.Operation
+	71,  // 124: build.bazel.remote.execution.v2.Execution.WaitExecution:output_type -> google.longrunning.Operation
+	17,  // 125: build.bazel.remote.execution.v2.ActionCache.GetActionResult:output_type -> build.bazel.remote.execution.v2.ActionResult
+	17,  // 126: build.bazel.remote.execution.v2.ActionCache.UpdateActionResult:output_type -> build.bazel.remote.execution.v2.ActionResult
+	33,  // 127: build.bazel.remote.execution.v2.ContentAddressableStorage.FindMissingBlobs:output_type -> build.bazel.remote.execution.v2.FindMissingBlobsResponse
+	35,  // 128: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchUpdateBlobs:output_type -> build.bazel.remote.execution.v2.BatchUpdateBlobsResponse
+	37,  // 129: build.bazel.remote.execution.v2.ContentAddressableStorage.BatchReadBlobs:output_type -> build.bazel.remote.execution.v2.BatchReadBlobsResponse
+	39,  // 130: build.bazel.remote.execution.v2.ContentAddressableStorage.GetTree:output_type -> build.bazel.remote.execution.v2.GetTreeResponse
+	40,  // 131: build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping:output_type -> build.bazel.remote.execution.v2.GetChunkMappingResponse
+	57,  // 132: build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping:output_type -> build.bazel.remote.execution.v2.RegisterChunkMappingResponse
+	43,  // 133: build.bazel.remote.execution.v2.Capabilities.GetCapabilities:output_type -> build.bazel.remote.execution.v2.ServerCapabilities
+	123, // [123:134] is the sub-list for method output_type
+	112, // [112:123] is the sub-list for method input_type
+	112, // [112:112] is the sub-list for extension type_name
+	112, // [112:112] is the sub-list for extension extendee
+	0,   // [0:112] is the sub-list for field type_name
 }
 
 func init() { file_build_bazel_remote_execution_v2_remote_execution_proto_init() }
@@ -6308,7 +5962,7 @@ func file_build_bazel_remote_execution_v2_remote_execution_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_build_bazel_remote_execution_v2_remote_execution_proto_rawDesc), len(file_build_bazel_remote_execution_v2_remote_execution_proto_rawDesc)),
 			NumEnums:      6,
-			NumMessages:   63,
+			NumMessages:   59,
 			NumExtensions: 0,
 			NumServices:   4,
 		},
