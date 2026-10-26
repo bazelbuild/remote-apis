@@ -5348,10 +5348,10 @@ func (x *Command_EnvironmentVariable) GetValue() string {
 	return ""
 }
 
-// A single property for the environment. The server is responsible for
-// specifying the property `name`s that it accepts. If an unknown `name` is
+// A single property for the environment. The server MAY document the property
+// `name`s that it accepts. If an unknown `name` is
 // provided in the requirements for an
-// [Action][build.bazel.remote.execution.v2.Action], the server SHOULD
+// [Action][build.bazel.remote.execution.v2.Action], the server MAY
 // reject the execution request. If permitted by the server, the same `name`
 // may occur multiple times.
 //
