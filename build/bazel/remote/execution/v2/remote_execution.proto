@@ -440,15 +440,6 @@ service ContentAddressableStorage {
     option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{root_digest.hash}/{root_digest.size_bytes}:getTree" };
   }
 
-  // SplitBlob is the deprecated unary version of
-  // [GetChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping].
-  // See that RPC for details.
-  //
-  // New in v2.12 and removed in v2.13.
-  rpc SplitBlob(SplitBlobRequest) returns (SplitBlobResponse) {
-    option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{blob_digest.hash}/{blob_digest.size_bytes}:splitBlob" };
-  }
-
   // GetChunkMapping retrieves the ordered chunk-digest mapping for a blob.
   //
   // This call returns information about how a blob is split into chunks, and
@@ -522,15 +513,6 @@ service ContentAddressableStorage {
   //   chunks.
   rpc GetChunkMapping(GetChunkMappingRequest) returns (stream GetChunkMappingResponse) {
     option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{blob_digest.hash}/{blob_digest.size_bytes}:getChunkMapping" };
-  }
-
-  // SpliceBlob is the deprecated unary version of
-  // [RegisterChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping].
-  // See that RPC for details.
-  //
-  // New in v2.12 and removed in v2.13.
-  rpc SpliceBlob(SpliceBlobRequest) returns (SpliceBlobResponse) {
-    option (google.api.http) = { post: "/v2/{instance_name=**}/blobs:spliceBlob" body: "*" };
   }
 
   // RegisterChunkMapping registers an ordered chunk-digest mapping for a blob.
@@ -2031,49 +2013,6 @@ message GetTreeResponse {
   string next_page_token = 2;
 }
 
-// A request message for
-// [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob].
-message SplitBlobRequest {
-  // The instance of the execution system to operate against. A server may
-  // support multiple instances of the execution system (with their own workers,
-  // storage, caches, etc.). The server MAY require use of this field to select
-  // between them in an implementation-defined fashion, otherwise it can be
-  // omitted.
-  string instance_name = 1;
-
-  // The digest of the blob to be split.
-  Digest blob_digest = 2;
-
-  // The digest function of the blob to be split.
-  //
-  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
-  // SHA384, SHA512, or VSO, the client MAY leave this field unset. In
-  // that case the server SHOULD infer the digest function using the
-  // length of the blob digest hashes and the digest functions announced
-  // in the server's capabilities.
-  DigestFunction.Value digest_function = 3;
-
-  // The chunking function that the client prefers to use.
-  //
-  // The server MAY use a different chunking function.
-  ChunkingFunction.Value chunking_function = 4;
-}
-
-// A response message for
-// [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob].
-message SplitBlobResponse {
-  // The ordered list of digests of the chunks into which the blob was split.
-  // The original blob is assembled by concatenating the chunk data according to
-  // the order of the digests given by this list.
-  //
-  // The server MUST use the same digest function as the one explicitly or
-  // implicitly (through hash length) specified in the split request.
-  repeated Digest chunk_digests = 1;
-
-  // The chunking function used to split the blob.
-  ChunkingFunction.Value chunking_function = 2;
-}
-
 // A response message for
 // [ContentAddressableStorage.GetChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping].
 message GetChunkMappingResponse {
@@ -2096,47 +2035,6 @@ message GetChunkMappingResponse {
   // from the first response and ignore values sent on subsequent responses.
   // Servers SHOULD omit this field on subsequent responses.
   ChunkingFunction.Value chunking_function = 2;
-}
-
-// A request message for
-// [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob].
-message SpliceBlobRequest {
-  // The instance of the execution system to operate against. A server may
-  // support multiple instances of the execution system (with their own workers,
-  // storage, caches, etc.). The server MAY require use of this field to select
-  // between them in an implementation-defined fashion, otherwise it can be
-  // omitted.
-  string instance_name = 1;
-
-  // Expected digest of the spliced blob. The client MUST set this field due
-  // to the following reasons:
-  //  1. It allows the server to perform an early existence check of the blob
-  //     or existing chunks that assemble the blob before spending the splicing
-  //     effort, as described in the [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob]
-  //     documentation.
-  //  2. It allows servers with different storage backends to dispatch the
-  //     request to the correct storage backend based on the size and/or the
-  //     hash of the blob.
-  //  3. If chunking information already exists for the blob, it allows
-  //     the server to keep the existing chunking information or replace it with
-  //     new chunking information.
-  Digest blob_digest = 2;
-
-  // The ordered list of digests of the chunks which need to be concatenated to
-  // assemble the original blob.
-  repeated Digest chunk_digests = 3;
-
-  // The digest function of all chunks to be concatenated and of the blob to be
-  // spliced. The server MUST use the same digest function for both cases.
-  //
-  // If the digest function used is one of MD5, MURMUR3, SHA1, SHA256, SHA384,
-  // SHA512, or VSO, the client MAY leave this field unset. In that case the
-  // server SHOULD infer the digest function using the length of the blob digest
-  // hashes and the digest functions announced in the server's capabilities.
-  DigestFunction.Value digest_function = 4;
-
-  // The chunking function that the client used to split the blob.
-  ChunkingFunction.Value chunking_function = 5;
 }
 
 // A request message for
@@ -2178,16 +2076,6 @@ message RegisterChunkMappingRequest {
   // use the value from the first request and ignore values sent on subsequent
   // requests.
   ChunkingFunction.Value chunking_function = 5;
-}
-
-// A response message for
-// [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob].
-message SpliceBlobResponse {
-  // Computed digest of the spliced blob.
-  //
-  // The server MUST use the same digest function as the one explicitly or
-  // implicitly (through hash length) specified in the splice request.
-  Digest blob_digest = 1;
 }
 
 // A request message for
@@ -2460,8 +2348,6 @@ message CacheCapabilities {
   // Whether blob splitting is supported for the particular server/instance. If
   // yes, the server/instance implements the specified behavior for blob
   // splitting and a meaningful result can be expected from the
-  // [ContentAddressableStorage.SplitBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SplitBlob]
-  // operation for RE API v2.12 and from the
   // [ContentAddressableStorage.GetChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping]
   // operation for RE API v2.13 or higher.
   bool split_blob_support = 9;
@@ -2469,8 +2355,6 @@ message CacheCapabilities {
   // Whether blob splicing is supported for the particular server/instance. If
   // yes, the server/instance implements the specified behavior for blob
   // splicing and a meaningful result can be expected from the
-  // [ContentAddressableStorage.SpliceBlob][build.bazel.remote.execution.v2.ContentAddressableStorage.SpliceBlob]
-  // operation for RE API v2.12 and from the
   // [ContentAddressableStorage.RegisterChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping]
   // operation for RE API v2.13 or higher.
   bool splice_blob_support = 10;

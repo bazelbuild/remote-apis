@@ -608,9 +608,7 @@ const (
 	ContentAddressableStorage_BatchUpdateBlobs_FullMethodName     = "/build.bazel.remote.execution.v2.ContentAddressableStorage/BatchUpdateBlobs"
 	ContentAddressableStorage_BatchReadBlobs_FullMethodName       = "/build.bazel.remote.execution.v2.ContentAddressableStorage/BatchReadBlobs"
 	ContentAddressableStorage_GetTree_FullMethodName              = "/build.bazel.remote.execution.v2.ContentAddressableStorage/GetTree"
-	ContentAddressableStorage_SplitBlob_FullMethodName            = "/build.bazel.remote.execution.v2.ContentAddressableStorage/SplitBlob"
 	ContentAddressableStorage_GetChunkMapping_FullMethodName      = "/build.bazel.remote.execution.v2.ContentAddressableStorage/GetChunkMapping"
-	ContentAddressableStorage_SpliceBlob_FullMethodName           = "/build.bazel.remote.execution.v2.ContentAddressableStorage/SpliceBlob"
 	ContentAddressableStorage_RegisterChunkMapping_FullMethodName = "/build.bazel.remote.execution.v2.ContentAddressableStorage/RegisterChunkMapping"
 )
 
@@ -851,12 +849,6 @@ type ContentAddressableStorageClient interface {
 	//
 	// * `NOT_FOUND`: The requested tree root is not present in the CAS.
 	GetTree(ctx context.Context, in *GetTreeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetTreeResponse], error)
-	// SplitBlob is the deprecated unary version of
-	// [GetChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping].
-	// See that RPC for details.
-	//
-	// New in v2.12 and removed in v2.13.
-	SplitBlob(ctx context.Context, in *SplitBlobRequest, opts ...grpc.CallOption) (*SplitBlobResponse, error)
 	// GetChunkMapping retrieves the ordered chunk-digest mapping for a blob.
 	//
 	// This call returns information about how a blob is split into chunks, and
@@ -929,12 +921,6 @@ type ContentAddressableStorageClient interface {
 	//   - `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob
 	//     chunks.
 	GetChunkMapping(ctx context.Context, in *GetChunkMappingRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetChunkMappingResponse], error)
-	// SpliceBlob is the deprecated unary version of
-	// [RegisterChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping].
-	// See that RPC for details.
-	//
-	// New in v2.12 and removed in v2.13.
-	SpliceBlob(ctx context.Context, in *SpliceBlobRequest, opts ...grpc.CallOption) (*SpliceBlobResponse, error)
 	// RegisterChunkMapping registers an ordered chunk-digest mapping for a blob.
 	//
 	// This is the complementary operation to the
@@ -1083,16 +1069,6 @@ func (c *contentAddressableStorageClient) GetTree(ctx context.Context, in *GetTr
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ContentAddressableStorage_GetTreeClient = grpc.ServerStreamingClient[GetTreeResponse]
 
-func (c *contentAddressableStorageClient) SplitBlob(ctx context.Context, in *SplitBlobRequest, opts ...grpc.CallOption) (*SplitBlobResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SplitBlobResponse)
-	err := c.cc.Invoke(ctx, ContentAddressableStorage_SplitBlob_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *contentAddressableStorageClient) GetChunkMapping(ctx context.Context, in *GetChunkMappingRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GetChunkMappingResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &ContentAddressableStorage_ServiceDesc.Streams[1], ContentAddressableStorage_GetChunkMapping_FullMethodName, cOpts...)
@@ -1111,16 +1087,6 @@ func (c *contentAddressableStorageClient) GetChunkMapping(ctx context.Context, i
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ContentAddressableStorage_GetChunkMappingClient = grpc.ServerStreamingClient[GetChunkMappingResponse]
-
-func (c *contentAddressableStorageClient) SpliceBlob(ctx context.Context, in *SpliceBlobRequest, opts ...grpc.CallOption) (*SpliceBlobResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SpliceBlobResponse)
-	err := c.cc.Invoke(ctx, ContentAddressableStorage_SpliceBlob_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
 
 func (c *contentAddressableStorageClient) RegisterChunkMapping(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[RegisterChunkMappingRequest, RegisterChunkMappingResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -1372,12 +1338,6 @@ type ContentAddressableStorageServer interface {
 	//
 	// * `NOT_FOUND`: The requested tree root is not present in the CAS.
 	GetTree(*GetTreeRequest, grpc.ServerStreamingServer[GetTreeResponse]) error
-	// SplitBlob is the deprecated unary version of
-	// [GetChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping].
-	// See that RPC for details.
-	//
-	// New in v2.12 and removed in v2.13.
-	SplitBlob(context.Context, *SplitBlobRequest) (*SplitBlobResponse, error)
 	// GetChunkMapping retrieves the ordered chunk-digest mapping for a blob.
 	//
 	// This call returns information about how a blob is split into chunks, and
@@ -1450,12 +1410,6 @@ type ContentAddressableStorageServer interface {
 	//   - `RESOURCE_EXHAUSTED`: There is insufficient disk quota to store the blob
 	//     chunks.
 	GetChunkMapping(*GetChunkMappingRequest, grpc.ServerStreamingServer[GetChunkMappingResponse]) error
-	// SpliceBlob is the deprecated unary version of
-	// [RegisterChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping].
-	// See that RPC for details.
-	//
-	// New in v2.12 and removed in v2.13.
-	SpliceBlob(context.Context, *SpliceBlobRequest) (*SpliceBlobResponse, error)
 	// RegisterChunkMapping registers an ordered chunk-digest mapping for a blob.
 	//
 	// This is the complementary operation to the
@@ -1566,14 +1520,8 @@ func (UnimplementedContentAddressableStorageServer) BatchReadBlobs(context.Conte
 func (UnimplementedContentAddressableStorageServer) GetTree(*GetTreeRequest, grpc.ServerStreamingServer[GetTreeResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method GetTree not implemented")
 }
-func (UnimplementedContentAddressableStorageServer) SplitBlob(context.Context, *SplitBlobRequest) (*SplitBlobResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SplitBlob not implemented")
-}
 func (UnimplementedContentAddressableStorageServer) GetChunkMapping(*GetChunkMappingRequest, grpc.ServerStreamingServer[GetChunkMappingResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method GetChunkMapping not implemented")
-}
-func (UnimplementedContentAddressableStorageServer) SpliceBlob(context.Context, *SpliceBlobRequest) (*SpliceBlobResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SpliceBlob not implemented")
 }
 func (UnimplementedContentAddressableStorageServer) RegisterChunkMapping(grpc.ClientStreamingServer[RegisterChunkMappingRequest, RegisterChunkMappingResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method RegisterChunkMapping not implemented")
@@ -1663,24 +1611,6 @@ func _ContentAddressableStorage_GetTree_Handler(srv interface{}, stream grpc.Ser
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ContentAddressableStorage_GetTreeServer = grpc.ServerStreamingServer[GetTreeResponse]
 
-func _ContentAddressableStorage_SplitBlob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SplitBlobRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContentAddressableStorageServer).SplitBlob(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContentAddressableStorage_SplitBlob_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContentAddressableStorageServer).SplitBlob(ctx, req.(*SplitBlobRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _ContentAddressableStorage_GetChunkMapping_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(GetChunkMappingRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -1691,24 +1621,6 @@ func _ContentAddressableStorage_GetChunkMapping_Handler(srv interface{}, stream 
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ContentAddressableStorage_GetChunkMappingServer = grpc.ServerStreamingServer[GetChunkMappingResponse]
-
-func _ContentAddressableStorage_SpliceBlob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SpliceBlobRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContentAddressableStorageServer).SpliceBlob(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContentAddressableStorage_SpliceBlob_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContentAddressableStorageServer).SpliceBlob(ctx, req.(*SpliceBlobRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
 
 func _ContentAddressableStorage_RegisterChunkMapping_Handler(srv interface{}, stream grpc.ServerStream) error {
 	return srv.(ContentAddressableStorageServer).RegisterChunkMapping(&grpc.GenericServerStream[RegisterChunkMappingRequest, RegisterChunkMappingResponse]{ServerStream: stream})
@@ -1735,14 +1647,6 @@ var ContentAddressableStorage_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BatchReadBlobs",
 			Handler:    _ContentAddressableStorage_BatchReadBlobs_Handler,
-		},
-		{
-			MethodName: "SplitBlob",
-			Handler:    _ContentAddressableStorage_SplitBlob_Handler,
-		},
-		{
-			MethodName: "SpliceBlob",
-			Handler:    _ContentAddressableStorage_SpliceBlob_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
