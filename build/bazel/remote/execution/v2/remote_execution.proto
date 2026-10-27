@@ -969,6 +969,40 @@ message Platform {
   repeated Property properties = 1;
 }
 
+// `ExecutionHints` is a set of optional, advisory key-value pairs
+// describing preferences for how an
+// [Action][build.bazel.remote.execution.v2.Action] should be executed.
+// Unlike [Platform][build.bazel.remote.execution.v2.Platform]
+// properties, hints are not requirements: a server MAY ignore any or
+// all hints, and MUST NOT reject an execution solely because it does
+// not recognize a hint. Their interpretation and effect on execution
+// and caching is implementation defined.
+//
+// Two successful executions of actions that differ only by their hints
+// SHOULD NOT produce different results, but a server MAY fail an
+// execution because of its hints.
+//
+// Hints are intended for use cases such as routing, and supplying
+// side-channel information that should not be part of the action key.
+message ExecutionHints {
+  // A single hint for the execution environment.
+  message Hint {
+    // The hint name. Servers are responsible for specifying the hint
+    // `name`s that they understand. Unknown names MUST be ignored.
+    string name = 1;
+
+    // The hint value. The interpretation of the value is implementation
+    // defined.
+    string value = 2;
+  }
+
+  // The hints that make up this set. In order to ensure that equivalent
+  // `ExecutionHints` always hash to the same value, the hints MUST be
+  // lexicographically sorted by name, and then by value. Sorting of
+  // strings is done by code point, equivalently, by the UTF-8 bytes.
+  repeated Hint hints = 1;
+}
+
 // A `Directory` represents a directory node in a file tree, containing zero or
 // more children [FileNodes][build.bazel.remote.execution.v2.FileNode],
 // [DirectoryNodes][build.bazel.remote.execution.v2.DirectoryNode] and
@@ -1644,6 +1678,27 @@ message ExecuteRequest {
   // `output_files` (DEPRECATED since v2.1) in the
   // [Command][build.bazel.remote.execution.v2.Command] message.
   repeated string inline_output_files = 12;
+
+  // Optional, advisory hints for the execution environment. Unlike
+  // [platform][build.bazel.remote.execution.v2.Action.platform]
+  // properties, these are not requirements: a server MAY ignore any or
+  // all hints, and MUST NOT reject a request solely because it does not
+  // recognize a hint. Their interpretation and effect on execution and
+  // caching is implementation defined.
+  //
+  // Because this field is part of the
+  // [ExecuteRequest][build.bazel.remote.execution.v2.ExecuteRequest]
+  // and not of the [Action][build.bazel.remote.execution.v2.Action],
+  // hints set here are not part of the action digest and do not affect
+  // the action cache key. This makes this field appropriate for
+  // scheduling and routing hints that never change the result of the
+  // action, as well as for side-channel information that should not be
+  // part of the action.
+  //
+  // Two successful executions of actions that differ only by their
+  // hints SHOULD NOT produce different results, but a server MAY fail
+  // an execution because of its hints.
+  ExecutionHints execution_hints = 13;
 }
 
 // A `LogFile` is a log stored in the CAS.

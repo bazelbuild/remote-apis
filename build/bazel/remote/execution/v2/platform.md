@@ -6,6 +6,13 @@ values can be added by submitting a PR against this repository, which requires
 signing the [Google CLA](https://opensource.google/documentation/reference/cla).
 If signing the Google CLA is undesirable, you may submit an issue instead.
 
+## Platform properties
+
+Platform properties are requirements. A server that does not accept a given
+property name SHOULD reject the execution request, and a server that accepts a
+property is expected to honor it. Platform properties are part of the action
+digest, so changing them changes the action cache key.
+
 The following standard property `name`s are defined:
 
 * `OSFamily`: This describes the operating system family. Multiple values
@@ -124,3 +131,23 @@ The following standard property `name`s are defined:
     ]
   }
   ```
+
+## Execution hints
+
+Like platform properties, execution hints are arbitrary key-value string
+pairs that convey hints about the execution to the remote environment.
+Unlike platform properties, execution hints are advisory metadata that
+is not considered part of the action key. A server MAY ignore any or all
+hints, and MUST NOT reject an execution solely because it does not
+recognize a hint. The interpretation of an execution hint, and its
+effect on execution and caching, is implementation defined.
+
+Two successful executions of actions that differ only by their hints
+SHOULD NOT produce different results, but a server MAY fail an execution
+because of its hints, for example when a hint carries an invalid API
+key.
+
+Execution hints are intended for use cases such as routing (e.g. "prefer
+a worker that recently fetched a similar input root") and supplying
+side-channel information that should not be part of the action key (such
+as API keys, license keys or other secrets).
