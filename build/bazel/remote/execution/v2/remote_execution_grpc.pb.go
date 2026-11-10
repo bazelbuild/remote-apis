@@ -942,11 +942,11 @@ type ContentAddressableStorageClient interface {
 	// function to handle the chunked upload of large blobs to save upload
 	// traffic.
 	//
-	// When uploading a large blob using chunked upload, clients MUST first upload
-	// all chunks to the CAS, then call this RPC to tell the server how those
-	// chunks compose the original blob. The chunks referenced in the
-	// RegisterChunkMapping call SHOULD be available in the CAS before calling this
-	// RPC.
+	// Clients upload chunks to the CAS and use this RPC to describe how the
+	// chunks form the original blob. A chunk MUST be in the CAS before a
+	// request message referencing it is sent. Chunks referenced by later request
+	// messages MAY still be uploading, so the server can validate the mapping
+	// incrementally.
 	//
 	// One example upload workflow is:
 	//  1. If the full blob digest is already available, the client can call
@@ -960,9 +960,10 @@ type ContentAddressableStorageClient interface {
 	//     `FindMissingBlobs` either once with the complete list or in batches as
 	//     digests become available, then upload the missing chunks. Clients SHOULD
 	//     avoid making a separate `FindMissingBlobs` call for each chunk.
-	//  3. After all chunks are available in the CAS, call this RPC and split the
-	//     complete ordered chunk digest list across request messages that remain
-	//     below the maximum message size accepted by the client/server pair.
+	//  3. Call this RPC and split the ordered chunk digest list across request
+	//     messages that remain below the maximum message size accepted by the
+	//     client/server pair. Clients may send each request message once its chunks
+	//     are in the CAS.
 	//
 	// The list of chunk digests is streamed across request messages
 	// to avoid exceeding protocol message size limits. Clients MUST set the
@@ -1463,11 +1464,11 @@ type ContentAddressableStorageServer interface {
 	// function to handle the chunked upload of large blobs to save upload
 	// traffic.
 	//
-	// When uploading a large blob using chunked upload, clients MUST first upload
-	// all chunks to the CAS, then call this RPC to tell the server how those
-	// chunks compose the original blob. The chunks referenced in the
-	// RegisterChunkMapping call SHOULD be available in the CAS before calling this
-	// RPC.
+	// Clients upload chunks to the CAS and use this RPC to describe how the
+	// chunks form the original blob. A chunk MUST be in the CAS before a
+	// request message referencing it is sent. Chunks referenced by later request
+	// messages MAY still be uploading, so the server can validate the mapping
+	// incrementally.
 	//
 	// One example upload workflow is:
 	//  1. If the full blob digest is already available, the client can call
@@ -1481,9 +1482,10 @@ type ContentAddressableStorageServer interface {
 	//     `FindMissingBlobs` either once with the complete list or in batches as
 	//     digests become available, then upload the missing chunks. Clients SHOULD
 	//     avoid making a separate `FindMissingBlobs` call for each chunk.
-	//  3. After all chunks are available in the CAS, call this RPC and split the
-	//     complete ordered chunk digest list across request messages that remain
-	//     below the maximum message size accepted by the client/server pair.
+	//  3. Call this RPC and split the ordered chunk digest list across request
+	//     messages that remain below the maximum message size accepted by the
+	//     client/server pair. Clients may send each request message once its chunks
+	//     are in the CAS.
 	//
 	// The list of chunk digests is streamed across request messages
 	// to avoid exceeding protocol message size limits. Clients MUST set the
