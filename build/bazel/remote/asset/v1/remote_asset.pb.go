@@ -276,8 +276,14 @@ type FetchBlobResponse struct {
 	// If unset, clients SHOULD default to use SHA256 regardless of the requested
 	// [FetchBlobRequest.digest_function].
 	DigestFunction v2.DigestFunction_Value `protobuf:"varint,6,opt,name=digest_function,json=digestFunction,proto3,enum=build.bazel.remote.execution.v2.DigestFunction_Value" json:"digest_function,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Referenced blobs or directories that need to not expire before expiration
+	// of this association, in addition to `blob_digest` itself.
+	// These fields are hints to allow a caching proxy to increase the lifetimes
+	// of all referenced blobs.
+	ReferencesBlobs       []*v2.Digest `protobuf:"bytes,7,rep,name=references_blobs,json=referencesBlobs,proto3" json:"references_blobs,omitempty"`
+	ReferencesDirectories []*v2.Digest `protobuf:"bytes,8,rep,name=references_directories,json=referencesDirectories,proto3" json:"references_directories,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *FetchBlobResponse) Reset() {
@@ -350,6 +356,20 @@ func (x *FetchBlobResponse) GetDigestFunction() v2.DigestFunction_Value {
 		return x.DigestFunction
 	}
 	return v2.DigestFunction_Value(0)
+}
+
+func (x *FetchBlobResponse) GetReferencesBlobs() []*v2.Digest {
+	if x != nil {
+		return x.ReferencesBlobs
+	}
+	return nil
+}
+
+func (x *FetchBlobResponse) GetReferencesDirectories() []*v2.Digest {
+	if x != nil {
+		return x.ReferencesDirectories
+	}
+	return nil
 }
 
 // A request message for
@@ -512,8 +532,14 @@ type FetchDirectoryResponse struct {
 	// If unset, clients SHOULD default to use SHA256 regardless of the requested
 	// [FetchDirectoryRequest.digest_function].
 	DigestFunction v2.DigestFunction_Value `protobuf:"varint,6,opt,name=digest_function,json=digestFunction,proto3,enum=build.bazel.remote.execution.v2.DigestFunction_Value" json:"digest_function,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Referenced blobs or directories that need to not expire before expiration
+	// of this association, in addition to `root_directory_digest` itself.
+	// These fields are hints to allow a caching proxy to increase the lifetimes
+	// of all referenced blobs.
+	ReferencesBlobs       []*v2.Digest `protobuf:"bytes,7,rep,name=references_blobs,json=referencesBlobs,proto3" json:"references_blobs,omitempty"`
+	ReferencesDirectories []*v2.Digest `protobuf:"bytes,8,rep,name=references_directories,json=referencesDirectories,proto3" json:"references_directories,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *FetchDirectoryResponse) Reset() {
@@ -586,6 +612,20 @@ func (x *FetchDirectoryResponse) GetDigestFunction() v2.DigestFunction_Value {
 		return x.DigestFunction
 	}
 	return v2.DigestFunction_Value(0)
+}
+
+func (x *FetchDirectoryResponse) GetReferencesBlobs() []*v2.Digest {
+	if x != nil {
+		return x.ReferencesBlobs
+	}
+	return nil
+}
+
+func (x *FetchDirectoryResponse) GetReferencesDirectories() []*v2.Digest {
+	if x != nil {
+		return x.ReferencesDirectories
+	}
+	return nil
 }
 
 // A request message for
@@ -935,7 +975,7 @@ const file_build_bazel_remote_asset_v1_remote_asset_proto_rawDesc = "" +
 	"\n" +
 	"qualifiers\x18\x05 \x03(\v2&.build.bazel.remote.asset.v1.QualifierR\n" +
 	"qualifiers\x12^\n" +
-	"\x0fdigest_function\x18\x06 \x01(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0edigestFunction\"\xfe\x02\n" +
+	"\x0fdigest_function\x18\x06 \x01(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0edigestFunction\"\xb2\x04\n" +
 	"\x11FetchBlobResponse\x12*\n" +
 	"\x06status\x18\x01 \x01(\v2\x12.google.rpc.StatusR\x06status\x12\x10\n" +
 	"\x03uri\x18\x02 \x01(\tR\x03uri\x12F\n" +
@@ -946,7 +986,9 @@ const file_build_bazel_remote_asset_v1_remote_asset_proto_rawDesc = "" +
 	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12H\n" +
 	"\vblob_digest\x18\x05 \x01(\v2'.build.bazel.remote.execution.v2.DigestR\n" +
 	"blobDigest\x12^\n" +
-	"\x0fdigest_function\x18\x06 \x01(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0edigestFunction\"\x81\x03\n" +
+	"\x0fdigest_function\x18\x06 \x01(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0edigestFunction\x12R\n" +
+	"\x10references_blobs\x18\a \x03(\v2'.build.bazel.remote.execution.v2.DigestR\x0freferencesBlobs\x12^\n" +
+	"\x16references_directories\x18\b \x03(\v2'.build.bazel.remote.execution.v2.DigestR\x15referencesDirectories\"\x81\x03\n" +
 	"\x15FetchDirectoryRequest\x12#\n" +
 	"\rinstance_name\x18\x01 \x01(\tR\finstanceName\x123\n" +
 	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12R\n" +
@@ -955,7 +997,7 @@ const file_build_bazel_remote_asset_v1_remote_asset_proto_rawDesc = "" +
 	"\n" +
 	"qualifiers\x18\x05 \x03(\v2&.build.bazel.remote.asset.v1.QualifierR\n" +
 	"qualifiers\x12^\n" +
-	"\x0fdigest_function\x18\x06 \x01(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0edigestFunction\"\x96\x03\n" +
+	"\x0fdigest_function\x18\x06 \x01(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0edigestFunction\"\xca\x04\n" +
 	"\x16FetchDirectoryResponse\x12*\n" +
 	"\x06status\x18\x01 \x01(\v2\x12.google.rpc.StatusR\x06status\x12\x10\n" +
 	"\x03uri\x18\x02 \x01(\tR\x03uri\x12F\n" +
@@ -965,7 +1007,9 @@ const file_build_bazel_remote_asset_v1_remote_asset_proto_rawDesc = "" +
 	"\n" +
 	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12[\n" +
 	"\x15root_directory_digest\x18\x05 \x01(\v2'.build.bazel.remote.execution.v2.DigestR\x13rootDirectoryDigest\x12^\n" +
-	"\x0fdigest_function\x18\x06 \x01(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0edigestFunction\"\xa9\x04\n" +
+	"\x0fdigest_function\x18\x06 \x01(\x0e25.build.bazel.remote.execution.v2.DigestFunction.ValueR\x0edigestFunction\x12R\n" +
+	"\x10references_blobs\x18\a \x03(\v2'.build.bazel.remote.execution.v2.DigestR\x0freferencesBlobs\x12^\n" +
+	"\x16references_directories\x18\b \x03(\v2'.build.bazel.remote.execution.v2.DigestR\x15referencesDirectories\"\xa9\x04\n" +
 	"\x0fPushBlobRequest\x12#\n" +
 	"\rinstance_name\x18\x01 \x01(\tR\finstanceName\x12\x12\n" +
 	"\x04uris\x18\x02 \x03(\tR\x04uris\x12F\n" +
@@ -1038,40 +1082,44 @@ var file_build_bazel_remote_asset_v1_remote_asset_proto_depIdxs = []int32{
 	10, // 6: build.bazel.remote.asset.v1.FetchBlobResponse.expires_at:type_name -> google.protobuf.Timestamp
 	13, // 7: build.bazel.remote.asset.v1.FetchBlobResponse.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
 	11, // 8: build.bazel.remote.asset.v1.FetchBlobResponse.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	9,  // 9: build.bazel.remote.asset.v1.FetchDirectoryRequest.timeout:type_name -> google.protobuf.Duration
-	10, // 10: build.bazel.remote.asset.v1.FetchDirectoryRequest.oldest_content_accepted:type_name -> google.protobuf.Timestamp
-	0,  // 11: build.bazel.remote.asset.v1.FetchDirectoryRequest.qualifiers:type_name -> build.bazel.remote.asset.v1.Qualifier
-	11, // 12: build.bazel.remote.asset.v1.FetchDirectoryRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	12, // 13: build.bazel.remote.asset.v1.FetchDirectoryResponse.status:type_name -> google.rpc.Status
-	0,  // 14: build.bazel.remote.asset.v1.FetchDirectoryResponse.qualifiers:type_name -> build.bazel.remote.asset.v1.Qualifier
-	10, // 15: build.bazel.remote.asset.v1.FetchDirectoryResponse.expires_at:type_name -> google.protobuf.Timestamp
-	13, // 16: build.bazel.remote.asset.v1.FetchDirectoryResponse.root_directory_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	11, // 17: build.bazel.remote.asset.v1.FetchDirectoryResponse.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	0,  // 18: build.bazel.remote.asset.v1.PushBlobRequest.qualifiers:type_name -> build.bazel.remote.asset.v1.Qualifier
-	10, // 19: build.bazel.remote.asset.v1.PushBlobRequest.expire_at:type_name -> google.protobuf.Timestamp
-	13, // 20: build.bazel.remote.asset.v1.PushBlobRequest.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	13, // 21: build.bazel.remote.asset.v1.PushBlobRequest.references_blobs:type_name -> build.bazel.remote.execution.v2.Digest
-	13, // 22: build.bazel.remote.asset.v1.PushBlobRequest.references_directories:type_name -> build.bazel.remote.execution.v2.Digest
-	11, // 23: build.bazel.remote.asset.v1.PushBlobRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	0,  // 24: build.bazel.remote.asset.v1.PushDirectoryRequest.qualifiers:type_name -> build.bazel.remote.asset.v1.Qualifier
-	10, // 25: build.bazel.remote.asset.v1.PushDirectoryRequest.expire_at:type_name -> google.protobuf.Timestamp
-	13, // 26: build.bazel.remote.asset.v1.PushDirectoryRequest.root_directory_digest:type_name -> build.bazel.remote.execution.v2.Digest
-	13, // 27: build.bazel.remote.asset.v1.PushDirectoryRequest.references_blobs:type_name -> build.bazel.remote.execution.v2.Digest
-	13, // 28: build.bazel.remote.asset.v1.PushDirectoryRequest.references_directories:type_name -> build.bazel.remote.execution.v2.Digest
-	11, // 29: build.bazel.remote.asset.v1.PushDirectoryRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
-	1,  // 30: build.bazel.remote.asset.v1.Fetch.FetchBlob:input_type -> build.bazel.remote.asset.v1.FetchBlobRequest
-	3,  // 31: build.bazel.remote.asset.v1.Fetch.FetchDirectory:input_type -> build.bazel.remote.asset.v1.FetchDirectoryRequest
-	5,  // 32: build.bazel.remote.asset.v1.Push.PushBlob:input_type -> build.bazel.remote.asset.v1.PushBlobRequest
-	7,  // 33: build.bazel.remote.asset.v1.Push.PushDirectory:input_type -> build.bazel.remote.asset.v1.PushDirectoryRequest
-	2,  // 34: build.bazel.remote.asset.v1.Fetch.FetchBlob:output_type -> build.bazel.remote.asset.v1.FetchBlobResponse
-	4,  // 35: build.bazel.remote.asset.v1.Fetch.FetchDirectory:output_type -> build.bazel.remote.asset.v1.FetchDirectoryResponse
-	6,  // 36: build.bazel.remote.asset.v1.Push.PushBlob:output_type -> build.bazel.remote.asset.v1.PushBlobResponse
-	8,  // 37: build.bazel.remote.asset.v1.Push.PushDirectory:output_type -> build.bazel.remote.asset.v1.PushDirectoryResponse
-	34, // [34:38] is the sub-list for method output_type
-	30, // [30:34] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	13, // 9: build.bazel.remote.asset.v1.FetchBlobResponse.references_blobs:type_name -> build.bazel.remote.execution.v2.Digest
+	13, // 10: build.bazel.remote.asset.v1.FetchBlobResponse.references_directories:type_name -> build.bazel.remote.execution.v2.Digest
+	9,  // 11: build.bazel.remote.asset.v1.FetchDirectoryRequest.timeout:type_name -> google.protobuf.Duration
+	10, // 12: build.bazel.remote.asset.v1.FetchDirectoryRequest.oldest_content_accepted:type_name -> google.protobuf.Timestamp
+	0,  // 13: build.bazel.remote.asset.v1.FetchDirectoryRequest.qualifiers:type_name -> build.bazel.remote.asset.v1.Qualifier
+	11, // 14: build.bazel.remote.asset.v1.FetchDirectoryRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	12, // 15: build.bazel.remote.asset.v1.FetchDirectoryResponse.status:type_name -> google.rpc.Status
+	0,  // 16: build.bazel.remote.asset.v1.FetchDirectoryResponse.qualifiers:type_name -> build.bazel.remote.asset.v1.Qualifier
+	10, // 17: build.bazel.remote.asset.v1.FetchDirectoryResponse.expires_at:type_name -> google.protobuf.Timestamp
+	13, // 18: build.bazel.remote.asset.v1.FetchDirectoryResponse.root_directory_digest:type_name -> build.bazel.remote.execution.v2.Digest
+	11, // 19: build.bazel.remote.asset.v1.FetchDirectoryResponse.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	13, // 20: build.bazel.remote.asset.v1.FetchDirectoryResponse.references_blobs:type_name -> build.bazel.remote.execution.v2.Digest
+	13, // 21: build.bazel.remote.asset.v1.FetchDirectoryResponse.references_directories:type_name -> build.bazel.remote.execution.v2.Digest
+	0,  // 22: build.bazel.remote.asset.v1.PushBlobRequest.qualifiers:type_name -> build.bazel.remote.asset.v1.Qualifier
+	10, // 23: build.bazel.remote.asset.v1.PushBlobRequest.expire_at:type_name -> google.protobuf.Timestamp
+	13, // 24: build.bazel.remote.asset.v1.PushBlobRequest.blob_digest:type_name -> build.bazel.remote.execution.v2.Digest
+	13, // 25: build.bazel.remote.asset.v1.PushBlobRequest.references_blobs:type_name -> build.bazel.remote.execution.v2.Digest
+	13, // 26: build.bazel.remote.asset.v1.PushBlobRequest.references_directories:type_name -> build.bazel.remote.execution.v2.Digest
+	11, // 27: build.bazel.remote.asset.v1.PushBlobRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	0,  // 28: build.bazel.remote.asset.v1.PushDirectoryRequest.qualifiers:type_name -> build.bazel.remote.asset.v1.Qualifier
+	10, // 29: build.bazel.remote.asset.v1.PushDirectoryRequest.expire_at:type_name -> google.protobuf.Timestamp
+	13, // 30: build.bazel.remote.asset.v1.PushDirectoryRequest.root_directory_digest:type_name -> build.bazel.remote.execution.v2.Digest
+	13, // 31: build.bazel.remote.asset.v1.PushDirectoryRequest.references_blobs:type_name -> build.bazel.remote.execution.v2.Digest
+	13, // 32: build.bazel.remote.asset.v1.PushDirectoryRequest.references_directories:type_name -> build.bazel.remote.execution.v2.Digest
+	11, // 33: build.bazel.remote.asset.v1.PushDirectoryRequest.digest_function:type_name -> build.bazel.remote.execution.v2.DigestFunction.Value
+	1,  // 34: build.bazel.remote.asset.v1.Fetch.FetchBlob:input_type -> build.bazel.remote.asset.v1.FetchBlobRequest
+	3,  // 35: build.bazel.remote.asset.v1.Fetch.FetchDirectory:input_type -> build.bazel.remote.asset.v1.FetchDirectoryRequest
+	5,  // 36: build.bazel.remote.asset.v1.Push.PushBlob:input_type -> build.bazel.remote.asset.v1.PushBlobRequest
+	7,  // 37: build.bazel.remote.asset.v1.Push.PushDirectory:input_type -> build.bazel.remote.asset.v1.PushDirectoryRequest
+	2,  // 38: build.bazel.remote.asset.v1.Fetch.FetchBlob:output_type -> build.bazel.remote.asset.v1.FetchBlobResponse
+	4,  // 39: build.bazel.remote.asset.v1.Fetch.FetchDirectory:output_type -> build.bazel.remote.asset.v1.FetchDirectoryResponse
+	6,  // 40: build.bazel.remote.asset.v1.Push.PushBlob:output_type -> build.bazel.remote.asset.v1.PushBlobResponse
+	8,  // 41: build.bazel.remote.asset.v1.Push.PushDirectory:output_type -> build.bazel.remote.asset.v1.PushDirectoryResponse
+	38, // [38:42] is the sub-list for method output_type
+	34, // [34:38] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_build_bazel_remote_asset_v1_remote_asset_proto_init() }
