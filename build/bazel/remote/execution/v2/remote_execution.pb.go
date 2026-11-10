@@ -2452,7 +2452,8 @@ type ExecuteRequest struct {
 	ResultsCachePolicy *ResultsCachePolicy `protobuf:"bytes,8,opt,name=results_cache_policy,json=resultsCachePolicy,proto3" json:"results_cache_policy,omitempty"`
 	// The digest function that was used to compute the action digest.
 	//
-	// If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+	// MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+	// if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
 	// SHA384, SHA512, or VSO, the client MAY leave this field unset. In
 	// that case the server SHOULD infer the digest function using the
 	// length of the action digest hash and the digest functions announced
@@ -2800,7 +2801,8 @@ type ExecuteOperationMetadata struct {
 	PartialExecutionMetadata *ExecutedActionMetadata `protobuf:"bytes,5,opt,name=partial_execution_metadata,json=partialExecutionMetadata,proto3" json:"partial_execution_metadata,omitempty"`
 	// The digest function that was used to compute the action digest.
 	//
-	// If the digest function used is one of BLAKE3, MD5, MURMUR3, SHA1,
+	// MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+	// if the digest function used is one of BLAKE3, MD5, MURMUR3, SHA1,
 	// SHA256, SHA256TREE, SHA384, SHA512, or VSO, the server MAY leave
 	// this field unset. In that case the client SHOULD infer the digest
 	// function using the length of the action digest hash and the digest
@@ -2956,7 +2958,8 @@ type GetActionResultRequest struct {
 	InlineOutputFiles []string `protobuf:"bytes,5,rep,name=inline_output_files,json=inlineOutputFiles,proto3" json:"inline_output_files,omitempty"`
 	// The digest function that was used to compute the action digest.
 	//
-	// If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+	// MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+	// if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
 	// SHA384, SHA512, or VSO, the client MAY leave this field unset. In
 	// that case the server SHOULD infer the digest function using the
 	// length of the action digest hash and the digest functions announced
@@ -3060,7 +3063,8 @@ type UpdateActionResultRequest struct {
 	ResultsCachePolicy *ResultsCachePolicy `protobuf:"bytes,4,opt,name=results_cache_policy,json=resultsCachePolicy,proto3" json:"results_cache_policy,omitempty"`
 	// The digest function that was used to compute the action digest.
 	//
-	// If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+	// MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+	// if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
 	// SHA384, SHA512, or VSO, the client MAY leave this field unset. In
 	// that case the server SHOULD infer the digest function using the
 	// length of the action digest hash and the digest functions announced
@@ -3150,7 +3154,8 @@ type FindMissingBlobsRequest struct {
 	BlobDigests []*Digest `protobuf:"bytes,2,rep,name=blob_digests,json=blobDigests,proto3" json:"blob_digests,omitempty"`
 	// The digest function of the blobs whose existence is checked.
 	//
-	// If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+	// MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+	// if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
 	// SHA384, SHA512, or VSO, the client MAY leave this field unset. In
 	// that case the server SHOULD infer the digest function using the
 	// length of the blob digest hashes and the digest functions announced
@@ -3273,7 +3278,8 @@ type BatchUpdateBlobsRequest struct {
 	// The digest function that was used to compute the digests of the
 	// blobs being uploaded.
 	//
-	// If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+	// MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+	// if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
 	// SHA384, SHA512, or VSO, the client MAY leave this field unset. In
 	// that case the server SHOULD infer the digest function using the
 	// length of the blob digest hashes and the digest functions announced
@@ -3399,7 +3405,8 @@ type BatchReadBlobsRequest struct {
 	AcceptableCompressors []Compressor_Value `protobuf:"varint,3,rep,packed,name=acceptable_compressors,json=acceptableCompressors,proto3,enum=build.bazel.remote.execution.v2.Compressor_Value" json:"acceptable_compressors,omitempty"`
 	// The digest function of the blobs being requested.
 	//
-	// If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+	// MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+	// if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
 	// SHA384, SHA512, or VSO, the client MAY leave this field unset. In
 	// that case the server SHOULD infer the digest function using the
 	// length of the blob digest hashes and the digest functions announced
@@ -3542,7 +3549,8 @@ type GetTreeRequest struct {
 	// The digest function that was used to compute the digest of the root
 	// directory.
 	//
-	// If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+	// MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+	// if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
 	// SHA384, SHA512, or VSO, the client MAY leave this field unset. In
 	// that case the server SHOULD infer the digest function using the
 	// length of the root digest hash and the digest functions announced
@@ -3690,7 +3698,8 @@ type SplitBlobRequest struct {
 	BlobDigest *Digest `protobuf:"bytes,2,opt,name=blob_digest,json=blobDigest,proto3" json:"blob_digest,omitempty"`
 	// The digest function of the blob to be split.
 	//
-	// If the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
+	// MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+	// if the digest function used is one of MD5, MURMUR3, SHA1, SHA256,
 	// SHA384, SHA512, or VSO, the client MAY leave this field unset. In
 	// that case the server SHOULD infer the digest function using the
 	// length of the blob digest hashes and the digest functions announced
@@ -3922,7 +3931,8 @@ type SpliceBlobRequest struct {
 	// The digest function of all chunks to be concatenated and of the blob to be
 	// spliced. The server MUST use the same digest function for both cases.
 	//
-	// If the digest function used is one of MD5, MURMUR3, SHA1, SHA256, SHA384,
+	// MUST be set to a value other than UNKNOWN since v2.13. Until v2.12,
+	// if the digest function used is one of MD5, MURMUR3, SHA1, SHA256, SHA384,
 	// SHA512, or VSO, the client MAY leave this field unset. In that case the
 	// server SHOULD infer the digest function using the length of the blob digest
 	// hashes and the digest functions announced in the server's capabilities.
