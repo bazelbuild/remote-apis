@@ -444,7 +444,7 @@ service ContentAddressableStorage {
   // [GetChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping].
   // See that RPC for details.
   //
-  // New in v2.12 and removed in v2.13.
+  // New in v2.12 and UNSUPPORTED since v2.13.
   rpc SplitBlob(SplitBlobRequest) returns (SplitBlobResponse) {
     option (google.api.http) = { get: "/v2/{instance_name=**}/blobs/{blob_digest.hash}/{blob_digest.size_bytes}:splitBlob" };
   }
@@ -528,7 +528,7 @@ service ContentAddressableStorage {
   // [RegisterChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping].
   // See that RPC for details.
   //
-  // New in v2.12 and removed in v2.13.
+  // New in v2.12 and UNSUPPORTED since v2.13.
   rpc SpliceBlob(SpliceBlobRequest) returns (SpliceBlobResponse) {
     option (google.api.http) = { post: "/v2/{instance_name=**}/blobs:spliceBlob" body: "*" };
   }
@@ -806,7 +806,7 @@ message Command {
   // Directories leading up to the output files are created by the worker prior
   // to execution, even if they are not explicitly part of the input root.
   //
-  // DEPRECATED since v2.1: Use `output_paths` instead.
+  // DEPRECATED since v2.1, UNSUPPORTED since v2.13: Use `output_paths` instead.
   repeated string output_files = 3 [ deprecated = true ];
 
   // A list of the output directories that the client expects to retrieve from
@@ -837,7 +837,7 @@ message Command {
   // directories themselves) are created by the worker prior to execution, even
   // if they are not explicitly part of the input root.
   //
-  // DEPRECATED since 2.1: Use `output_paths` instead.
+  // DEPRECATED since 2.1, UNSUPPORTED since v2.13: Use `output_paths` instead.
   repeated string output_directories = 4 [ deprecated = true ];
 
   // A list of the output paths that the client expects to retrieve from the
@@ -875,8 +875,8 @@ message Command {
   // the client SHOULD ensure that running the action on any such worker will
   // have the same result.  A detailed lexicon for this can be found in the
   // accompanying platform.md.
-  // DEPRECATED as of v2.2: platform properties are now specified directly in
-  // the action. See documentation note in the
+  // DEPRECATED as of v2.2, UNSUPPORTED since v2.13: platform properties are now
+  // specified directly in the action. See documentation note in the
   // [Action][build.bazel.remote.execution.v2.Action] for migration.
   Platform platform = 5 [ deprecated = true ];
 
@@ -1279,8 +1279,9 @@ message ActionResult {
   // will be omitted from the list. The server is free to arrange the output
   // list as desired; clients MUST NOT assume that the output list is sorted.
   //
-  // DEPRECATED as of v2.1. Servers that wish to be compatible with v2.0 API
-  // should still populate this field in addition to `output_symlinks`.
+  // DEPRECATED as of v2.1, UNSUPPORTED since v2.13. Servers that wish to be
+  // compatible with v2.0 API should still populate this field in addition to
+  // `output_symlinks`.
   repeated OutputSymlink output_file_symlinks = 10 [ deprecated = true ];
 
   // New in v2.1: this field will only be populated if the command
@@ -1379,8 +1380,9 @@ message ActionResult {
   // will be omitted from the list. The server is free to arrange the output
   // list as desired; clients MUST NOT assume that the output list is sorted.
   //
-  // DEPRECATED as of v2.1. Servers that wish to be compatible with v2.0 API
-  // should still populate this field in addition to `output_symlinks`.
+  // DEPRECATED as of v2.1, UNSUPPORTED since v2.13. Servers that wish to be
+  // compatible with v2.0 API should still populate this field in addition to
+  // `output_symlinks`.
   repeated OutputSymlink output_directory_symlinks = 11 [ deprecated = true ];
 
   // The exit code of the command.

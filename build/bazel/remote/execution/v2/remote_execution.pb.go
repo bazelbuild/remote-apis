@@ -693,7 +693,7 @@ type Command struct {
 	// Directories leading up to the output files are created by the worker prior
 	// to execution, even if they are not explicitly part of the input root.
 	//
-	// DEPRECATED since v2.1: Use `output_paths` instead.
+	// DEPRECATED since v2.1, UNSUPPORTED since v2.13: Use `output_paths` instead.
 	//
 	// Deprecated: Marked as deprecated in build/bazel/remote/execution/v2/remote_execution.proto.
 	OutputFiles []string `protobuf:"bytes,3,rep,name=output_files,json=outputFiles,proto3" json:"output_files,omitempty"`
@@ -725,7 +725,7 @@ type Command struct {
 	// directories themselves) are created by the worker prior to execution, even
 	// if they are not explicitly part of the input root.
 	//
-	// DEPRECATED since 2.1: Use `output_paths` instead.
+	// DEPRECATED since 2.1, UNSUPPORTED since v2.13: Use `output_paths` instead.
 	//
 	// Deprecated: Marked as deprecated in build/bazel/remote/execution/v2/remote_execution.proto.
 	OutputDirectories []string `protobuf:"bytes,4,rep,name=output_directories,json=outputDirectories,proto3" json:"output_directories,omitempty"`
@@ -763,8 +763,8 @@ type Command struct {
 	// the client SHOULD ensure that running the action on any such worker will
 	// have the same result.  A detailed lexicon for this can be found in the
 	// accompanying platform.md.
-	// DEPRECATED as of v2.2: platform properties are now specified directly in
-	// the action. See documentation note in the
+	// DEPRECATED as of v2.2, UNSUPPORTED since v2.13: platform properties are now
+	// specified directly in the action. See documentation note in the
 	// [Action][build.bazel.remote.execution.v2.Action] for migration.
 	//
 	// Deprecated: Marked as deprecated in build/bazel/remote/execution/v2/remote_execution.proto.
@@ -1713,8 +1713,9 @@ type ActionResult struct {
 	// will be omitted from the list. The server is free to arrange the output
 	// list as desired; clients MUST NOT assume that the output list is sorted.
 	//
-	// DEPRECATED as of v2.1. Servers that wish to be compatible with v2.0 API
-	// should still populate this field in addition to `output_symlinks`.
+	// DEPRECATED as of v2.1, UNSUPPORTED since v2.13. Servers that wish to be
+	// compatible with v2.0 API should still populate this field in addition to
+	// `output_symlinks`.
 	//
 	// Deprecated: Marked as deprecated in build/bazel/remote/execution/v2/remote_execution.proto.
 	OutputFileSymlinks []*OutputSymlink `protobuf:"bytes,10,rep,name=output_file_symlinks,json=outputFileSymlinks,proto3" json:"output_file_symlinks,omitempty"`
@@ -1816,8 +1817,9 @@ type ActionResult struct {
 	// will be omitted from the list. The server is free to arrange the output
 	// list as desired; clients MUST NOT assume that the output list is sorted.
 	//
-	// DEPRECATED as of v2.1. Servers that wish to be compatible with v2.0 API
-	// should still populate this field in addition to `output_symlinks`.
+	// DEPRECATED as of v2.1, UNSUPPORTED since v2.13. Servers that wish to be
+	// compatible with v2.0 API should still populate this field in addition to
+	// `output_symlinks`.
 	//
 	// Deprecated: Marked as deprecated in build/bazel/remote/execution/v2/remote_execution.proto.
 	OutputDirectorySymlinks []*OutputSymlink `protobuf:"bytes,11,rep,name=output_directory_symlinks,json=outputDirectorySymlinks,proto3" json:"output_directory_symlinks,omitempty"`

@@ -855,7 +855,7 @@ type ContentAddressableStorageClient interface {
 	// [GetChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping].
 	// See that RPC for details.
 	//
-	// New in v2.12 and removed in v2.13.
+	// New in v2.12 and UNSUPPORTED since v2.13.
 	SplitBlob(ctx context.Context, in *SplitBlobRequest, opts ...grpc.CallOption) (*SplitBlobResponse, error)
 	// GetChunkMapping retrieves the ordered chunk-digest mapping for a blob.
 	//
@@ -933,7 +933,7 @@ type ContentAddressableStorageClient interface {
 	// [RegisterChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping].
 	// See that RPC for details.
 	//
-	// New in v2.12 and removed in v2.13.
+	// New in v2.12 and UNSUPPORTED since v2.13.
 	SpliceBlob(ctx context.Context, in *SpliceBlobRequest, opts ...grpc.CallOption) (*SpliceBlobResponse, error)
 	// RegisterChunkMapping registers an ordered chunk-digest mapping for a blob.
 	//
@@ -1376,7 +1376,7 @@ type ContentAddressableStorageServer interface {
 	// [GetChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.GetChunkMapping].
 	// See that RPC for details.
 	//
-	// New in v2.12 and removed in v2.13.
+	// New in v2.12 and UNSUPPORTED since v2.13.
 	SplitBlob(context.Context, *SplitBlobRequest) (*SplitBlobResponse, error)
 	// GetChunkMapping retrieves the ordered chunk-digest mapping for a blob.
 	//
@@ -1454,7 +1454,7 @@ type ContentAddressableStorageServer interface {
 	// [RegisterChunkMapping][build.bazel.remote.execution.v2.ContentAddressableStorage.RegisterChunkMapping].
 	// See that RPC for details.
 	//
-	// New in v2.12 and removed in v2.13.
+	// New in v2.12 and UNSUPPORTED since v2.13.
 	SpliceBlob(context.Context, *SpliceBlobRequest) (*SpliceBlobResponse, error)
 	// RegisterChunkMapping registers an ordered chunk-digest mapping for a blob.
 	//
