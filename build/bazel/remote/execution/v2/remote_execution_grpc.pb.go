@@ -77,6 +77,15 @@ type ExecutionClient interface {
 	// `metadata` on the operation is of type
 	// [ExecuteOperationMetadata][build.bazel.remote.execution.v2.ExecuteOperationMetadata].
 	//
+	// Implementations SHOULD ensure that any blobs referenced from the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
+	// by the [ActionResult][build.bazel.remote.execution.v2.ActionResult] in the
+	// `response` are available at the time of returning it and will be for some
+	// period of time afterwards. Implementations MAY advertise that they perform
+	// this check via the
+	// [ExecutionCapabilities.verifies_action_results][build.bazel.remote.execution.v2.ExecutionCapabilities.verifies_action_results]
+	// field.
+	//
 	// If the client remains connected after the first response is returned after
 	// the server, then updates are streamed as if the client had called
 	// [WaitExecution][build.bazel.remote.execution.v2.Execution.WaitExecution]
@@ -226,6 +235,15 @@ type ExecutionServer interface {
 	// [ExecuteResponse][build.bazel.remote.execution.v2.ExecuteResponse]. The
 	// `metadata` on the operation is of type
 	// [ExecuteOperationMetadata][build.bazel.remote.execution.v2.ExecuteOperationMetadata].
+	//
+	// Implementations SHOULD ensure that any blobs referenced from the
+	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
+	// by the [ActionResult][build.bazel.remote.execution.v2.ActionResult] in the
+	// `response` are available at the time of returning it and will be for some
+	// period of time afterwards. Implementations MAY advertise that they perform
+	// this check via the
+	// [ExecutionCapabilities.verifies_action_results][build.bazel.remote.execution.v2.ExecutionCapabilities.verifies_action_results]
+	// field.
 	//
 	// If the client remains connected after the first response is returned after
 	// the server, then updates are streamed as if the client had called
@@ -401,7 +419,10 @@ type ActionCacheClient interface {
 	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
 	// are available at the time of returning the
 	// [ActionResult][build.bazel.remote.execution.v2.ActionResult] and will be
-	// for some period of time afterwards. The lifetimes of the referenced blobs SHOULD be increased
+	// for some period of time afterwards. Implementations MAY advertise that they
+	// perform this check via the
+	// [CacheCapabilities.verifies_action_results][build.bazel.remote.execution.v2.CacheCapabilities.verifies_action_results]
+	// field. The lifetimes of the referenced blobs SHOULD be increased
 	// if necessary and applicable.
 	//
 	// Errors:
@@ -485,7 +506,10 @@ type ActionCacheServer interface {
 	// [ContentAddressableStorage][build.bazel.remote.execution.v2.ContentAddressableStorage]
 	// are available at the time of returning the
 	// [ActionResult][build.bazel.remote.execution.v2.ActionResult] and will be
-	// for some period of time afterwards. The lifetimes of the referenced blobs SHOULD be increased
+	// for some period of time afterwards. Implementations MAY advertise that they
+	// perform this check via the
+	// [CacheCapabilities.verifies_action_results][build.bazel.remote.execution.v2.CacheCapabilities.verifies_action_results]
+	// field. The lifetimes of the referenced blobs SHOULD be increased
 	// if necessary and applicable.
 	//
 	// Errors:
